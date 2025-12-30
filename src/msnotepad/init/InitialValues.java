@@ -27,7 +27,7 @@ public class InitialValues {
 	private static final AtomicInteger frameWidth = new AtomicInteger(600);
 	private static final AtomicInteger frameHeight = new AtomicInteger(450);
 	private static final AtomicInteger caretPosition = new AtomicInteger(0);
-	private static Font editorFont = new Font("Consolas", Font.PLAIN, 14);
+	private static Font editorFont = new Font("Consolas", Font.PLAIN, 24);
 	private static String fileName = NEW_FILE;
 	private static String filePath = null;
 

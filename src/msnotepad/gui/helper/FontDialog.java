@@ -16,7 +16,6 @@ import java.awt.Graphics;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JButton;
@@ -43,7 +42,7 @@ import javax.swing.GroupLayout;
  * FontDialog class handle the font choosing function of the MSNotepad,
  * this Dialog uses the GroupLayout as the LayoutManager.
  */
-public class FontDialog extends JDialog implements ListSelectionListener {
+public class FontDialog extends msnotepad.gui.helper.ADialog implements ListSelectionListener {
     private static final int foregroundTextSize = 13;
     private Parameter fontName, fontStyle, fontSize;
 
@@ -130,8 +129,8 @@ public class FontDialog extends JDialog implements ListSelectionListener {
         fontStyle.list.addListSelectionListener(this);
         fontSize.list.addListSelectionListener(this);
 
-        fontName.list.setCellRenderer(new FontCellRenderer(true));
-        fontStyle.list.setCellRenderer(new FontCellRenderer(false));
+        fontName.list.setCellRenderer(new FontCellRenderer<>(true));
+        fontStyle.list.setCellRenderer(new FontCellRenderer<>(false));
 
         okButton = new JButton("OK");
         cancelButton = new JButton("Cancel");

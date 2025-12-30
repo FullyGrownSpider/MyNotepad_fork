@@ -6,7 +6,6 @@
 package msnotepad.gui.helper;
 
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -25,7 +24,7 @@ import java.awt.FlowLayout;
  * Basically, its the combination of JLabel and the HTML file in the form
  * of string in the label.
  */
-public class AboutDialog extends JDialog{
+public class AboutDialog extends msnotepad.gui.helper.ADialog{
     private JLabel textLabel;
 
     /**

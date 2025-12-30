@@ -6,6 +6,7 @@
 package msnotepad.action;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileWriter;
@@ -20,6 +21,9 @@ import msnotepad.gui.GUIHandler;
 import msnotepad.gui.helper.OptionPane;
 import msnotepad.init.InitialValues;
 
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
+import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+
 public class FileMenuActions {
     
     public static class NewFileAction extends AbstractAction {
@@ -27,11 +31,11 @@ public class FileMenuActions {
             super();
             putValue(AbstractAction.NAME, "New File");
             putValue(MNEMONIC_KEY, KeyEvent.VK_N);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
-            if(!GUIHandler.getIsSaved()) {
+            if(GUIHandler.getNotSaved()) {
                 int value = OptionPane.showOptionPane();
 
                 if(value == 1) {
@@ -56,7 +60,7 @@ public class FileMenuActions {
             super();
             putValue(AbstractAction.NAME, "New Window");
             putValue(MNEMONIC_KEY, KeyEvent.VK_W);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK + ActionEvent.SHIFT_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, CTRL_DOWN_MASK + SHIFT_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -81,12 +85,11 @@ public class FileMenuActions {
             super();
             putValue(AbstractAction.NAME, "Open");
             putValue(MNEMONIC_KEY, KeyEvent.VK_O);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
             JFileChooser fileChooser = new JFileChooser();
-//            FileSystemView fsv = fileChooser.getFileSystemView();
             int value = fileChooser.showOpenDialog(GUIHandler.getFrame());
             if(value == JFileChooser.APPROVE_OPTION) {
                 GUIHandler.setIsLoadingFile(true);
@@ -96,11 +99,11 @@ public class FileMenuActions {
                 InitialValues.setFileName(fileName);
                 InitialValues.setFilePath(filePath);
 
-                String fileText = "";
+                StringBuilder fileText = new StringBuilder();
                 try {
                     Scanner read = new Scanner(file);
                     while(read.hasNextLine()) {
-                        fileText = fileText + read.nextLine() + "\n";
+                        fileText.append(read.nextLine()).append("\n");
                     }
                     read.close();
                     GUIHandler.setIsSaved(true);
@@ -120,7 +123,7 @@ public class FileMenuActions {
             super();
             putValue(AbstractAction.NAME, "Save");
             putValue(MNEMONIC_KEY, KeyEvent.VK_S);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -149,7 +152,7 @@ public class FileMenuActions {
             super();
             putValue(AbstractAction.NAME, "Save As");
             putValue(MNEMONIC_KEY, KeyEvent.VK_A);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK + ActionEvent.SHIFT_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -181,9 +184,7 @@ public class FileMenuActions {
     public static class ExitFileAction extends AbstractAction {
         public ExitFileAction() {
             super();
-            putValue(AbstractAction.NAME, "Exit");
-            putValue(MNEMONIC_KEY, KeyEvent.VK_X);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
+            putValue(AbstractAction.NAME, "Kill");
         }
         @Override
         public void actionPerformed(ActionEvent e) {

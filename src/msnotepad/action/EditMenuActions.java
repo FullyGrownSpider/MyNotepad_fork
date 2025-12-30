@@ -6,6 +6,7 @@
 package msnotepad.action;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
@@ -15,6 +16,8 @@ import msnotepad.gui.GUIHandler;
 import msnotepad.gui.helper.DialogType;
 import msnotepad.gui.helper.FindAndReplaceDialog;
 
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
+
 public class EditMenuActions {
     
     public static class UndoEditAction extends AbstractAction {
@@ -22,7 +25,7 @@ public class EditMenuActions {
             super();
             putValue(AbstractAction.NAME, "Undo");
             putValue(MNEMONIC_KEY, KeyEvent.VK_U);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -35,7 +38,7 @@ public class EditMenuActions {
             super();
             putValue(AbstractAction.NAME, "Delete");
             putValue(MNEMONIC_KEY, KeyEvent.VK_L);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -48,7 +51,7 @@ public class EditMenuActions {
             super();
             putValue(AbstractAction.NAME, "Find");
             putValue(MNEMONIC_KEY, KeyEvent.VK_F);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F, CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -61,7 +64,7 @@ public class EditMenuActions {
             super();
             putValue(AbstractAction.NAME, "Replace");
             putValue(MNEMONIC_KEY, KeyEvent.VK_R);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_H, CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -74,7 +77,7 @@ public class EditMenuActions {
             super();
             putValue(AbstractAction.NAME, "Select All");
             putValue(MNEMONIC_KEY, KeyEvent.VK_A);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_A, CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {

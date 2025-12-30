@@ -17,17 +17,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.Color;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JCheckBox;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JRadioButton;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 
@@ -40,8 +30,8 @@ import msnotepad.gui.GUIHandler;
  * the Dialog).
  */
 public class FindAndReplaceDialog {
-    public FindAndReplaceDialog(JFrame frame, DialogType type, boolean mobality) {
-        if(type == DialogType.FIND_ONLY) {
+    public FindAndReplaceDialog(JFrame frame, msnotepad.gui.helper.DialogType type, boolean mobality) {
+        if(type == msnotepad.gui.helper.DialogType.FIND_ONLY) {
             new FindDialog(frame, mobality);
         }
         else {
@@ -55,7 +45,7 @@ public class FindAndReplaceDialog {
     /**
      * FindDialog inner class handle the Finding part of the MSNotepad.
      */
-    private static class FindDialog extends JDialog implements ActionListener {
+    private static class FindDialog extends msnotepad.gui.helper.ADialog implements ActionListener {
         private JTextField findField;
         private JButton findButton, cancelButton;
         private JRadioButton downRadioButton;
@@ -87,6 +77,7 @@ public class FindAndReplaceDialog {
         private void initializeFindDialog() {
             JLabel findLabel = new JLabel("Find What :");
             findField = new JTextField(19);
+
             findLabel.setLabelFor(findField);
             {
                 JTextArea textArea = GUIHandler.getEditorTextArea();
@@ -110,6 +101,8 @@ public class FindAndReplaceDialog {
 
             caseCheckBox = new JCheckBox("Match Case");
             JCheckBox wrapCheckBox = new JCheckBox("Wrap Around");
+            JCheckBox regCheckBox = new JCheckBox("Regex");
+            wrapCheckBox.setSelected(true);
     
             //----------- Setting Up Layout ----------------
     
@@ -151,7 +144,7 @@ public class FindAndReplaceDialog {
             gbc.gridwidth = 1;
             gbc.gridheight = 3;
             {
-                JPanel buttonBag = new JPanel(new GridLayout(3, 1, 5, 5));
+                JPanel buttonBag = new JPanel(new GridLayout(2, 1, 5, 5));
                 buttonBag.add(findButton);
                 buttonBag.add(cancelButton);
                 gbl.setConstraints(buttonBag, gbc);
@@ -168,7 +161,8 @@ public class FindAndReplaceDialog {
             gbc.gridwidth = 2;
             gbc.gridheight = 1;
             {
-                JPanel buttonBag = new JPanel(new GridLayout(2, 1, 5, 5));
+                JPanel buttonBag = new JPanel(new GridLayout(3, 1, 5, 5));
+                buttonBag.add(regCheckBox);
                 buttonBag.add(caseCheckBox);
                 buttonBag.add(wrapCheckBox);
                 gbl.setConstraints(buttonBag, gbc);
@@ -211,6 +205,7 @@ public class FindAndReplaceDialog {
                     enableButtons();
                 }
             });
+
             findButton.addActionListener(this);
             cancelButton.addActionListener(e -> dispose());
         }
@@ -219,7 +214,7 @@ public class FindAndReplaceDialog {
          * enableButtons method check and enable buttons accordingly.  
          */
         private void enableButtons() {  //<-------------  Enable and Disable Required Buttons
-            findButton.setEnabled(!findField.getText().equals(""));
+            findButton.setEnabled(!findField.getText().isEmpty());
         }
 
         @Override
@@ -324,7 +319,7 @@ public class FindAndReplaceDialog {
      * ReplaceDialog inner class handle the Replacing part of the Edit menu.
      * It also use some method of the Find Dialog.
      */
-    private static class ReplaceDialog extends JDialog implements ActionListener {
+    private static class ReplaceDialog extends msnotepad.gui.helper.ADialog implements ActionListener {
         private JTextField findField, replaceField;
         private JButton findButton,replaceButton, replaceAllButton, cancelButton;
         private JCheckBox caseCheckBox;
@@ -378,6 +373,8 @@ public class FindAndReplaceDialog {
     
             caseCheckBox = new JCheckBox("Match Case");
             JCheckBox wrapCheckBox = new JCheckBox("Wrap Around");
+            wrapCheckBox.setSelected(true);
+            JCheckBox regCheckbox = new JCheckBox("Regex");
     
             //----------- Setting Up Layout ----------------
     
@@ -461,8 +458,9 @@ public class FindAndReplaceDialog {
             gbc.gridwidth = 2;
             gbc.gridheight = 1;
             {
-                JPanel buttonBag = new JPanel(new GridLayout(2, 1, 5, 5));
+                JPanel buttonBag = new JPanel(new GridLayout(3, 1, 5, 5));
                 buttonBag.add(caseCheckBox);
+                buttonBag.add(regCheckbox);
                 buttonBag.add(wrapCheckBox);
                 gbl.setConstraints(buttonBag, gbc);
                 add(buttonBag);
@@ -479,6 +477,7 @@ public class FindAndReplaceDialog {
                 public void focusLost(FocusEvent e) {
                     enableButtons();
                 }
+
             });
             findField.addKeyListener(new KeyAdapter() {
                 @Override
@@ -487,6 +486,7 @@ public class FindAndReplaceDialog {
                 }
             });
             findButton.addActionListener(this);
+//            this.addKeyListener()
             replaceButton.addActionListener(e -> replaceAction());
             replaceAllButton.addActionListener(e -> replaceAllAction());
             cancelButton.addActionListener(e -> dispose());
@@ -497,7 +497,7 @@ public class FindAndReplaceDialog {
          * buttons, accordingly.
          */
         private void enableButtons() {  //<-------------  Enable and Disable Required Buttons
-            if(findField.getText().equals("")) {
+            if(findField.getText().isEmpty()) {
                 findButton.setEnabled(false);
                 replaceButton.setEnabled(false);
                 replaceAllButton.setEnabled(false);

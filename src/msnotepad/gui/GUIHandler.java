@@ -7,8 +7,7 @@ package msnotepad.gui;
 
 import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
@@ -25,8 +24,6 @@ import javax.swing.JMenuItem;
 import java.awt.Font;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.event.DocumentEvent;
@@ -46,6 +43,8 @@ import msnotepad.action.ViewMenuActions;
 import msnotepad.gui.helper.StatusBar;
 import msnotepad.gui.helper.OptionPane;
 import msnotepad.init.InitialValues;
+
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
 /**
  * GUIHandler class handle the main gui functioning of the MSNotepad, this is the point of
@@ -91,7 +90,7 @@ public class GUIHandler {
 		frame.addWindowListener(new WindowAdapter(){
 			@Override
 			public void windowClosing(WindowEvent e) {
-				if(!GUIHandler.getIsSaved()) {
+				if(GUIHandler.getNotSaved()) {
 					int value = OptionPane.showOptionPane();
 					if(value == 1) {
 						GUIHandler.getSaveAsMenuItem().doClick();
@@ -164,8 +163,8 @@ public class GUIHandler {
 	 * getIsSaved method is the getter of isSaved variable.
 	 * @return the isSaved variable.
 	 */
-	public static boolean getIsSaved() {
-		return isSaved.get();
+	public static boolean getNotSaved() {
+		return !isSaved.get();
 	}
 
 
@@ -309,7 +308,7 @@ public class GUIHandler {
 	 */
 	private void doUpdateWork() {
 		undoEdit.setEnabled(false);
-		if(editorTextArea.getText().equals("")) {
+		if(editorTextArea.getText().isEmpty()) {
 			findEdit.setEnabled(false);
 			replaceEdit.setEnabled(false);
 		}
@@ -462,8 +461,8 @@ public class GUIHandler {
 
 		zoomView.setMnemonic(KeyEvent.VK_Z);
 
-		cutEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.CTRL_MASK));
-		copyEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
-		pasteEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.CTRL_MASK));
+		cutEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, CTRL_DOWN_MASK));
+		copyEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, CTRL_DOWN_MASK));
+		pasteEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, CTRL_DOWN_MASK));
 	}
 }
