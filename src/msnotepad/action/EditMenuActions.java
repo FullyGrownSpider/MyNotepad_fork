@@ -17,6 +17,7 @@ import msnotepad.gui.helper.DialogType;
 import msnotepad.gui.helper.FindAndReplaceDialog;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
+import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
 
 public class EditMenuActions {
     
@@ -26,6 +27,18 @@ public class EditMenuActions {
             putValue(AbstractAction.NAME, "Undo");
             putValue(MNEMONIC_KEY, KeyEvent.VK_U);
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, CTRL_DOWN_MASK));
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // TODO Auto-generated method stub
+        }
+    }
+    public static class RedoEditAction extends AbstractAction {
+        public RedoEditAction() {
+            super();
+            putValue(AbstractAction.NAME, "Redo");
+            putValue(MNEMONIC_KEY, KeyEvent.VK_U);
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Y, CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -64,7 +77,7 @@ public class EditMenuActions {
             super();
             putValue(AbstractAction.NAME, "Replace");
             putValue(MNEMONIC_KEY, KeyEvent.VK_R);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_H, CTRL_DOWN_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F, CTRL_DOWN_MASK | SHIFT_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {

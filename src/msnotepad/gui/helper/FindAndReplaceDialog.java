@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021 Mohit Saini, Under MIT License. Use is subject to license terms.
- * 
+ *
  */
 
 package msnotepad.gui.helper;
@@ -16,6 +16,8 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.Color;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -31,15 +33,13 @@ import msnotepad.gui.GUIHandler;
  */
 public class FindAndReplaceDialog {
     public FindAndReplaceDialog(JFrame frame, msnotepad.gui.helper.DialogType type, boolean mobality) {
-        if(type == msnotepad.gui.helper.DialogType.FIND_ONLY) {
+        if (type == msnotepad.gui.helper.DialogType.FIND_ONLY) {
             new FindDialog(frame, mobality);
-        }
-        else {
+        } else {
             new ReplaceDialog(frame, mobality);
         }
 
     }
-
 
 
     /**
@@ -49,20 +49,22 @@ public class FindAndReplaceDialog {
         private JTextField findField;
         private JButton findButton, cancelButton;
         private JRadioButton downRadioButton;
+        private AbstractButton regCheckbox;
         private JCheckBox caseCheckBox;
         private int lastLoc = GUIHandler.getEditorTextArea().getCaretPosition();
 
         /**
          * FindDialog constructor help to specify the parent component and mobality
          * of the FindDialog.
-         * @param frame the parent component.
+         *
+         * @param frame    the parent component.
          * @param mobality the dialog is movable if it is TRUE.
          */
         public FindDialog(JFrame frame, boolean mobality) {
-            super(frame,"Find", mobality);
+            super(frame, "Find", mobality);
             initializeFindDialog();
             addListeners();
-    
+
             pack();
             setLocationRelativeTo(null);
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -81,14 +83,14 @@ public class FindAndReplaceDialog {
             findLabel.setLabelFor(findField);
             {
                 JTextArea textArea = GUIHandler.getEditorTextArea();
-                if(textArea.getSelectedText() != null) {
+                if (textArea.getSelectedText() != null) {
                     findField.setText(textArea.getSelectedText());
                     findField.requestFocus();
                     findField.selectAll();
                     lastLoc = textArea.getSelectionStart();
                 }
             }
-    
+
             findButton = new JButton("Find Next");
             cancelButton = new JButton("Cancel");
 
@@ -100,16 +102,17 @@ public class FindAndReplaceDialog {
             downRadioButton.setSelected(true);
 
             caseCheckBox = new JCheckBox("Match Case");
+            caseCheckBox.setSelected(true);
             JCheckBox wrapCheckBox = new JCheckBox("Wrap Around");
-            JCheckBox regCheckBox = new JCheckBox("Regex");
+            regCheckbox = new JCheckBox("Regex");
             wrapCheckBox.setSelected(true);
-    
+
             //----------- Setting Up Layout ----------------
-    
+
             GridBagLayout gbl = new GridBagLayout();
             GridBagConstraints gbc = new GridBagConstraints();
             getContentPane().setLayout(gbl);
-    
+
             gbc.insets = new Insets(11, 8, 5, 5);
             gbc.fill = GridBagConstraints.BOTH;
             gbc.anchor = GridBagConstraints.CENTER;
@@ -121,7 +124,7 @@ public class FindAndReplaceDialog {
             gbc.gridheight = 1;
             gbl.setConstraints(findLabel, gbc);
             add(findLabel);
-    
+
             gbc.insets = new Insets(11, 5, 5, 6);
             gbc.fill = GridBagConstraints.BOTH;
             gbc.anchor = GridBagConstraints.CENTER;
@@ -133,7 +136,7 @@ public class FindAndReplaceDialog {
             gbc.gridheight = 1;
             gbl.setConstraints(findField, gbc);
             add(findField);
-    
+
             gbc.insets = new Insets(10, 5, 35, 5);
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.anchor = GridBagConstraints.NORTH;
@@ -150,7 +153,7 @@ public class FindAndReplaceDialog {
                 gbl.setConstraints(buttonBag, gbc);
                 add(buttonBag);
             }
-            
+
             gbc.insets = new Insets(5, 5, 5, 5);
             gbc.fill = GridBagConstraints.NONE;
             gbc.anchor = GridBagConstraints.SOUTHWEST;
@@ -162,13 +165,13 @@ public class FindAndReplaceDialog {
             gbc.gridheight = 1;
             {
                 JPanel buttonBag = new JPanel(new GridLayout(3, 1, 5, 5));
-                buttonBag.add(regCheckBox);
+                buttonBag.add(regCheckbox);
                 buttonBag.add(caseCheckBox);
                 buttonBag.add(wrapCheckBox);
                 gbl.setConstraints(buttonBag, gbc);
                 add(buttonBag);
             }
-    
+
             gbc.insets = new Insets(5, 5, 5, 5);
             gbc.fill = GridBagConstraints.NONE;
             gbc.anchor = GridBagConstraints.NORTHEAST;
@@ -199,6 +202,9 @@ public class FindAndReplaceDialog {
                     enableButtons();
                 }
             });
+
+            KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+            rootPane.registerKeyboardAction(this, stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
             findField.addKeyListener(new KeyAdapter() {
                 @Override
                 public void keyTyped(KeyEvent e) {
@@ -211,7 +217,7 @@ public class FindAndReplaceDialog {
         }
 
         /**
-         * enableButtons method check and enable buttons accordingly.  
+         * enableButtons method check and enable buttons accordingly.
          */
         private void enableButtons() {  //<-------------  Enable and Disable Required Buttons
             findButton.setEnabled(!findField.getText().isEmpty());
@@ -219,89 +225,97 @@ public class FindAndReplaceDialog {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            int value = findNext(this,lastLoc, findField.getText(), caseCheckBox.isSelected(), downRadioButton.isSelected(), true);
-            if(value != -1) {
+            int value = findNext(this, lastLoc, findField.getText(), caseCheckBox.isSelected(), downRadioButton.isSelected(), true, regCheckbox.isSelected());
+            if (value != -1) {
                 lastLoc = value;
             }
         }
 
         /**
          * findNext method is help to find the next occurrence as entered.
-         * @param parent the parent component.
-         * @param lastLoc the location of the select end.
-         * @param text the text we need to find.
-         * @param matchCase the case sensitivity.
+         *
+         * @param parent          the parent component.
+         * @param lastLoc         the location of the select end.
+         * @param text            the text we need to find.
+         * @param matchCase       the case sensitivity.
          * @param isDownDirection the direction of checking.
-         * @param showOptPane show optionPane in last if TRUE.
+         * @param showOptPane     show optionPane in last if TRUE.
          * @return the location of which the text, if found, otherwise -1.
          */
-        public static int findNext(JDialog parent, int lastLoc, String text, boolean matchCase, boolean isDownDirection, boolean showOptPane) {
+        public static int findNext(JDialog parent, int lastLoc, String text, boolean matchCase, boolean isDownDirection, boolean showOptPane, boolean isRegex) {
             JTextArea textArea = GUIHandler.getEditorTextArea();
             String file = textArea.getText();
             int fileLength = file.length();
             boolean isFind = false;
-            
-            if(isDownDirection)
-            {
-                if(textArea.getSelectedText() != null) {
+            if (isRegex) {
+                if (textArea.getSelectedText() != null) {
                     lastLoc = textArea.getSelectionEnd();
+                    if (!isDownDirection) {
+                        lastLoc--;
+                    }
                 }
-                for(int i = lastLoc; i <= fileLength; ++i) {
-                    if((i + text.length()) <= fileLength) {
-                        if(matchCase) {
-                            if(file.startsWith(text, i)) {
-                                isFind = true;
-                                lastLoc = i;
-                                textArea.select(i, i + text.length());
-                                break;
-                            }
-                        }
-                        else {
-                            if(file.substring(i, i + text.length()) .equalsIgnoreCase(text)) {
-                                isFind = true;
-                                lastLoc = i;
-                                textArea.select(i, i + text.length());
-                                break;
-                            }
+                Pattern pattern;
+                if (!matchCase) {
+                    pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+                } else {
+                    pattern = Pattern.compile(text, Pattern.MULTILINE | Pattern.DOTALL);
+                }
+                var match = pattern.matcher(file);
+                if (!isDownDirection){
+                    MatchResult lastFound = null;
+                    while (match.find()){
+                        var last = match.toMatchResult();
+                        if (last.end() < lastLoc){
+                            lastFound = last;
+                        } else {
+                            break;
                         }
                     }
-                    //i = file.lastIndexOf(text, lastLoc);  //<---- WE CAN ALSO USE THIS
-                    else {
+                    if (lastFound != null){
+                        isFind = true;
+                        lastLoc = lastFound.start();
+                        textArea.select(lastLoc, lastFound.end());
+                    }
+                } else {
+                    if (match.find(lastLoc)){
+                        var found = match.toMatchResult();
+                        isFind = true;
+                        lastLoc = found.start();
+                        textArea.select(lastLoc, found.end());
+                    }
+                }
+            } else {
+                if (textArea.getSelectedText() != null) {
+                    lastLoc = textArea.getSelectionEnd();
+                    if (!isDownDirection) {
+                        lastLoc--;
+                    }
+                }
+                int i = lastLoc;
+                while (isDownDirection && (i + text.length() < fileLength) ||
+                        !isDownDirection && (i - text.length() >= 0)){
+                    int start = i;
+                    if (!isDownDirection){
+                        start -= text.length();
+                    }
+                    if ((matchCase && file.startsWith(text, start)) ||
+                           (!matchCase && file.substring(start, start + text.length()).equalsIgnoreCase(text))) {
+                        isFind = true;
+                        lastLoc = start;
+                        textArea.select(start, start + text.length());
                         break;
+                    }
+                    if (isDownDirection){
+                        i++;
+                    } else{
+                        i--;
                     }
                 }
             }
-            else {
-                for(int i = lastLoc; i >= 0; --i) {
-                    if((i - text.length()) >= 0) {
-                        if(matchCase) {
-                            if(file.startsWith(text, i - text.length())) {
-                                isFind = true;
-                                lastLoc = i - text.length();
-                                textArea.select(i - text.length(), i);
-                                break;
-                            }
-                        }
-                        else {
-                            if(file.substring(i - text.length(), i) .equalsIgnoreCase(text)) {
-                                isFind = true;
-                                lastLoc = i - text.length();
-                                textArea.select(i - text.length(), i);
-                                break;
-                            }
-                        }
-                    }
-                    //i = file.lastIndexOf(text, lastLoc);  //<---- WE CAN ALSO USE THIS
-                    else {
-                        break;
-                    }
-                }
-            }
-            if(isFind) {
+            if (isFind) {
                 return lastLoc;
-            }
-            else {
-                if(showOptPane) {
+            } else {
+                if (showOptPane) {
                     String message = "<HTML>Can not find <b>\"" + text + "\"</b> in the file.";
                     JOptionPane.showMessageDialog(parent, message, "MyNotepad", JOptionPane.INFORMATION_MESSAGE);
                 }
@@ -311,24 +325,22 @@ public class FindAndReplaceDialog {
     }
 
 
-
-
-
-
     /**
      * ReplaceDialog inner class handle the Replacing part of the Edit menu.
      * It also use some method of the Find Dialog.
      */
     private static class ReplaceDialog extends msnotepad.gui.helper.ADialog implements ActionListener {
         private JTextField findField, replaceField;
-        private JButton findButton,replaceButton, replaceAllButton, cancelButton;
+        private JButton findButton, replaceButton, replaceAllButton, cancelButton;
         private JCheckBox caseCheckBox;
+        private JCheckBox regCheckbox;
         private int lastLoc = GUIHandler.getEditorTextArea().getCaretPosition();
 
         /**
          * ReplaceDialog Constructor get the parent component and mobality
          * and set it to the JDialog. And Then, call the initial methods.
-         * @param frame the main frame.
+         *
+         * @param frame    the main frame.
          * @param mobality the mobality.
          */
         public ReplaceDialog(JFrame frame, boolean mobality) {
@@ -336,7 +348,7 @@ public class FindAndReplaceDialog {
 
             initializeFindDialog();
             addListeners();
-    
+
             pack();
             setLocationRelativeTo(null);
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -354,7 +366,7 @@ public class FindAndReplaceDialog {
             findLabel.setLabelFor(findField);
             {
                 JTextArea textArea = GUIHandler.getEditorTextArea();
-                if(textArea.getSelectedText() != null) {
+                if (textArea.getSelectedText() != null) {
                     findField.setText(textArea.getSelectedText());
                     findField.requestFocus();
                     findField.selectAll();
@@ -370,18 +382,19 @@ public class FindAndReplaceDialog {
             cancelButton = new JButton("Cancel");
             replaceButton = new JButton("Replace");
             replaceAllButton = new JButton("Replace All");
-    
+
             caseCheckBox = new JCheckBox("Match Case");
+            caseCheckBox.setSelected(true);
             JCheckBox wrapCheckBox = new JCheckBox("Wrap Around");
             wrapCheckBox.setSelected(true);
-            JCheckBox regCheckbox = new JCheckBox("Regex");
-    
+            regCheckbox = new JCheckBox("Regex");
+
             //----------- Setting Up Layout ----------------
-    
+
             GridBagLayout gbl = new GridBagLayout();
             GridBagConstraints gbc = new GridBagConstraints();
             getContentPane().setLayout(gbl);
-    
+
             gbc.insets = new Insets(11, 8, 5, 5);
             gbc.fill = GridBagConstraints.BOTH;
             gbc.anchor = GridBagConstraints.CENTER;
@@ -393,7 +406,7 @@ public class FindAndReplaceDialog {
             gbc.gridheight = 1;
             gbl.setConstraints(findLabel, gbc);
             add(findLabel);
-    
+
             gbc.insets = new Insets(11, 5, 5, 6);
             gbc.fill = GridBagConstraints.BOTH;
             gbc.anchor = GridBagConstraints.CENTER;
@@ -405,7 +418,7 @@ public class FindAndReplaceDialog {
             gbc.gridheight = 1;
             gbl.setConstraints(findField, gbc);
             add(findField);
-    
+
             gbc.insets = new Insets(10, 5, 35, 5);
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.anchor = GridBagConstraints.NORTH;
@@ -435,7 +448,7 @@ public class FindAndReplaceDialog {
             gbc.gridheight = 1;
             gbl.setConstraints(replaceLabel, gbc);
             add(replaceLabel);
-    
+
             gbc.insets = new Insets(5, 5, 5, 5);
             gbc.fill = GridBagConstraints.BOTH;
             gbc.anchor = GridBagConstraints.CENTER;
@@ -447,7 +460,7 @@ public class FindAndReplaceDialog {
             gbc.gridheight = 1;
             gbl.setConstraints(replaceField, gbc);
             add(replaceField);
-            
+
             gbc.insets = new Insets(5, 5, 5, 5);
             gbc.fill = GridBagConstraints.NONE;
             gbc.anchor = GridBagConstraints.SOUTHWEST;
@@ -468,7 +481,7 @@ public class FindAndReplaceDialog {
         }
 
         /**
-         * addListeners method is help to add the listener to Components 
+         * addListeners method is help to add the listener to Components
          * used in the ReplaceDialog.
          */
         private void addListeners() {
@@ -497,12 +510,11 @@ public class FindAndReplaceDialog {
          * buttons, accordingly.
          */
         private void enableButtons() {  //<-------------  Enable and Disable Required Buttons
-            if(findField.getText().isEmpty()) {
+            if (findField.getText().isEmpty()) {
                 findButton.setEnabled(false);
                 replaceButton.setEnabled(false);
                 replaceAllButton.setEnabled(false);
-            }
-            else {
+            } else {
                 findButton.setEnabled(true);
                 replaceButton.setEnabled(true);
                 replaceAllButton.setEnabled(true);
@@ -515,13 +527,12 @@ public class FindAndReplaceDialog {
          */
         private void replaceAction() {
             JTextArea textArea = GUIHandler.getEditorTextArea();
-            if(textArea.getSelectedText() != null && textArea.getSelectedText().equalsIgnoreCase(findField.getText())) {
+            if (textArea.getSelectedText() != null && textArea.getSelectedText().equalsIgnoreCase(findField.getText())) {
                 textArea.replaceSelection(replaceField.getText());
                 textArea.select(textArea.getCaretPosition() - replaceField.getText().length(), textArea.getCaretPosition());
-            }
-            else {
-                int value = FindDialog.findNext(this, lastLoc, findField.getText(), caseCheckBox.isSelected(), true, true);
-                if(value != -1) {
+            } else {
+                int value = FindDialog.findNext(this, lastLoc, findField.getText(), caseCheckBox.isSelected(), true, true, regCheckbox.isSelected());
+                if (value != -1) {
                     lastLoc = value;
                     textArea.replaceSelection(replaceField.getText());
                     textArea.select(textArea.getCaretPosition() - replaceField.getText().length(), textArea.getCaretPosition());
@@ -538,19 +549,19 @@ public class FindAndReplaceDialog {
             int count = 0;
             int value = 0;
 
-            while(value != -1) {
+            while (value != -1) {
                 textArea.replaceSelection(replaceField.getText());
                 ++count;
-                value = FindDialog.findNext(this, lastLoc, findField.getText(), caseCheckBox.isSelected(), true, false);
+                value = FindDialog.findNext(this, lastLoc, findField.getText(), caseCheckBox.isSelected(), true, false, regCheckbox.isSelected());
             }
             String message = "<HTML>Number of replacements : <b>" + count + "</b>";
             JOptionPane.showMessageDialog(this, message, "MyNotepad", JOptionPane.INFORMATION_MESSAGE);
         }
-    
+
         @Override
         public void actionPerformed(ActionEvent e) {
-            int value = FindDialog.findNext(this, lastLoc, findField.getText(), caseCheckBox.isSelected(), true, true);
-            if(value != -1) {
+            int value = FindDialog.findNext(this, lastLoc, findField.getText(), caseCheckBox.isSelected(), true, true, regCheckbox.isSelected());
+            if (value != -1) {
                 lastLoc = value;
             }
         }

@@ -63,6 +63,7 @@ public class GUIHandler {
 	private static JMenu fileMenu, editMenu, formatMenu, viewMenu, helpMenu;
 	private static JMenuItem saveAsFile;
 	private static JMenuItem undoEdit;
+	private static JMenuItem redoEdit;
 	private static JMenuItem cutEdit;
 	private static JMenuItem copyEdit;
 	private static JMenuItem pasteEdit;
@@ -307,7 +308,6 @@ public class GUIHandler {
 	 * text editor.
 	 */
 	private void doUpdateWork() {
-		undoEdit.setEnabled(false);
 		if(editorTextArea.getText().isEmpty()) {
 			findEdit.setEnabled(false);
 			replaceEdit.setEnabled(false);
@@ -396,11 +396,13 @@ public class GUIHandler {
 		copyEdit = new JMenuItem(ClipboardActions.getCopyAction());
 		pasteEdit = new JMenuItem(ClipboardActions.getPasteAction());
 		undoEdit = new JMenuItem(new EditMenuActions.UndoEditAction());
+		redoEdit = new JMenuItem(new EditMenuActions.RedoEditAction());
 		JMenuItem deleteEdit = new JMenuItem(new EditMenuActions.DeleteEditAction());
 		findEdit = new JMenuItem(new EditMenuActions.FindEditAction());
 		replaceEdit = new JMenuItem(new EditMenuActions.ReplaceEditAction());
 		JMenuItem selectAllEdit = new JMenuItem(new EditMenuActions.SelectAllEditAction());
 		editMenu.add(undoEdit);
+		editMenu.add(redoEdit);
 		editMenu.addSeparator();
 		editMenu.add(cutEdit);
 		editMenu.add(copyEdit);
