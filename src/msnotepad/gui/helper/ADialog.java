@@ -1,5 +1,4 @@
 
-package msnotepad.gui.helper;
 
 import javax.swing.*;
 import java.awt.*;

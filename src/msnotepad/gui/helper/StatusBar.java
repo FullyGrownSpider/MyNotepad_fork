@@ -3,7 +3,6 @@
  * 
  */
 
-package msnotepad.gui.helper;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -16,8 +15,6 @@ import java.awt.FlowLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import msnotepad.gui.GUIHandler;
-import msnotepad.init.InitialValues;
 
 /**
  * StatusBar class make basic statusBar for the MSNotepad, with the

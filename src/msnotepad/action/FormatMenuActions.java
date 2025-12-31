@@ -3,17 +3,11 @@
  * 
  */
 
-package msnotepad.action;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.JTextArea;
-
-import msnotepad.gui.GUIHandler;
-import msnotepad.gui.helper.FontDialog;
-import msnotepad.init.InitialValues;
 
 public class FormatMenuActions {
     

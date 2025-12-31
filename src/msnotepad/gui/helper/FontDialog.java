@@ -3,7 +3,6 @@
  * 
  */
 
-package msnotepad.gui.helper;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -34,15 +33,13 @@ import javax.swing.event.CaretListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import msnotepad.init.InitialValues;
-
 import javax.swing.GroupLayout;
 
 /**
  * FontDialog class handle the font choosing function of the MSNotepad,
  * this Dialog uses the GroupLayout as the LayoutManager.
  */
-public class FontDialog extends msnotepad.gui.helper.ADialog implements ListSelectionListener {
+public class FontDialog extends ADialog implements ListSelectionListener {
     private static final int foregroundTextSize = 13;
     private Parameter fontName, fontStyle, fontSize;
 

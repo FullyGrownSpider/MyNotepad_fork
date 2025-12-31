@@ -3,7 +3,6 @@
  * 
  */
 
-package msnotepad.action;
 
 import javax.swing.Action;
 import javax.swing.text.DefaultEditorKit;

@@ -3,7 +3,6 @@
  *
  */
 
-package msnotepad.gui.helper;
 
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
@@ -23,17 +22,14 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 
-import msnotepad.gui.GUIHandler;
-
-
 /**
  * FindAndReplaceDialog class handle both type of dialog, whether it is
  * Find-Dialog or is Replace-Dialog (by making separate inner classes for both
  * the Dialog).
  */
 public class FindAndReplaceDialog {
-    public FindAndReplaceDialog(JFrame frame, msnotepad.gui.helper.DialogType type, boolean mobality) {
-        if (type == msnotepad.gui.helper.DialogType.FIND_ONLY) {
+    public FindAndReplaceDialog(JFrame frame, DialogType type, boolean mobality) {
+        if (type == DialogType.FIND_ONLY) {
             new FindDialog(frame, mobality);
         } else {
             new ReplaceDialog(frame, mobality);
@@ -45,7 +41,7 @@ public class FindAndReplaceDialog {
     /**
      * FindDialog inner class handle the Finding part of the MSNotepad.
      */
-    private static class FindDialog extends msnotepad.gui.helper.ADialog implements ActionListener {
+    private static class FindDialog extends ADialog implements ActionListener {
         private JTextField findField;
         private JButton findButton, cancelButton;
         private JRadioButton downRadioButton;
@@ -329,7 +325,7 @@ public class FindAndReplaceDialog {
      * ReplaceDialog inner class handle the Replacing part of the Edit menu.
      * It also use some method of the Find Dialog.
      */
-    private static class ReplaceDialog extends msnotepad.gui.helper.ADialog implements ActionListener {
+    private static class ReplaceDialog extends ADialog implements ActionListener {
         private JTextField findField, replaceField;
         private JButton findButton, replaceButton, replaceAllButton, cancelButton;
         private JCheckBox caseCheckBox;

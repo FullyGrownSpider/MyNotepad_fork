@@ -1,14 +1,14 @@
 /*
  * Copyright (c) 2021 Mohit Saini, Under MIT License. Use is subject to license terms.
- * 
+ *
  */
 
-package msnotepad.gui;
 
 import javax.swing.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -26,16 +26,6 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 
-import msnotepad.action.ClipboardActions;
-import msnotepad.action.EditMenuActions;
-import msnotepad.action.FileMenuActions;
-import msnotepad.action.FormatMenuActions;
-import msnotepad.action.HelpMenuActions;
-import msnotepad.action.ViewMenuActions;
-import msnotepad.gui.helper.StatusBar;
-import msnotepad.gui.helper.OptionPane;
-import msnotepad.init.InitialValues;
-
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
 /**
@@ -43,81 +33,84 @@ import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
  * distribution of work to other classes.
  */
 public class GUIHandler {
-	private static JFrame frame;
-	private static JScrollPane editorScrollPane;
-	private static JMenuBar menuBar;
-	private static JPanel mainPanel;
-	private static JTextArea editorTextArea;
+    private static JFrame frame;
+    private static JScrollPane editorScrollPane;
+    private static JMenuBar menuBar;
+    private static JPanel mainPanel;
+    private static JTextArea editorTextArea;
     private static final Timer autoSave = new Timer();
-	private static StatusBar statusBar;
-	private static final AtomicBoolean isSaved = new AtomicBoolean(true);
-	private static final AtomicBoolean isLoadingFile = new AtomicBoolean(false);
+    private static StatusBar statusBar;
+    private static final AtomicBoolean isSaved = new AtomicBoolean(true);
+    private static final AtomicBoolean isLoadingFile = new AtomicBoolean(false);
     private static byte count = 0;
     private static int undoIndex = 0;
+    private static int savedIndex;//TODO for efficent saving
+    private static final int MAX_LIST = 48;
+    private static ArrayList<UndoAction> undoActionList = new ArrayList<>(MAX_LIST);
 
 
-	private static JMenu fileMenu, editMenu, formatMenu, viewMenu, helpMenu;
-	private static JMenuItem saveAsFile;
+    private static JMenu fileMenu, editMenu, formatMenu, viewMenu, helpMenu;
+    private static JMenuItem saveAsFile;
     private static JMenuItem saveFile;
-	private static JMenuItem undoEdit;
-	private static JMenuItem redoEdit;
-	private static JMenuItem cutEdit;
-	private static JMenuItem copyEdit;
-	private static JMenuItem pasteEdit;
-	private static JMenuItem findEdit;
-	private static JMenuItem replaceEdit;
+    private static JMenuItem undoEdit;
+    private static JMenuItem redoEdit;
+    private static JMenuItem cutEdit;
+    private static JMenuItem copyEdit;
+    private static JMenuItem pasteEdit;
+    private static JMenuItem findEdit;
+    private static JMenuItem replaceEdit;
 
-	private static JMenu zoomView;
-	private static int zoomLevel = 100;
-	public static JCheckBoxMenuItem statusBarView;
+    private static JMenu zoomView;
+    private static int zoomLevel = 100;
+    public static JCheckBoxMenuItem statusBarView;
 
-	/**
-	 * handle method is help to setup the major components and getting the frame ready to
-	 * make it visible on the user screen.
-	 */
-	public void handle() {
-		frame = new JFrame() {
-			@Override
-			public void setTitle(String fileName) {
-				fileName = fileName + " - ";
-				String unSavedMark = isSaved.get() ? "" : "*";
-				super.setTitle(unSavedMark + fileName + "MyNotepad");
-			}
-		};
-		InitialValues.readFromFile();
-		frame.addWindowListener(new WindowAdapter(){
-			@Override
-			public void windowClosing(WindowEvent e) {
-				if(GUIHandler.getNotSaved()) {
-					int value = OptionPane.showOptionPane();
-					if(value == 1) {
-						GUIHandler.getSaveAsMenuItem().doClick();
-					} 
-					else if(value == 2) {
-						return;
-					}
-				}
-				InitialValues.writeToFile();
-			}
-		});
-		frame.setSize(InitialValues.getFrameWidth(), InitialValues.getFrameHeight());
+    /**
+     * handle method is help to setup the major components and getting the frame ready to
+     * make it visible on the user screen.
+     */
+    public void handle() {
+        frame = new JFrame() {
+            @Override
+            public void setTitle(String fileName) {
+                fileName = fileName + " - ";
+                String unSavedMark = isSaved.get() ? "" : "*";
+                super.setTitle(unSavedMark + fileName + "MyNotepad");
+            }
+        };
+        InitialValues.readFromFile();
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (GUIHandler.getNotSaved()) {
+                    int value = OptionPane.showOptionPane();
+                    if (value == 1) {
+                        GUIHandler.getSaveAsMenuItem().doClick();
+                    } else if (value == 2) {
+                        return;
+                    }
+                }
+                InitialValues.writeToFile();
+            }
+        });
+        frame.setSize(InitialValues.getFrameWidth(), InitialValues.getFrameHeight());
 
-		frame.setTitle(InitialValues.getFileName());
-		mainPanel = (JPanel) frame.getContentPane();
+        frame.setTitle(InitialValues.getFileName());
+        mainPanel = (JPanel) frame.getContentPane();
 
-		initialiseMenuBar();
-		initialiseScrollPane();
-		frame.setJMenuBar(menuBar);
-		
-		statusBar = new StatusBar();
-		mainPanel.setLayout(new BorderLayout());
-		mainPanel.add(editorScrollPane, BorderLayout.CENTER);
-		mainPanel.add(statusBar, BorderLayout.SOUTH);
-		
-		
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
+        initialiseMenuBar();
+        initialiseScrollPane();
+        frame.setJMenuBar(menuBar);
+
+        statusBar = new StatusBar();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(editorScrollPane, BorderLayout.CENTER);
+        mainPanel.add(statusBar, BorderLayout.SOUTH);
+
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+
+        undoInit();
 
         TimerTask task = new TimerTask() {
             @Override
@@ -125,289 +118,398 @@ public class GUIHandler {
                 count--;
                 if (count > 0)//this should probably be an option?
                     return;
-                if (count < -4) {
+                if (count < -2) {
                     count = -5;
                     return;
                 }
-                if (InitialValues.getFilePath() != null && getNotSaved()){
+                if (InitialValues.getFilePath() != null && getNotSaved()) {
                     GUIHandler.getSaveMenuItem().doClick();
                 }
             }
         };
         //try to save every two seconds
         autoSave.scheduleAtFixedRate(task, 0, 5000);
-	}
+    }
 
+    private void undoInit() {
+        //init the undo list
+        for (int i = undoIndex; i < 48; i++) {
+            undoActionList.add(null);
+        }
+    }
 
 
     /**
-	 * initialiseScrollPane method is help to setup the text editor of the MSNotepad.
-	 */
-	private void initialiseScrollPane() {
-		editorTextArea = new JTextArea(){
-			@Override
-			public void setFont(Font font) {
-				String family = font.getFamily();
-				int style = font.getStyle();
-				int size = font.getSize();
+     * initialiseScrollPane method is help to setup the text editor of the MSNotepad.
+     */
+    private void initialiseScrollPane() {
+        //TODO background color + text colour
+        editorTextArea = new JTextArea() {
+            @Override
+            public void setFont(Font font) {
+                String family = font.getFamily();
+                int style = font.getStyle();
+                int size = font.getSize();
 
-				int originalPix = InitialValues.getEditorFont().getSize() + 5;
-				int zoomPix = (zoomLevel * originalPix) / 100 - originalPix;
-				
-				font = new Font(family, style, size + zoomPix + 5);
-				super.setFont(font);
-			}
-		};
+                int originalPix = InitialValues.getEditorFont().getSize() + 5;
+                int zoomPix = (zoomLevel * originalPix) / 100 - originalPix;
+
+                font = new Font(family, style, size + zoomPix + 5);
+                super.setFont(font);
+            }
+        };
         editorTextArea.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyTyped(KeyEvent e) {
+            public void keyPressed(KeyEvent e) {
                 count = 2;
-//                if enter + shift turn into enter
+                if (e.isControlDown() || e.isAltDown()) return;
+                int charTyped = e.getKeyChar();
+                if (e.isActionKey()){
+                    if (undoIndex == MAX_LIST){
+                        return;
+                    } else if (undoActionList.get(undoIndex) != null){
+                        undoIndex++;
+                        return;
+                    }
+                }
+                var selected = editorTextArea.getSelectedText();
+                if (selected != null) {
+                    addRemoveToUndo(selected);
+                    undoIndex++;
+                    if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
+                        return;
+                    }
+                    if (e.isShiftDown() && charTyped == KeyEvent.VK_ENTER) {
+                        e.consume();
+                        editorTextArea.insert("\n", editorTextArea.getSelectionStart());
+                    }
+                    addToUndo(charTyped);
+                    undoIndex++;
+                }
+                else if (charTyped == KeyEvent.VK_ENTER || charTyped == KeyEvent.VK_SPACE) {
+                    addToUndo(charTyped);
+                    undoIndex++;
+                    if (e.isShiftDown() && charTyped == KeyEvent.VK_ENTER) {
+                        e.consume();
+                        editorTextArea.insert("\n", editorTextArea.getSelectionEnd());
+                    }
+                } else if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
+                    int location = editorTextArea.getSelectionEnd();
+                    try {
+                        if (charTyped == KeyEvent.VK_BACK_SPACE) {
+                            if (location == 0) {
+                                e.consume();
+                                return;
+                            }
+                            addRemoveToUndo(editorTextArea.getText(location -1, 1));
+                        } else {
+                            addRemoveToUndo(editorTextArea.getText(location, 1));
+                        }
+                        undoIndex++;
+                    } catch (BadLocationException ex) {
+                        e.consume();
+                    }
+                } else {
+                    addToUndo(charTyped);
+                }
+
 //                if space or enter 1 create undo action 2 make text appear in other thing
                 //TODO update other text with space
                 super.keyTyped(e);
             }
         });
-		editorScrollPane = new JScrollPane(editorTextArea);
-		editorScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-		editorScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		
-		editorScrollPane.setBorder(new LineBorder(Color.WHITE, 0));
-		Border outside = new MatteBorder(1, 0, 0, 0, mainPanel.getBackground());
-		Border inside = new MatteBorder(0, 4, 0, 0, editorTextArea.getBackground());
-		editorTextArea.setBorder(new CompoundBorder(outside, inside));
+        editorScrollPane = new JScrollPane(editorTextArea);
+        editorScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        editorScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-		Font font = InitialValues.getEditorFont();
-		editorTextArea.setFont(font);
-		editorTextArea.setLineWrap(InitialValues.getWrapTheLine());
-		editorTextArea.setTabSize(4);
+        editorScrollPane.setBorder(new LineBorder(Color.WHITE, 0));
+        Border outside = new MatteBorder(1, 0, 0, 0, mainPanel.getBackground());
+        Border inside = new MatteBorder(0, 4, 0, 0, editorTextArea.getBackground());
+        editorTextArea.setBorder(new CompoundBorder(outside, inside));
 
-		if(InitialValues.getFilePath() != null) {
-			loadFileToEditor();
-		}
+        Font font = InitialValues.getEditorFont();
+        editorTextArea.setFont(font);
+        editorTextArea.setLineWrap(InitialValues.getWrapTheLine());
+        editorTextArea.setTabSize(4);
 
-		doUpdateWork();
-		editorTextArea.addCaretListener(e -> {
-			if(editorTextArea.getSelectedText() == null){
-				cutEdit.setEnabled(false);
-				copyEdit.setEnabled(false);
-			}
-			else {
-				cutEdit.setEnabled(true);
-				copyEdit.setEnabled(true);
-			}
-		});
-		editorTextArea.getDocument().addDocumentListener(new DocumentListener() {
-	
-			@Override
-			public void removeUpdate(DocumentEvent e) {
-				if(!isLoadingFile.get()) {
-					setIsSaved(false);
-				}
-				doUpdateWork();
-			}
-			@Override
-			public void insertUpdate(DocumentEvent e) {
-				if(!isLoadingFile.get()) {
-					setIsSaved(false);
-				}
-				doUpdateWork();
-			}
-			@Override
-			public void changedUpdate(DocumentEvent arg0) {}
-		});
-		
-		editorTextArea.addCaretListener(e -> {
+        if (InitialValues.getFilePath() != null) {
+            loadFileToEditor();
+        }
 
-			JTextArea editorArea = (JTextArea) e.getSource();
-			int lineNum = 1;
-			int columnNum = 1;
+        doUpdateWork();
+        editorTextArea.addCaretListener(e -> {
+            if (editorTextArea.getSelectedText() == null) {
+                cutEdit.setEnabled(false);
+                copyEdit.setEnabled(false);
+            } else {
+                cutEdit.setEnabled(true);
+                copyEdit.setEnabled(true);
+            }
+        });
+        editorTextArea.getDocument().addDocumentListener(new DocumentListener() {
 
-			int caretPosition;
-			try {
-				caretPosition = editorArea.getCaretPosition();
-				lineNum = editorArea.getLineOfOffset(caretPosition);
-				columnNum = caretPosition - editorArea.getLineStartOffset(lineNum);
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                if (!isLoadingFile.get()) {
+                    setIsSaved(false);
+                }
+                doUpdateWork();
+            }
 
-			} catch (BadLocationException ee) {
-				ee.printStackTrace();
-			}
-			statusBar.setCaretPosition(lineNum, columnNum);
-		});
-	}
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                if (!isLoadingFile.get()) {
+                    setIsSaved(false);
+                }
+                doUpdateWork();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent arg0) {
+            }
+        });
+
+        editorTextArea.addCaretListener(e -> {
+            JTextArea editorArea = (JTextArea) e.getSource();
+            int lineNum = 1;
+            int columnNum = 1;
+
+            int caretPosition;
+            try {
+                caretPosition = editorArea.getCaretPosition();
+                lineNum = editorArea.getLineOfOffset(caretPosition);
+                columnNum = caretPosition - editorArea.getLineStartOffset(lineNum);
+
+            } catch (BadLocationException ee) {
+                ee.printStackTrace();
+            }
+            statusBar.setCaretPosition(lineNum, columnNum);
+        });
+    }
+
+    private void addToUndo(int keyChar) {
+        removeThingsAhead();
+        var undo = undoActionList.get(undoIndex);
+        if (undo == null) {
+            undoActionList.set(undoIndex,
+                    new UndoAction(editorTextArea.getSelectionEnd(),
+                            Character.toString(keyChar),
+                            false));
+        } else {
+            undo.text.append(Character.toString(keyChar));
+        }
+    }
+
+    /**
+     * the protections of the list
+     * will call the list shuffle (0 = 1, 1 = 2...)
+     * else will check if there are any redo's ahead of the current index
+     */
+    private void removeThingsAhead() {
+        if (undoIndex == undoActionList.size()) undoListSubFirst();
+        else if (undoIndex == -1) undoIndex = 0;
+        else {
+            int counter = undoIndex + 1;
+            if (counter != MAX_LIST) {
+                var undo = undoActionList.get(counter);
+                while (undo != null) {
+                    undoActionList.set(counter, null);
+                    counter++;
+                    if (counter == MAX_LIST) break;
+                    undo = undoActionList.get(counter);
+                }
+            }
+        }
+    }
+
+    private void addRemoveToUndo(String text) {
+        removeThingsAhead();
+        undoActionList.set(undoIndex,
+                new UndoAction(editorTextArea.getSelectionStart(),
+                        text,
+                        true));
+    }
+
+    /**
+     * if the counter is on the max you need to make the items in the list go one back, and forget the first one
+     */
+    private void undoListSubFirst() {
+        undoIndex--;
+        int max = MAX_LIST - 1;
+        for (int i = 0; i < max; i++){
+            undoActionList.set(i, undoActionList.get(i + 1));
+        }
+        undoActionList.set(max, null);
+    }
+
+    /**
+     * doUpdateWork method is help to set enable/disable the edit action of the
+     * text editor.
+     */
+    private void doUpdateWork() {
+        if (editorTextArea.getText().isEmpty()) {
+            findEdit.setEnabled(false);
+            replaceEdit.setEnabled(false);
+        } else {
+            findEdit.setEnabled(true);
+            replaceEdit.setEnabled(true);
+        }
+    }
 
 
-	/**
-	 * doUpdateWork method is help to set enable/disable the edit action of the
-	 * text editor.
-	 */
-	private void doUpdateWork() {
-		if(editorTextArea.getText().isEmpty()) {
-			findEdit.setEnabled(false);
-			replaceEdit.setEnabled(false);
-		}
-		else {
-			findEdit.setEnabled(true);
-			replaceEdit.setEnabled(true);
-		}
-	}
-
-
-	/**
-	 * loadFileToEditor method is help to load/reload the file,
-	 * whose name is saved in InitialValues class.
-	 */
-	private void loadFileToEditor() {
-		setIsLoadingFile(true);
-		String path = InitialValues.getFilePath();
-		File file = new File(path);
-		StringBuilder fileText = new StringBuilder();
-		try {
-			Scanner fileReader = new Scanner(file);
-			while(fileReader.hasNextLine()) {
-				fileText.append(fileReader.nextLine()).append("\n");
-			}
-			fileReader.close();
-			setIsSaved(true);
-		} catch (IOException ex) {
-			System.out.println(path);
-			System.out.println("File not found...");
-			InitialValues.setFileName(InitialValues.NEW_FILE);
-			InitialValues.setFilePath(null);
-			InitialValues.writeToFile();
-		}
+    /**
+     * loadFileToEditor method is help to load/reload the file,
+     * whose name is saved in InitialValues class.
+     */
+    private void loadFileToEditor() {
+        setIsLoadingFile(true);
+        String path = InitialValues.getFilePath();
+        File file = new File(path);
+        StringBuilder fileText = new StringBuilder();
+        try {
+            Scanner fileReader = new Scanner(file);
+            while (fileReader.hasNextLine()) {
+                fileText.append(fileReader.nextLine()).append("\n");
+            }
+            fileReader.close();
+            setIsSaved(true);
+        } catch (IOException ex) {
+            System.out.println(path);
+            System.out.println("File not found...");
+            InitialValues.setFileName(InitialValues.NEW_FILE);
+            InitialValues.setFilePath(null);
+            InitialValues.writeToFile();
+        }
         if (fileText.length() - 1 > -1)
-		    editorTextArea.setText(fileText.substring(0, fileText.length() - 1));
-		try {
-			editorTextArea.setCaretPosition(InitialValues.getCaretPosition());
-		} catch (Exception e) {
-			editorTextArea.setCaretPosition(0);
-			InitialValues.setCaretPosition(0);
-		}
-		setIsLoadingFile(false);
-	}
+            editorTextArea.setText(fileText.substring(0, fileText.length() - 1));
+        try {
+            editorTextArea.setCaretPosition(InitialValues.getCaretPosition());
+        } catch (Exception e) {
+            editorTextArea.setCaretPosition(0);
+            InitialValues.setCaretPosition(0);
+        }
+        setIsLoadingFile(false);
+    }
 
 
-	/**
-	 * initialiseMenuBar method is help to initialise and setup the menu bar
-	 * of this app, and also initialize the menus and their item in the menu.
-	 */
-	private void initialiseMenuBar() {
-		menuBar = new JMenuBar();
-		menuBar.setBorderPainted(false);
-		
-		fileMenu = new JMenu("File");
-		editMenu = new JMenu("Edit");
-		formatMenu = new JMenu("Format");
-		viewMenu = new JMenu("View");
-		helpMenu = new JMenu("Help");
-		initialiseMenuItems();
-		
-		menuBar.add(fileMenu);
-		menuBar.add(editMenu);
-		menuBar.add(formatMenu);
-		menuBar.add(viewMenu);
-		menuBar.add(helpMenu);
-	}
-	
-	private void initialiseMenuItems() {
-		JMenuItem newFile = new JMenuItem(new FileMenuActions.NewFileAction());
-		JMenuItem newWindowFile = new JMenuItem(new FileMenuActions.NewWindowFileAction());
-		JMenuItem openFile = new JMenuItem(new FileMenuActions.OpenFileAction());
-		saveFile = new JMenuItem(new FileMenuActions.SaveFileAction());
-		saveAsFile = new JMenuItem(new FileMenuActions.SaveAsFileAction());
-		JMenuItem exitFile = new JMenuItem(new FileMenuActions.ExitFileAction());
-		fileMenu.add(newFile);
-		fileMenu.add(newWindowFile);
-		fileMenu.addSeparator();
-		fileMenu.add(openFile);
-		fileMenu.add(saveFile);
-		fileMenu.add(saveAsFile);
-		fileMenu.addSeparator();
-		fileMenu.add(exitFile);
+    /**
+     * initialiseMenuBar method is help to initialise and setup the menu bar
+     * of this app, and also initialize the menus and their item in the menu.
+     */
+    private void initialiseMenuBar() {
+        menuBar = new JMenuBar();
+        menuBar.setBorderPainted(false);
+
+        fileMenu = new JMenu("File");
+        editMenu = new JMenu("Edit");
+        formatMenu = new JMenu("Format");
+        viewMenu = new JMenu("View");
+        helpMenu = new JMenu("Help");
+        initialiseMenuItems();
+
+        menuBar.add(fileMenu);
+        menuBar.add(editMenu);
+        menuBar.add(formatMenu);
+        menuBar.add(viewMenu);
+        menuBar.add(helpMenu);
+    }
+
+    private void initialiseMenuItems() {
+        JMenuItem newFile = new JMenuItem(new FileMenuActions.NewFileAction());
+        JMenuItem newWindowFile = new JMenuItem(new FileMenuActions.NewWindowFileAction());
+        JMenuItem openFile = new JMenuItem(new FileMenuActions.OpenFileAction());
+        saveFile = new JMenuItem(new FileMenuActions.SaveFileAction());
+        saveAsFile = new JMenuItem(new FileMenuActions.SaveAsFileAction());
+        JMenuItem exitFile = new JMenuItem(new FileMenuActions.ExitFileAction());
+        fileMenu.add(newFile);
+        fileMenu.add(newWindowFile);
+        fileMenu.addSeparator();
+        fileMenu.add(openFile);
+        fileMenu.add(saveFile);
+        fileMenu.add(saveAsFile);
+        fileMenu.addSeparator();
+        fileMenu.add(exitFile);
 
 
-		cutEdit = new JMenuItem(ClipboardActions.getCutAction());
-		copyEdit = new JMenuItem(ClipboardActions.getCopyAction());
-		pasteEdit = new JMenuItem(ClipboardActions.getPasteAction());
-		undoEdit = new JMenuItem(new EditMenuActions.UndoEditAction());
-		redoEdit = new JMenuItem(new EditMenuActions.RedoEditAction());
-		JMenuItem deleteEdit = new JMenuItem(new EditMenuActions.DeleteEditAction());
-		findEdit = new JMenuItem(new EditMenuActions.FindEditAction());
-		replaceEdit = new JMenuItem(new EditMenuActions.ReplaceEditAction());
-		JMenuItem selectAllEdit = new JMenuItem(new EditMenuActions.SelectAllEditAction());
-		editMenu.add(undoEdit);
-		editMenu.add(redoEdit);
-		editMenu.addSeparator();
-		editMenu.add(cutEdit);
-		editMenu.add(copyEdit);
-		editMenu.add(pasteEdit);
-		editMenu.addSeparator();
-		editMenu.add(findEdit);
-		editMenu.add(replaceEdit);
-		editMenu.addSeparator();
-		editMenu.add(deleteEdit);
-		editMenu.add(selectAllEdit);
+        cutEdit = new JMenuItem(ClipboardActions.getCutAction());
+        copyEdit = new JMenuItem(ClipboardActions.getCopyAction());
+        pasteEdit = new JMenuItem(ClipboardActions.getPasteAction());
+        undoEdit = new JMenuItem(new EditMenuActions.UndoEditAction());
+        redoEdit = new JMenuItem(new EditMenuActions.RedoEditAction());
+        JMenuItem deleteEdit = new JMenuItem(new EditMenuActions.DeleteEditAction());
+        findEdit = new JMenuItem(new EditMenuActions.FindEditAction());
+        replaceEdit = new JMenuItem(new EditMenuActions.ReplaceEditAction());
+        JMenuItem selectAllEdit = new JMenuItem(new EditMenuActions.SelectAllEditAction());
+        editMenu.add(undoEdit);
+        editMenu.add(redoEdit);
+        editMenu.addSeparator();
+        editMenu.add(cutEdit);
+        editMenu.add(copyEdit);
+        editMenu.add(pasteEdit);
+        editMenu.addSeparator();
+        editMenu.add(findEdit);
+        editMenu.add(replaceEdit);
+        editMenu.addSeparator();
+        editMenu.add(deleteEdit);
+        editMenu.add(selectAllEdit);
 
-		JCheckBoxMenuItem wordWrapFormat = new JCheckBoxMenuItem(new FormatMenuActions.WordWrapFormatAction());
-		wordWrapFormat.setState(InitialValues.getWrapTheLine());
-		JMenuItem fontChangeFormat = new JMenuItem(new FormatMenuActions.FontChangeFormatAction());
-		formatMenu.add(wordWrapFormat);
-		formatMenu.add(fontChangeFormat);
-		
-		zoomView = new JMenu("Zoom");
-		statusBarView = new JCheckBoxMenuItem(new ViewMenuActions.StatusBarViewAction());
-		statusBarView.setState(InitialValues.getShowStatusBar());
-		viewMenu.add(zoomView);
-		viewMenu.add(statusBarView);
+        JCheckBoxMenuItem wordWrapFormat = new JCheckBoxMenuItem(new FormatMenuActions.WordWrapFormatAction());
+        wordWrapFormat.setState(InitialValues.getWrapTheLine());
+        JMenuItem fontChangeFormat = new JMenuItem(new FormatMenuActions.FontChangeFormatAction());
+        formatMenu.add(wordWrapFormat);
+        formatMenu.add(fontChangeFormat);
 
-		JMenuItem viewHelp = new JMenuItem(new HelpMenuActions.ViewHelpAction());
-		JMenuItem sendFeedback = new JMenuItem(new HelpMenuActions.SendFeedbackAction());
-		JMenuItem aboutNotepad = new JMenuItem(new HelpMenuActions.AboutNotepadAction());
-		helpMenu.add(viewHelp);
-		helpMenu.add(sendFeedback);
-		helpMenu.addSeparator();
-		helpMenu.add(aboutNotepad);
+        zoomView = new JMenu("Zoom");
+        statusBarView = new JCheckBoxMenuItem(new ViewMenuActions.StatusBarViewAction());
+        statusBarView.setState(InitialValues.getShowStatusBar());
+        viewMenu.add(zoomView);
+        viewMenu.add(statusBarView);
 
-		JMenuItem zoomIn = new JMenuItem(new ViewMenuActions.ZoomInAction());
-		JMenuItem zoomOut = new JMenuItem(new ViewMenuActions.ZoomOutAction());
-		JMenuItem defaultZoom = new JMenuItem(new ViewMenuActions.DefaultZoomAction());
-		zoomView.add(zoomIn);
-		zoomView.add(zoomOut);
-		zoomView.add(defaultZoom);
+        JMenuItem viewHelp = new JMenuItem(new HelpMenuActions.ViewHelpAction());
+        JMenuItem sendFeedback = new JMenuItem(new HelpMenuActions.SendFeedbackAction());
+        JMenuItem aboutNotepad = new JMenuItem(new HelpMenuActions.AboutNotepadAction());
+        helpMenu.add(viewHelp);
+        helpMenu.add(sendFeedback);
+        helpMenu.addSeparator();
+        helpMenu.add(aboutNotepad);
 
-		setRemainingMnemonicAndAccelerator();
-	}
+        JMenuItem zoomIn = new JMenuItem(new ViewMenuActions.ZoomInAction());
+        JMenuItem zoomOut = new JMenuItem(new ViewMenuActions.ZoomOutAction());
+        JMenuItem defaultZoom = new JMenuItem(new ViewMenuActions.DefaultZoomAction());
+        zoomView.add(zoomIn);
+        zoomView.add(zoomOut);
+        zoomView.add(defaultZoom);
 
+        setRemainingMnemonicAndAccelerator();
+    }
 
-	/**
-	 * setRemainingMnemonicAndAccelerator method is help to set the MnemonicKeys and
-	 * the Accelerator of the remaining items of the menus in the menu bar.
-	 */
-	private void setRemainingMnemonicAndAccelerator() {
+    /**
+     * setRemainingMnemonicAndAccelerator method is help to set the MnemonicKeys and
+     * the Accelerator of the remaining items of the menus in the menu bar.
+     */
+    private void setRemainingMnemonicAndAccelerator() {
 
-		fileMenu.setMnemonic(KeyEvent.VK_F);
-		editMenu.setMnemonic(KeyEvent.VK_E);
-		formatMenu.setMnemonic(KeyEvent.VK_O);
-		viewMenu.setMnemonic(KeyEvent.VK_V);
-		helpMenu.setMnemonic(KeyEvent.VK_H);
+        fileMenu.setMnemonic(KeyEvent.VK_F);
+        editMenu.setMnemonic(KeyEvent.VK_E);
+        formatMenu.setMnemonic(KeyEvent.VK_O);
+        viewMenu.setMnemonic(KeyEvent.VK_V);
+        helpMenu.setMnemonic(KeyEvent.VK_H);
 
-		cutEdit.setMnemonic(KeyEvent.VK_T);
-		copyEdit.setMnemonic(KeyEvent.VK_C);
-		pasteEdit.setMnemonic(KeyEvent.VK_P);
+        cutEdit.setMnemonic(KeyEvent.VK_T);
+        copyEdit.setMnemonic(KeyEvent.VK_C);
+        pasteEdit.setMnemonic(KeyEvent.VK_P);
 
-		zoomView.setMnemonic(KeyEvent.VK_Z);
+        zoomView.setMnemonic(KeyEvent.VK_Z);
 
-		cutEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, CTRL_DOWN_MASK));
-		copyEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, CTRL_DOWN_MASK));
-		pasteEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, CTRL_DOWN_MASK));
-	}
-
-
+        cutEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, CTRL_DOWN_MASK));
+        copyEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, CTRL_DOWN_MASK));
+        pasteEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, CTRL_DOWN_MASK));
+    }
 
 
     /**
      * getFrame is the getter of the frame.
+     *
      * @return the frame.
      */
     public static JFrame getFrame() {
@@ -417,6 +519,7 @@ public class GUIHandler {
 
     /**
      * getEditorTextArea method is the getter of main text-area.
+     *
      * @return the editorTextArea.
      */
     public static JTextArea getEditorTextArea() {
@@ -426,6 +529,7 @@ public class GUIHandler {
 
     /**
      * getStatusBar method is the getter of statusBar.
+     *
      * @return the statusBar.
      */
     public static JPanel getStatusBar() {
@@ -435,6 +539,7 @@ public class GUIHandler {
 
     /**
      * getSaveAsMenuItem method is the getter of saveAsFile.
+     *
      * @return the saveAsFile.
      */
     public static JMenuItem getSaveAsMenuItem() {
@@ -444,6 +549,7 @@ public class GUIHandler {
 
     /**
      * getSaveMenuItem method is the getter of saveFile.
+     *
      * @return the saveFile.
      */
     public static JMenuItem getSaveMenuItem() {
@@ -453,6 +559,7 @@ public class GUIHandler {
 
     /**
      * getIsSaved method is the getter of isSaved variable.
+     *
      * @return the isSaved variable.
      */
     public static boolean getNotSaved() {
@@ -462,6 +569,7 @@ public class GUIHandler {
 
     /**
      * setIsSave method is set the isSaved value the variable.
+     *
      * @param value the value of isSaved.
      */
     public static void setIsSaved(boolean value) {
@@ -472,6 +580,7 @@ public class GUIHandler {
 
     /**
      * setIsLoadingFile method is set the loading flag of the this app.
+     *
      * @param value loading flag.
      */
     public static void setIsLoadingFile(boolean value) {
@@ -481,6 +590,7 @@ public class GUIHandler {
 
     /**
      * getZoomValue method is help to the zoomValue of the textArea.
+     *
      * @return the zoomLevel.
      */
     public static int getZoomValue() {
@@ -490,6 +600,7 @@ public class GUIHandler {
 
     /**
      * setZoomValue method is help to set the zoom level of the editor textArea.
+     *
      * @param value the zoom level.
      */
     public static void setZoomValue(int value) {
@@ -504,6 +615,40 @@ public class GUIHandler {
      */
     public static void updateFrameTitle() {
         frame.setTitle(InitialValues.getFileName());
+    }
+
+    public static UndoAction getUndoAction() {
+        System.out.println(undoIndex);
+        System.out.println(undoActionList.get(undoIndex));
+        if (undoIndex >= MAX_LIST) {
+            undoIndex = MAX_LIST -1;
+        } else if (undoIndex < 0)
+            return null;
+        var found = undoActionList.get(undoIndex);
+        if (found != null || undoIndex == 0)
+            return found;
+        undoIndex--;
+        return undoActionList.get(undoIndex);
+    }
+
+    public static UndoAction getRedoAction() {
+        if (undoIndex < 0)
+            undoIndex = 0;
+        else if (undoIndex == MAX_LIST){
+            return null;
+        }
+        return undoActionList.get(undoIndex);
+    }
+
+    public static void decreaseUndo() {
+        if (undoIndex != -1)
+            undoIndex--;
+    }
+
+    public static void increaseUndo() {
+        if (undoIndex < MAX_LIST) {
+            undoIndex++;
+        }
     }
 
 }

@@ -3,7 +3,6 @@
  * 
  */
 
-package msnotepad.gui.helper;
 
 import java.awt.Font;
 import java.awt.Color;
@@ -11,8 +10,6 @@ import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
-import msnotepad.gui.GUIHandler;
-import msnotepad.init.InitialValues;
 
 /**
  * OptionPane class help to make initial OptionPane for the MSNotepad.

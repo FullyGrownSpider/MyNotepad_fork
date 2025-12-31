@@ -3,8 +3,6 @@
  * 
  */
 
-package msnotepad.init;
-
 import java.awt.Font;
 import java.io.File;
 import java.io.FileWriter;
@@ -13,7 +11,6 @@ import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import msnotepad.gui.GUIHandler;
 
 /**
  * InitialValues class help to get the initial values of the MSNotepad, and,

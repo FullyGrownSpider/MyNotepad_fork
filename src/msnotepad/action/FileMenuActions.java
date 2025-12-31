@@ -3,7 +3,6 @@
  * 
  */
 
-package msnotepad.action;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -16,10 +15,6 @@ import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
-
-import msnotepad.gui.GUIHandler;
-import msnotepad.gui.helper.OptionPane;
-import msnotepad.init.InitialValues;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;

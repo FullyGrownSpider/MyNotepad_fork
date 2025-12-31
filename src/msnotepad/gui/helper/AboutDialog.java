@@ -3,7 +3,6 @@
  * 
  */
 
-package msnotepad.gui.helper;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -24,7 +23,7 @@ import java.awt.FlowLayout;
  * Basically, its the combination of JLabel and the HTML file in the form
  * of string in the label.
  */
-public class AboutDialog extends msnotepad.gui.helper.ADialog{
+public class AboutDialog extends ADialog{
     private JLabel textLabel;
 
     /**

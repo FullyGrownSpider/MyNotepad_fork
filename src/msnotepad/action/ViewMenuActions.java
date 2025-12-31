@@ -3,7 +3,6 @@
  * 
  */
 
-package msnotepad.action;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -11,9 +10,6 @@ import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 import javax.swing.JPanel;
 
-import msnotepad.gui.GUIHandler;
-import msnotepad.gui.helper.StatusBar;
-import msnotepad.init.InitialValues;
 
 public class ViewMenuActions {
     

@@ -3,18 +3,12 @@
  * 
  */
 
-package msnotepad.action;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 import javax.swing.JTextArea;
-
-import msnotepad.gui.GUIHandler;
-import msnotepad.gui.helper.DialogType;
-import msnotepad.gui.helper.FindAndReplaceDialog;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
@@ -30,7 +24,14 @@ public class EditMenuActions {
         }
         @Override
         public void actionPerformed(ActionEvent e) {
-            // TODO Auto-generated method stub
+            var undoAction = GUIHandler.getUndoAction();
+            if (undoAction == null) return;
+            GUIHandler.decreaseUndo();
+            if (undoAction.deleted){
+                GUIHandler.getEditorTextArea().insert(undoAction.text.toString(), undoAction.location);
+            } else {
+                GUIHandler.getEditorTextArea().replaceRange("", undoAction.location, undoAction.location + undoAction.text.length());
+            }
         }
     }
     public static class RedoEditAction extends AbstractAction {
@@ -42,7 +43,17 @@ public class EditMenuActions {
         }
         @Override
         public void actionPerformed(ActionEvent e) {
-            // TODO Auto-generated method stub
+            GUIHandler.increaseUndo();
+            var undoAction = GUIHandler.getRedoAction();
+            if (undoAction == null) {
+                GUIHandler.decreaseUndo();
+                return;
+            }
+            if (undoAction.deleted){
+                GUIHandler.getEditorTextArea().replaceRange("", undoAction.location, undoAction.location + undoAction.text.length());
+            } else {
+                GUIHandler.getEditorTextArea().insert(undoAction.text.toString(), undoAction.location);
+            }
         }
     }
 

@@ -3,10 +3,8 @@
  * 
  */
 
-package msnotepad;
 
 import javax.swing.UIManager;
-import msnotepad.gui.GUIHandler;
 
 /** 
  * MainLauncher is the starting point of this Notepad, Moreover,

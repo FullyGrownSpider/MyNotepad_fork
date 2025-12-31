@@ -3,15 +3,12 @@
  * 
  */
 
-package msnotepad.action;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.net.URL;
 import javax.swing.AbstractAction;
 
-import msnotepad.gui.GUIHandler;
-import msnotepad.gui.helper.AboutDialog;
 
 
 public class HelpMenuActions {

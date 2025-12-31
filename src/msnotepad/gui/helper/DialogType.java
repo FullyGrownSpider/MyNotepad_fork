@@ -3,7 +3,6 @@
  * 
  */
 
-package msnotepad.gui.helper;
 
 /**
  * DialogType enumeration help to specify the type of dialog
