@@ -303,7 +303,8 @@ public class GUIHandler {
         } catch (BadLocationException ee) {
             ee.printStackTrace();
         }
-        statusBar.setCaretPosition(lineNum, columnNum);
+        if (statusBar != null)
+            statusBar.setCaretPosition(lineNum, columnNum);
     }
 
     private void addToUndo(int keyChar) {
@@ -417,7 +418,6 @@ public class GUIHandler {
      */
     private void initialiseMenuBar() {
         menuBar = new JMenuBar();
-        menuBar.setBackground(Color.black);
         menuBar.setBorderPainted(false);
 
         fileMenu = makeMenu("File");
@@ -435,13 +435,11 @@ public class GUIHandler {
     private JMenu makeMenu(String s){
         var newMenu = new JMenu(s);
         newMenu.setForeground(Color.green);
-        newMenu.setBackground(Color.BLACK);
         return newMenu;
     }
     private JMenuItem makeMenuItem(Action a){
         var newMenu = new JMenuItem(a);
         newMenu.setForeground(Color.green);
-        newMenu.setBackground(Color.BLACK);
         return newMenu;
     }
 
@@ -508,7 +506,6 @@ public class GUIHandler {
 
     private JCheckBoxMenuItem makeCheckBoxMenuItem(Action a) {
         var newMenu = new JCheckBoxMenuItem(a);
-        newMenu.setBackground(Color.BLACK);
         newMenu.setForeground(Color.green);
         return newMenu;
     }

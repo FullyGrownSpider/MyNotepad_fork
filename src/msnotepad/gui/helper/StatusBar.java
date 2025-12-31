@@ -24,7 +24,6 @@ public class StatusBar extends JPanel{
 	private static JPanel blankPanel;
     private static StatusBarLabel caretPosition;
     private static StatusBarLabel zoomLevel;
-    private static StatusBarLabel encoding;
 
     /**
      * StatusBar constructor help to do the initial work.
@@ -73,14 +72,6 @@ public class StatusBar extends JPanel{
     }
 
     /**
-     * setEncoding method help to change the value of the
-     * encoding label in the statusBar.
-     */
-    public void setEncoding(String encoding) {
-        StatusBar.encoding.setText(encoding);
-    }
-
-    /**
      * initialiseStatusBar method help to do the initial work and setup
      * components.
      */
@@ -95,12 +86,13 @@ public class StatusBar extends JPanel{
 		
 		caretPosition = new StatusBarLabel("Ln 1, Col 1", 140);
 		zoomLevel = new StatusBarLabel("100%", 70);
-		encoding = new StatusBarLabel("UTF-8", 120);
-		
+
+        caretPosition.setForeground(Color.green);
+        zoomLevel.setForeground(Color.green);
+
 		labelHolder.add(caretPosition);
 		labelHolder.add(zoomLevel);
-		labelHolder.add(encoding);
-        
+
         setLayout(new BorderLayout());
 		add(labelHolder, BorderLayout.EAST);
 		add(blankPanel, BorderLayout.CENTER);

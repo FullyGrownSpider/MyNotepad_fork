@@ -26,7 +26,7 @@ public class MainLauncher {
     
     private static void loadLookAndFeel() {
         try{
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
         } catch (Exception ee) {
             ee.printStackTrace();
         }
