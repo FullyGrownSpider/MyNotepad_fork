@@ -10,6 +10,8 @@ import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 import javax.swing.JPanel;
 
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
+
 
 public class ViewMenuActions {
     
@@ -38,12 +40,12 @@ public class ViewMenuActions {
             super();
             putValue(AbstractAction.NAME, "Zoom In");
             putValue(MNEMONIC_KEY, KeyEvent.VK_I);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
             int zoomLevel = GUIHandler.getZoomValue();
-            zoomLevel = zoomLevel + 10;
+            zoomLevel = zoomLevel + 20;
             GUIHandler.setZoomValue(zoomLevel);
             StatusBar.setZoomLevel(zoomLevel);
         }
@@ -54,12 +56,13 @@ public class ViewMenuActions {
             super();
             putValue(AbstractAction.NAME, "Zoom Out");
             putValue(MNEMONIC_KEY, KeyEvent.VK_O);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
             int zoomLevel = GUIHandler.getZoomValue();
-            zoomLevel = zoomLevel - 10;
+            if (zoomLevel == 20) return;
+            zoomLevel = zoomLevel - 20;
             GUIHandler.setZoomValue(zoomLevel);
             StatusBar.setZoomLevel(zoomLevel);
         }
@@ -70,7 +73,7 @@ public class ViewMenuActions {
             super();
             putValue(AbstractAction.NAME, "Default Zoom");
             putValue(MNEMONIC_KEY, KeyEvent.VK_R);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_0, ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_0, CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
