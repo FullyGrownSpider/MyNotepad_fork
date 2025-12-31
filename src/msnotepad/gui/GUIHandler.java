@@ -5,27 +5,19 @@
 
 package msnotepad.gui;
 
-import javax.swing.KeyStroke;
-import javax.swing.ScrollPaneConstants;
+import javax.swing.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 
 import java.awt.Font;
 import java.awt.BorderLayout;
 import java.awt.Color;
 
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
@@ -56,12 +48,17 @@ public class GUIHandler {
 	private static JMenuBar menuBar;
 	private static JPanel mainPanel;
 	private static JTextArea editorTextArea;
+    private static final Timer autoSave = new Timer();
 	private static StatusBar statusBar;
 	private static final AtomicBoolean isSaved = new AtomicBoolean(true);
 	private static final AtomicBoolean isLoadingFile = new AtomicBoolean(false);
+    private static byte count = 0;
+    private static int undoIndex = 0;
+
 
 	private static JMenu fileMenu, editMenu, formatMenu, viewMenu, helpMenu;
 	private static JMenuItem saveAsFile;
+    private static JMenuItem saveFile;
 	private static JMenuItem undoEdit;
 	private static JMenuItem redoEdit;
 	private static JMenuItem cutEdit;
@@ -121,102 +118,29 @@ public class GUIHandler {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
+
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                count--;
+                if (count > 0)//this should probably be an option?
+                    return;
+                if (count < -4) {
+                    count = -5;
+                    return;
+                }
+                if (InitialValues.getFilePath() != null && getNotSaved()){
+                    GUIHandler.getSaveMenuItem().doClick();
+                }
+            }
+        };
+        //try to save every two seconds
+        autoSave.scheduleAtFixedRate(task, 0, 5000);
 	}
 
 
-	/**
-	 * getFrame is the getter of the frame.
-	 * @return the frame.
-	 */
-	public static JFrame getFrame() {
-		return frame;
-	}
 
-
-	/**
-	 * getEditorTextArea method is the getter of main text-area.
-	 * @return the editorTextArea.
-	 */
-	public static JTextArea getEditorTextArea() {
-		return editorTextArea;
-	}
-
-
-	/**
-	 * getStatusBar method is the getter of statusBar.
-	 * @return the statusBar.
-	 */
-	public static JPanel getStatusBar() {
-		return statusBar;
-	}
-
-
-	/**
-	 * getSaveAsMenuItem method is the getter of saveAsFile.
-	 * @return the saveAsFile.
-	 */
-	public static JMenuItem getSaveAsMenuItem() {
-		return saveAsFile;
-	}
-
-
-	/**
-	 * getIsSaved method is the getter of isSaved variable.
-	 * @return the isSaved variable.
-	 */
-	public static boolean getNotSaved() {
-		return !isSaved.get();
-	}
-
-
-	/**
-	 * setIsSave method is set the isSaved value the variable.
-	 * @param value the value of isSaved.
-	 */
-	public static void setIsSaved(boolean value) {
-		isSaved.set(value);
-		updateFrameTitle();
-	}
-
-
-	/**
-	 * setIsLoadingFile method is set the loading flag of the this app.
-	 * @param value loading flag.
-	 */
-	public static void setIsLoadingFile(boolean value) {
-		isLoadingFile.set(value);
-	}
-
-
-	/**
-	 * getZoomValue method is help to the zoomValue of the textArea.
-	 * @return the zoomLevel.
-	 */
-	public static int getZoomValue() {
-		return zoomLevel;
-	}
-
-
-	/**
-	 * setZoomValue method is help to set the zoom level of the editor textArea.
-	 * @param value the zoom level.
-	 */
-	public static void setZoomValue(int value) {
-		zoomLevel = value;
-		editorTextArea.setFont(InitialValues.getEditorFont());
-	}
-
-
-	/**
-	 * updateFrameTitle method is help to change the file name and unsaved mark
-	 * of the opened file.
-	 */
-	public static void updateFrameTitle() {
-		frame.setTitle(InitialValues.getFileName());
-	}
-
-
-	/**
+    /**
 	 * initialiseScrollPane method is help to setup the text editor of the MSNotepad.
 	 */
 	private void initialiseScrollPane() {
@@ -234,6 +158,16 @@ public class GUIHandler {
 				super.setFont(font);
 			}
 		};
+        editorTextArea.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                count = 2;
+//                if enter + shift turn into enter
+//                if space or enter 1 create undo action 2 make text appear in other thing
+                //TODO update other text with space
+                super.keyTyped(e);
+            }
+        });
 		editorScrollPane = new JScrollPane(editorTextArea);
 		editorScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		editorScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -342,7 +276,8 @@ public class GUIHandler {
 			InitialValues.setFilePath(null);
 			InitialValues.writeToFile();
 		}
-		editorTextArea.setText(fileText.substring(0, fileText.length() - 1));
+        if (fileText.length() - 1 > -1)
+		    editorTextArea.setText(fileText.substring(0, fileText.length() - 1));
 		try {
 			editorTextArea.setCaretPosition(InitialValues.getCaretPosition());
 		} catch (Exception e) {
@@ -379,7 +314,7 @@ public class GUIHandler {
 		JMenuItem newFile = new JMenuItem(new FileMenuActions.NewFileAction());
 		JMenuItem newWindowFile = new JMenuItem(new FileMenuActions.NewWindowFileAction());
 		JMenuItem openFile = new JMenuItem(new FileMenuActions.OpenFileAction());
-		JMenuItem saveFile = new JMenuItem(new FileMenuActions.SaveFileAction());
+		saveFile = new JMenuItem(new FileMenuActions.SaveFileAction());
 		saveAsFile = new JMenuItem(new FileMenuActions.SaveAsFileAction());
 		JMenuItem exitFile = new JMenuItem(new FileMenuActions.ExitFileAction());
 		fileMenu.add(newFile);
@@ -467,4 +402,108 @@ public class GUIHandler {
 		copyEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, CTRL_DOWN_MASK));
 		pasteEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, CTRL_DOWN_MASK));
 	}
+
+
+
+
+    /**
+     * getFrame is the getter of the frame.
+     * @return the frame.
+     */
+    public static JFrame getFrame() {
+        return frame;
+    }
+
+
+    /**
+     * getEditorTextArea method is the getter of main text-area.
+     * @return the editorTextArea.
+     */
+    public static JTextArea getEditorTextArea() {
+        return editorTextArea;
+    }
+
+
+    /**
+     * getStatusBar method is the getter of statusBar.
+     * @return the statusBar.
+     */
+    public static JPanel getStatusBar() {
+        return statusBar;
+    }
+
+
+    /**
+     * getSaveAsMenuItem method is the getter of saveAsFile.
+     * @return the saveAsFile.
+     */
+    public static JMenuItem getSaveAsMenuItem() {
+        return saveAsFile;
+    }
+
+
+    /**
+     * getSaveMenuItem method is the getter of saveFile.
+     * @return the saveFile.
+     */
+    public static JMenuItem getSaveMenuItem() {
+        return saveFile;
+    }
+
+
+    /**
+     * getIsSaved method is the getter of isSaved variable.
+     * @return the isSaved variable.
+     */
+    public static boolean getNotSaved() {
+        return !isSaved.get();
+    }
+
+
+    /**
+     * setIsSave method is set the isSaved value the variable.
+     * @param value the value of isSaved.
+     */
+    public static void setIsSaved(boolean value) {
+        isSaved.set(value);
+        updateFrameTitle();
+    }
+
+
+    /**
+     * setIsLoadingFile method is set the loading flag of the this app.
+     * @param value loading flag.
+     */
+    public static void setIsLoadingFile(boolean value) {
+        isLoadingFile.set(value);
+    }
+
+
+    /**
+     * getZoomValue method is help to the zoomValue of the textArea.
+     * @return the zoomLevel.
+     */
+    public static int getZoomValue() {
+        return zoomLevel;
+    }
+
+
+    /**
+     * setZoomValue method is help to set the zoom level of the editor textArea.
+     * @param value the zoom level.
+     */
+    public static void setZoomValue(int value) {
+        zoomLevel = value;
+        editorTextArea.setFont(InitialValues.getEditorFont());
+    }
+
+
+    /**
+     * updateFrameTitle method is help to change the file name and unsaved mark
+     * of the opened file.
+     */
+    public static void updateFrameTitle() {
+        frame.setTitle(InitialValues.getFileName());
+    }
+
 }

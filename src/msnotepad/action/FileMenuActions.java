@@ -85,7 +85,7 @@ public class FileMenuActions {
             super();
             putValue(AbstractAction.NAME, "Open");
             putValue(MNEMONIC_KEY, KeyEvent.VK_O);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -123,7 +123,7 @@ public class FileMenuActions {
             super();
             putValue(AbstractAction.NAME, "Save");
             putValue(MNEMONIC_KEY, KeyEvent.VK_S);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -152,7 +152,7 @@ public class FileMenuActions {
             super();
             putValue(AbstractAction.NAME, "Save As");
             putValue(MNEMONIC_KEY, KeyEvent.VK_A);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK));
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -192,4 +192,6 @@ public class FileMenuActions {
             
         }
     }
+
+    //TODO efficient saving
 }
