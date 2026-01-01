@@ -37,6 +37,3 @@ public class MainLauncher {
         }
     }
 }
-
-//while typing make text appear in the second JTextArea (for now put it on the right, but make it so you can put it under above or left too (use settings.txt))
-//make it so you can edit the words in the second JTextArea (zt = zt, *user edits on the left, zt = that)

@@ -221,7 +221,6 @@ public class GUIHandler {
                 count = 2;
                 if (e.isControlDown() || e.isAltDown()) return;
                 int charTyped = e.getKeyChar();
-                //TODO shift tab (for every line remove one tab)
                 if (e.isActionKey()) {
                     if (undoIndex == MAX_LIST) {
                         return;
@@ -232,8 +231,18 @@ public class GUIHandler {
                 }
                 var selected = editorTextArea.getSelectedText();
                 if (selected != null) {
+                    if (e.getKeyChar() == KeyEvent.VK_TAB) {
+                        try {
+                            removeTab(e.isShiftDown());
+                        } catch (BadLocationException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        e.consume();
+                        return;
+                    }
+
+                    fullCompare(e.getKeyChar());
                     addRemoveToUndo(selected);
-//                    removeCompare();
                     undoIndex++;
                     if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
                         return;
@@ -246,6 +255,10 @@ public class GUIHandler {
                     undoIndex++;
 
                 } else if (isSplitter(charTyped)) {
+                    try {
+                        doCompare(e.getKeyChar());
+                    } catch (BadLocationException ignored) {
+                    }
                     addToUndo(charTyped);
                     undoIndex++;
                     if (e.isShiftDown() && charTyped == KeyEvent.VK_ENTER) {
@@ -253,6 +266,7 @@ public class GUIHandler {
                         editorTextArea.insert("\n", editorTextArea.getSelectionEnd());
                     }
                 } else if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
+                    fullCompare(e.getKeyChar());
                     int location = editorTextArea.getSelectionEnd();
                     try {
                         if (charTyped == KeyEvent.VK_BACK_SPACE) {
@@ -269,9 +283,20 @@ public class GUIHandler {
                         e.consume();
                     }
                 } else {
+                    if (e.isShiftDown() && e.getKeyChar() == KeyEvent.VK_TAB){
+                        try {
+                            removeTab(true);
+                        } catch (BadLocationException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        return;
+                    }
+                    try {
+                        doCompare(e.getKeyChar());
+                    } catch (BadLocationException ignored) {
+                    }
                     addToUndo(charTyped);
                 }
-                fullCompare(e.getKeyChar());
 
                 removeThingsAhead();
                 super.keyPressed(e);
@@ -303,13 +328,24 @@ public class GUIHandler {
         editorTextArea.setSelectionStart(editorTextArea.getText().length());
     }
 
-    private void removeCompare() {
-//        fullCompare();
-        //TODO
+    private void removeTab(boolean shiftDown) throws BadLocationException {
+        var lineNumQuickEnd = editorTextArea.getLineOfOffset(editorTextArea.getSelectionEnd());
+        var lineNumQuickStart = editorTextArea.getLineOfOffset(editorTextArea.getSelectionStart());
+        for (int i = lineNumQuickStart; i <= lineNumQuickEnd; i++){
+            int index = editorTextArea.getLineStartOffset(i);
+            if (shiftDown){
+                if (editorTextArea.getText(index,1).equals("\t")) {
+                    editorTextArea.setText(editorTextArea.getText(0, index) +
+                            editorTextArea.getText(index+1, editorTextArea.getText().length() -index - 1)
+                    );
+                }
+            } else {
+                editorTextArea.insert("\t", index);
+            }
+        }
     }
 
     private void doCompare(int lastChar) throws BadLocationException {
-
         if (editorQuickOutArea.getText().isEmpty()) {
             fullCompare(lastChar);
             return;
@@ -324,13 +360,13 @@ public class GUIHandler {
             text = text.substring(0, lineLocationEnd + 1);
         }
         var newText = AddedWord.createText(text, quicktype.data);
-        var oldReplace =  editorQuickOutArea.getText().substring(lineNumOffsetQuick);
-        lineLocationEnd =oldReplace.indexOf("\n");
+        var oldReplace = editorQuickOutArea.getText().substring(lineNumOffsetQuick);
+        lineLocationEnd = oldReplace.indexOf("\n");
         if (lineLocationEnd==-1){
-            lineLocationEnd = oldReplace.length();
+            lineLocationEnd = oldReplace.length()-1;
         }
         try {
-            editorQuickOutArea.replaceRange("", lineNumOffsetQuick, lineNumOffsetQuick + lineLocationEnd);
+            editorQuickOutArea.replaceRange("", lineNumOffsetQuick, lineNumOffsetQuick + lineLocationEnd + 1);
         } catch (Exception ignored) {
         }
         editorQuickOutArea.insert(AddedWord.createText(newText, quicktype.data), lineNumOffsetQuick);
