@@ -1,7 +1,6 @@
 import quicktype.AddedWord;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -137,7 +136,7 @@ public class FullEditForm {
     private void southPanelMake() {
         add.setText("add/update");
         add.addActionListener(x -> {
-            GUIHandler.getQuicktype().addWord(new AddedWord(Arrays.stream(fieldList).map(JTextComponent::getText).toList().toArray(new String[8])));
+            GUIHandler.getQuicktype().addWord(new AddedWord(Arrays.stream(fieldList).map(xo -> xo.getText().replaceAll(" ", "<<")).toList().toArray(new String[8])));
             textToThing();
         });
         southPanel.add(add);
@@ -191,5 +190,12 @@ class HintTextField extends JTextField implements FocusListener {
         if(this.getText().isEmpty() || this.getText().equals("-")) {
             super.setText(hint);
         }
+    }
+    @Override
+    public String getText(){
+        var what = super.getText();
+        if (what.equals(hint))
+            return "";
+        return super.getText();
     }
 }
