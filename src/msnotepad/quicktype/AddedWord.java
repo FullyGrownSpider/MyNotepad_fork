@@ -1,7 +1,9 @@
 package quicktype;
 
 import java.util.Arrays;
-
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
 public class AddedWord {
     public String[] data;
 
@@ -105,5 +107,65 @@ public class AddedWord {
             return chosen + data[7].replace("-", "");
         }
         return data[7];
+    }
+
+    static boolean[] bools = {false, false, false, false, false, false};
+
+    public static void createText(String text, Map<String, AddedWord> data) {
+//she< [vh zt sz zer r bn so< unhappy for< [-cz a ln tn-.-] ()*&^%$#@!!:{}
+        var split = Arrays.stream(text.split("[ \\-]")).toList();
+        for (String shortCut : split) {
+            if (shortCut.contains("<")) continue;
+            var unCap = shortCut.toLowerCase(Locale.ROOT);
+            unCap = check("s", unCap, (byte) 0);
+            unCap = check("y", unCap, (byte) 1);
+            unCap = check("=", unCap, (byte) 2);
+            unCap = check("[", unCap, (byte) 3);
+            unCap = check(";", unCap, (byte) 4);
+            unCap = check(",", unCap, (byte) 5);
+
+            var item = data.get(AddedWord.sortString(unCap));//scr t= scribe
+            if (item == null) continue;
+            String chosen = getString(item);
+            if (!shortCut.toLowerCase(Locale.ROOT).equals(shortCut)) {
+                String s1 = chosen.substring(0, 1).toUpperCase();
+                chosen = s1 + chosen.substring(1);
+            }
+            //for(int<<i=0;i\<int;i++)
+            text = text.replaceFirst("(?:^|(?<=[ \\-]))" + Pattern.quote(shortCut) + "(?:$|(?=[ \\-]))", chosen.replace("\\", "\\\\"));
+        }
+        System.out.print(
+                text.replaceAll("-(?!-)", "")
+                        .replaceAll("--", "-")
+                        .replaceAll("(?<!\\\\)<<", " ")
+                        .replaceAll("(?<![\\\\<])<(?!<)", "")
+                        .replaceAll("\\\\<", "<"));
+    }
+
+    private static String getString(AddedWord item) {
+        String chosen;
+        if (bools[0]) {
+            chosen = item.getS();
+        } else if (bools[1]) {
+            chosen = item.getY();
+        } else if (bools[2]) {
+            chosen = item.getING();
+        } else if (bools[3]) {
+            chosen = item.getED();
+        } else if (bools[4]) {
+            chosen = item.getER();
+        } else {
+            chosen = item.getWord();
+        }
+        if (bools[5]) {
+            return item.getNot(chosen);
+        }
+        return chosen;
+    }
+
+    public static String check(String find, String text, byte index) {
+        var newCut = text.replace(find, "");
+        bools[index] = newCut.length() != text.length();
+        return newCut;
     }
 }

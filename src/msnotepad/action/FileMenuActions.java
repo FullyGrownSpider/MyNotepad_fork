@@ -159,5 +159,18 @@ public class FileMenuActions {
         }
     }
 
-    //TODO efficient saving
+
+    public static class OpenQuickTypeEditAction extends AbstractAction {
+        public OpenQuickTypeEditAction() {
+            super();
+            putValue(AbstractAction.NAME, "Open Quicktype Edit");
+            putValue(MNEMONIC_KEY, KeyEvent.VK_E);
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_E, CTRL_DOWN_MASK));
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            new FullEditForm(GUIHandler.getWordList());
+        }
+    }
+
 }

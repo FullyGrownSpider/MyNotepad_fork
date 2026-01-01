@@ -3,20 +3,18 @@
  *
  */
 
+import quicktype.AddedWord;
+import quicktype.Quicktype;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.*;
+import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import java.awt.Font;
-import java.awt.BorderLayout;
-import java.awt.Color;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -38,15 +36,16 @@ public class GUIHandler {
     private static JMenuBar menuBar;
     private static JPanel mainPanel;
     private static JTextArea editorTextArea;
+    private static JTextArea editorQuickOutArea;
     private static final Timer autoSave = new Timer();
     private static StatusBar statusBar;
     private static final AtomicBoolean isSaved = new AtomicBoolean(true);
     private static final AtomicBoolean isLoadingFile = new AtomicBoolean(false);
+    private static final Quicktype quicktype = new Quicktype();
     private static byte count = 0;
     private static int undoIndex = 0;
     private static final int MAX_LIST = 48;
     private static final ArrayList<UndoAction> undoActionList = new ArrayList<>(MAX_LIST);
-
 
     private static JMenu fileMenu, editMenu, formatMenu, viewMenu;
     private static JMenuItem saveAsFile;
@@ -56,7 +55,6 @@ public class GUIHandler {
     private static JMenuItem findEdit;
     private static JMenuItem replaceEdit;
 
-    private static JMenu zoomView;
     private static int zoomLevel = 100;
     public static JCheckBoxMenuItem statusBarView;
 
@@ -99,9 +97,10 @@ public class GUIHandler {
 
         statusBar = new StatusBar();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(editorScrollPane, BorderLayout.CENTER);
+        mainPanel.add(editorScrollPane, BorderLayout.WEST);
+        mainPanel.add(editorQuickOutArea, BorderLayout.EAST);
         mainPanel.add(statusBar, BorderLayout.SOUTH);
-
+//TODO add the other pane
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
@@ -136,7 +135,6 @@ public class GUIHandler {
             undoActionList.add(null);
         }
     }
-
 
     /**
      * initialiseScrollPane method is help to setup the text editor of the MSNotepad.
@@ -232,6 +230,7 @@ public class GUIHandler {
                 super.keyTyped(e);
             }
         });
+        editorQuickOutArea = new JTextArea();
         editorScrollPane = new JScrollPane(editorTextArea);
         editorScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         editorScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -373,7 +372,6 @@ public class GUIHandler {
         }
     }
 
-
     /**
      * loadFileToEditor method is help to load/reload the file,
      * whose name is saved in InitialValues class.
@@ -407,7 +405,6 @@ public class GUIHandler {
         }
         setIsLoadingFile(false);
     }
-
 
     /**
      * initialiseMenuBar method is help to initialise and setup the menu bar
@@ -444,6 +441,7 @@ public class GUIHandler {
         JMenuItem newFile = makeMenuItem(new FileMenuActions.NewFileAction());
         JMenuItem newWindowFile = makeMenuItem(new FileMenuActions.NewWindowFileAction());
         JMenuItem openFile = makeMenuItem(new FileMenuActions.OpenFileAction());
+        JMenuItem editQuicktype = makeMenuItem(new FileMenuActions.OpenQuickTypeEditAction());
         saveAsFile = makeMenuItem(new FileMenuActions.SaveAsFileAction());
         JMenuItem exitFile = makeMenuItem(new FileMenuActions.ExitFileAction());
         fileMenu.add(newFile);
@@ -451,9 +449,10 @@ public class GUIHandler {
         fileMenu.addSeparator();
         fileMenu.add(openFile);
         fileMenu.add(saveAsFile);
+        fileMenu.add(openFile);
+        fileMenu.add(editQuicktype);
         fileMenu.addSeparator();
         fileMenu.add(exitFile);
-
 
         cutEdit = makeMenuItem(ClipboardActions.getCutAction());
         copyEdit = makeMenuItem(ClipboardActions.getCopyAction());
@@ -483,7 +482,7 @@ public class GUIHandler {
         formatMenu.add(wordWrapFormat);
         formatMenu.add(fontChangeFormat);
 
-        zoomView = makeMenu("Zoom");
+        JMenu zoomView = makeMenu("Zoom");
         statusBarView = makeCheckBoxMenuItem(new ViewMenuActions.StatusBarViewAction());
         statusBarView.setState(InitialValues.getShowStatusBar());
         viewMenu.add(zoomView);
@@ -510,23 +509,10 @@ public class GUIHandler {
      * the Accelerator of the remaining items of the menus in the menu bar.
      */
     private void setRemainingMnemonicAndAccelerator() {
-
-        fileMenu.setMnemonic(KeyEvent.VK_F);
-        editMenu.setMnemonic(KeyEvent.VK_E);
-        formatMenu.setMnemonic(KeyEvent.VK_O);
-        viewMenu.setMnemonic(KeyEvent.VK_V);
-
-        cutEdit.setMnemonic(KeyEvent.VK_T);
-        copyEdit.setMnemonic(KeyEvent.VK_C);
-        pasteEdit.setMnemonic(KeyEvent.VK_P);
-
-        zoomView.setMnemonic(KeyEvent.VK_Z);
-
         cutEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, CTRL_DOWN_MASK));
         copyEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, CTRL_DOWN_MASK));
         pasteEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, CTRL_DOWN_MASK));
     }
-
 
     /**
      * getFrame is the getter of the frame.
@@ -537,7 +523,6 @@ public class GUIHandler {
         return frame;
     }
 
-
     /**
      * getEditorTextArea method is the getter of main text-area.
      *
@@ -546,7 +531,6 @@ public class GUIHandler {
     public static JTextArea getEditorTextArea() {
         return editorTextArea;
     }
-
 
     /**
      * getStatusBar method is the getter of statusBar.
@@ -557,7 +541,6 @@ public class GUIHandler {
         return statusBar;
     }
 
-
     /**
      * getSaveAsMenuItem method is the getter of saveAsFile.
      *
@@ -567,7 +550,6 @@ public class GUIHandler {
         return saveAsFile;
     }
 
-
     /**
      * getIsSaved method is the getter of isSaved variable.
      *
@@ -576,7 +558,6 @@ public class GUIHandler {
     public static boolean getNotSaved() {
         return !isSaved.get();
     }
-
 
     /**
      * setIsSave method is set the isSaved value the variable.
@@ -588,7 +569,6 @@ public class GUIHandler {
         updateFrameTitle();
     }
 
-
     /**
      * setIsLoadingFile method is set the loading flag of the this app.
      *
@@ -598,7 +578,6 @@ public class GUIHandler {
         isLoadingFile.set(value);
     }
 
-
     /**
      * getZoomValue method is help to the zoomValue of the textArea.
      *
@@ -607,7 +586,6 @@ public class GUIHandler {
     public static int getZoomValue() {
         return zoomLevel;
     }
-
 
     /**
      * setZoomValue method is help to set the zoom level of the editor textArea.
@@ -619,13 +597,16 @@ public class GUIHandler {
         editorTextArea.setFont(InitialValues.getEditorFont());
     }
 
-
     /**
      * updateFrameTitle method is help to change the file name and unsaved mark
      * of the opened file.
      */
     public static void updateFrameTitle() {
         frame.setTitle(InitialValues.getFileName());
+    }
+
+    public static List<AddedWord> getWordList() {
+        return quicktype.getWords();
     }
 
     public static UndoAction getUndoAction() {

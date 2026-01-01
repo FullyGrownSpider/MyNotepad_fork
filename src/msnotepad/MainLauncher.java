@@ -4,6 +4,8 @@
  */
 
 
+import quicktype.Loading;
+
 import javax.swing.UIManager;
 
 /** 
@@ -20,6 +22,9 @@ public class MainLauncher {
     }
      
 	public static void main(String[] args) {
+        if (args.length == 0)
+            return;
+        Loading.path = args[0];
         loadLookAndFeel();
         new MainLauncher();     //<--- Internal Constructor
 	}
