@@ -5,7 +5,6 @@
 
 
 import java.awt.Font;
-import java.awt.Color;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -25,9 +24,7 @@ public class OptionPane extends JOptionPane {
 		String message = "Do you want to save changes to \"" + InitialValues.getFileName() + "\" ?";
 
 		JLabel label = new JLabel(message);
-		label.setBackground(Color.WHITE);
 		label.setFont(new Font("", Font.PLAIN, 14 + 2));
-		label.setForeground(new Color(0, 51, 153));
 
         return showOptionDialog(
 			GUIHandler.getFrame(),

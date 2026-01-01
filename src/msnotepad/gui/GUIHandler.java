@@ -50,7 +50,6 @@ public class GUIHandler {
 
     private static JMenu fileMenu, editMenu, formatMenu, viewMenu;
     private static JMenuItem saveAsFile;
-    private static JMenuItem saveFile;
     private static JMenuItem cutEdit;
     private static JMenuItem copyEdit;
     private static JMenuItem pasteEdit;
@@ -121,7 +120,7 @@ public class GUIHandler {
                     return;
                 }
                 if (InitialValues.getFilePath() != null && getNotSaved()) {
-                    GUIHandler.getSaveMenuItem().doClick();
+                    FileMenuActions.saveFile();
                 }
             }
         };
@@ -169,7 +168,7 @@ public class GUIHandler {
             public void focusLost(FocusEvent focusEvent) {
                 count = -5;
                 if (InitialValues.getFilePath() != null && getNotSaved()) {
-                    GUIHandler.getSaveMenuItem().doClick();
+                    FileMenuActions.saveFile();
                 }
             }
         });
@@ -284,9 +283,7 @@ public class GUIHandler {
             }
         });
 
-        editorTextArea.addCaretListener(e -> {
-            findNSetPositionIndicator();
-        });
+        editorTextArea.addCaretListener(e -> findNSetPositionIndicator());
         editorTextArea.setSelectionStart(editorTextArea.getText().length());
     }
 
@@ -447,14 +444,12 @@ public class GUIHandler {
         JMenuItem newFile = makeMenuItem(new FileMenuActions.NewFileAction());
         JMenuItem newWindowFile = makeMenuItem(new FileMenuActions.NewWindowFileAction());
         JMenuItem openFile = makeMenuItem(new FileMenuActions.OpenFileAction());
-        saveFile = makeMenuItem(new FileMenuActions.SaveFileAction());
         saveAsFile = makeMenuItem(new FileMenuActions.SaveAsFileAction());
         JMenuItem exitFile = makeMenuItem(new FileMenuActions.ExitFileAction());
         fileMenu.add(newFile);
         fileMenu.add(newWindowFile);
         fileMenu.addSeparator();
         fileMenu.add(openFile);
-        fileMenu.add(saveFile);
         fileMenu.add(saveAsFile);
         fileMenu.addSeparator();
         fileMenu.add(exitFile);
@@ -574,16 +569,6 @@ public class GUIHandler {
 
 
     /**
-     * getSaveMenuItem method is the getter of saveFile.
-     *
-     * @return the saveFile.
-     */
-    public static JMenuItem getSaveMenuItem() {
-        return saveFile;
-    }
-
-
-    /**
      * getIsSaved method is the getter of isSaved variable.
      *
      * @return the isSaved variable.
@@ -644,8 +629,6 @@ public class GUIHandler {
     }
 
     public static UndoAction getUndoAction() {
-        System.out.println(undoIndex);
-        System.out.println(undoActionList.get(undoIndex));
         if (undoIndex >= MAX_LIST) {
             undoIndex = MAX_LIST -1;
         } else if (undoIndex < 0)

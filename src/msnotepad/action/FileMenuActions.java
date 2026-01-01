@@ -14,7 +14,6 @@ import java.util.Scanner;
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 import javax.swing.JFileChooser;
-import javax.swing.JMenuItem;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
@@ -112,36 +111,6 @@ public class FileMenuActions {
         }
     }
     
-
-    public static class SaveFileAction extends AbstractAction {
-        public SaveFileAction() {
-            super();
-            putValue(AbstractAction.NAME, "Save");
-            putValue(MNEMONIC_KEY, KeyEvent.VK_S);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
-        }
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (InitialValues.getFilePath() == null) {
-                JMenuItem saveAs = GUIHandler.getSaveAsMenuItem();
-                saveAs.doClick();
-            } else {
-                File file = new File(InitialValues.getFilePath());
-
-                try {
-                    FileWriter writer = new FileWriter(file);
-                    writer.write(GUIHandler.getEditorTextArea().getText());
-                    writer.close();
-                    GUIHandler.setIsSaved(true);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-                GUIHandler.updateFrameTitle();
-            }
-        }
-    }
-    
-    
     public static class SaveAsFileAction extends AbstractAction {
         public SaveAsFileAction() {
             super();
@@ -152,29 +121,31 @@ public class FileMenuActions {
         @Override
         public void actionPerformed(ActionEvent e) {
             JFileChooser fileChooser = new JFileChooser();
-//            FileSystemView fsv = fileChooser.getFileSystemView();
             int value = fileChooser.showSaveDialog(GUIHandler.getFrame());
             if(value == JFileChooser.APPROVE_OPTION) {
                 String filePath = fileChooser.getSelectedFile().getAbsolutePath();
                 String fileName = fileChooser.getSelectedFile().getName();
                 InitialValues.setFileName(fileName);
                 InitialValues.setFilePath(filePath);
-                
-                File file = new File(filePath);
 
-                try {
-                    FileWriter writer = new FileWriter(file);
-                    writer.write(GUIHandler.getEditorTextArea().getText());
-                    writer.close();
-                    GUIHandler.setIsSaved(true);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                saveFile();
                 GUIHandler.updateFrameTitle();
             }
         }
     }
-    
+    public static void saveFile(){
+        File file = new File(InitialValues.getFilePath());
+
+        try {
+            FileWriter writer = new FileWriter(file);
+            writer.write(GUIHandler.getEditorTextArea().getText());
+            writer.close();
+            GUIHandler.setIsSaved(true);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        GUIHandler.updateFrameTitle();
+    }
 
     public static class ExitFileAction extends AbstractAction {
         public ExitFileAction() {
