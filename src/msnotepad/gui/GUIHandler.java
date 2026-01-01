@@ -143,8 +143,8 @@ public class GUIHandler {
         }
     }
 
-    private JTextArea initTextArea(){
-         var textArea = new JTextArea() {
+    private JTextArea initTextArea() {
+        var textArea = new JTextArea() {
             @Override
             public void setFont(Font font) {
                 String family = font.getFamily();
@@ -208,6 +208,7 @@ public class GUIHandler {
         });
         return textArea;
     }
+
     /**
      * initialiseScrollPane method is help to setup the text editor of the MSNotepad.
      */
@@ -216,21 +217,15 @@ public class GUIHandler {
         editorQuickOutArea = initTextArea();
         editorTextArea.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyTyped(KeyEvent e) {
-                super.keyTyped(e);
-                fullCompare(e.getKeyChar());
-            }
-
-            @Override
             public void keyPressed(KeyEvent e) {
                 count = 2;
                 if (e.isControlDown() || e.isAltDown()) return;
                 int charTyped = e.getKeyChar();
                 //TODO shift tab (for every line remove one tab)
-                if (e.isActionKey()){
-                    if (undoIndex == MAX_LIST){
+                if (e.isActionKey()) {
+                    if (undoIndex == MAX_LIST) {
                         return;
-                    } else if (undoActionList.get(undoIndex) != null){
+                    } else if (undoActionList.get(undoIndex) != null) {
                         undoIndex++;
                         return;
                     }
@@ -249,10 +244,9 @@ public class GUIHandler {
                     }
                     addToUndo(charTyped);
                     undoIndex++;
-                }
-                else if (isSplitter(charTyped) ) {
+
+                } else if (isSplitter(charTyped)) {
                     addToUndo(charTyped);
-//                    doCompare();
                     undoIndex++;
                     if (e.isShiftDown() && charTyped == KeyEvent.VK_ENTER) {
                         e.consume();
@@ -266,11 +260,10 @@ public class GUIHandler {
                                 e.consume();
                                 return;
                             }
-                            addRemoveToUndo(editorTextArea.getText(location -1, 1));
+                            addRemoveToUndo(editorTextArea.getText(location - 1, 1));
                         } else {
                             addRemoveToUndo(editorTextArea.getText(location, 1));
                         }
-//                        removeCompare();
                         undoIndex++;
                     } catch (BadLocationException ex) {
                         e.consume();
@@ -278,6 +271,8 @@ public class GUIHandler {
                 } else {
                     addToUndo(charTyped);
                 }
+                fullCompare(e.getKeyChar());
+
                 removeThingsAhead();
                 super.keyPressed(e);
             }
@@ -313,12 +308,35 @@ public class GUIHandler {
         //TODO
     }
 
-    private void doCompare() {
-        //TODO
-//        fullCompare();
+    private void doCompare(int lastChar) throws BadLocationException {
+
+        if (editorQuickOutArea.getText().isEmpty()) {
+            fullCompare(lastChar);
+            return;
+        }
+        var textOld = editorTextArea.getText();
+        var caretPosition = editorTextArea.getCaretPosition();
+        var lineNumOffsetQuick = editorQuickOutArea.getLineStartOffset(editorTextArea.getLineOfOffset(caretPosition));
+        var text = (textOld.substring(0, editorTextArea.getSelectionStart()) + Character.toString(lastChar) + textOld.substring(editorTextArea.getSelectionStart()))
+                .substring(editorTextArea.getLineStartOffset(editorTextArea.getLineOfOffset(caretPosition)));
+        int lineLocationEnd = text.indexOf("\n");
+        if (lineLocationEnd != -1) {
+            text = text.substring(0, lineLocationEnd + 1);
+        }
+        var newText = AddedWord.createText(text, quicktype.data);
+        var oldReplace =  editorQuickOutArea.getText().substring(lineNumOffsetQuick);
+        lineLocationEnd =oldReplace.indexOf("\n");
+        if (lineLocationEnd==-1){
+            lineLocationEnd = oldReplace.length();
+        }
+        try {
+            editorQuickOutArea.replaceRange("", lineNumOffsetQuick, lineNumOffsetQuick + lineLocationEnd);
+        } catch (Exception ignored) {
+        }
+        editorQuickOutArea.insert(AddedWord.createText(newText, quicktype.data), lineNumOffsetQuick);
     }
 
-    public static void fullCompare(int lastChar){
+    public static void fullCompare(int lastChar) {
         if (lastChar == KeyEvent.VK_BACK_SPACE || lastChar == KeyEvent.VK_DELETE) return;
 
         var textOld = editorTextArea.getText();
@@ -329,7 +347,7 @@ public class GUIHandler {
         //TODO
     }
 
-    private boolean isSplitter(int c){
+    private boolean isSplitter(int c) {
         return c == KeyEvent.VK_ENTER || c == KeyEvent.VK_SPACE || c == KeyEvent.VK_TAB;
     }
 
@@ -399,7 +417,7 @@ public class GUIHandler {
     private void undoListSubFirst() {
         undoIndex--;
         int max = MAX_LIST - 1;
-        for (int i = 0; i < max; i++){
+        for (int i = 0; i < max; i++) {
             undoActionList.set(i, undoActionList.get(i + 1));
         }
         undoActionList.set(max, null);
@@ -473,12 +491,13 @@ public class GUIHandler {
         menuBar.add(viewMenu);
     }
 
-    private JMenu makeMenu(String s){
+    private JMenu makeMenu(String s) {
         var newMenu = new JMenu(s);
         newMenu.setForeground(Color.green);
         return newMenu;
     }
-    private JMenuItem makeMenuItem(Action a){
+
+    private JMenuItem makeMenuItem(Action a) {
         var newMenu = new JMenuItem(a);
         newMenu.setForeground(Color.green);
         return newMenu;
@@ -670,7 +689,7 @@ public class GUIHandler {
 
     public static UndoAction getUndoAction() {
         if (undoIndex >= MAX_LIST) {
-            undoIndex = MAX_LIST -1;
+            undoIndex = MAX_LIST - 1;
         } else if (undoIndex < 0)
             return null;
         var found = undoActionList.get(undoIndex);
@@ -683,7 +702,7 @@ public class GUIHandler {
     public static UndoAction getRedoAction() {
         if (undoIndex < 0)
             undoIndex = 0;
-        else if (undoIndex == MAX_LIST){
+        else if (undoIndex == MAX_LIST) {
             return null;
         }
         return undoActionList.get(undoIndex);

@@ -113,7 +113,7 @@ public class AddedWord implements Comparable<AddedWord>{
 
     public static String createText(String text, Map<String, AddedWord> data) {
 //she< [vh zt sz zer r bn so< unhappy for< [-cz a ln tn-.-] ()*&^%$#@!!:{}
-        var split = Arrays.stream(text.split("[ \\-]")).toList();
+        var split = Arrays.stream(text.split("[ \\-\n]")).toList();
         for (String shortCut : split) {
             if (shortCut.contains("<")) continue;
             var unCap = shortCut.toLowerCase(Locale.ROOT);
@@ -132,7 +132,8 @@ public class AddedWord implements Comparable<AddedWord>{
                 chosen = s1 + chosen.substring(1);
             }
             //for(int<<i=0;i\<int;i++)
-            text = text.replaceFirst("(?:^|(?<=[ \\-]))" + Pattern.quote(shortCut) + "(?:$|(?=[ \\-]))", chosen.replace("\\", "\\\\"));
+
+            text = Pattern.compile("(?:^|(?<=[ \\-]))" + Pattern.quote(shortCut) + "(?:$|(?=[ \\-]))", Pattern.MULTILINE).matcher(text).replaceFirst(chosen.replace("\\", "\\\\"));
         }
         return text.replaceAll("-(?!-)", "")
                         .replaceAll("--", "-")
