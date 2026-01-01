@@ -1,5 +1,4 @@
 import quicktype.AddedWord;
-import quicktype.Loading;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -8,7 +7,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +32,6 @@ public class FullEditForm {
 
     public FullEditForm(List<AddedWord> myMap) {
         this.myMap = myMap;
-//        word.
         makeFrame();
         northPanelMake();
         southPanelMake();
@@ -140,32 +137,20 @@ public class FullEditForm {
     private void southPanelMake() {
         add.setText("add/update");
         add.addActionListener(x -> {
-            var found = myMap.stream().filter(xx -> xx.shortCut().equals(shortCut.getText())).findFirst();
-            found.ifPresent(addedWord -> myMap.remove(addedWord));
-            myMap.add(new AddedWord(Arrays.stream(fieldList).map(JTextComponent::getText).toList().toArray(new String[8])));
+            GUIHandler.getQuicktype().addWord(new AddedWord(Arrays.stream(fieldList).map(JTextComponent::getText).toList().toArray(new String[8])));
             textToThing();
-            try {
-                Loading.save((ArrayList<AddedWord>) myMap);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
         });
         southPanel.add(add);
         remove.setText("remove");
         remove.addActionListener(x -> {
-            var found = myMap.stream().filter(xx -> xx.shortCut().equals(shortCut.getText())).findFirst();
-            found.ifPresent(addedWord -> myMap.remove(addedWord));
+            GUIHandler.getQuicktype().removeWord(shortCut.getText());
             textToThing();
-            try {
-                Loading.save((ArrayList<AddedWord>) myMap);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
         });
         southPanel.add(remove);
     }
 
     private void textToThing() {
+        myMap = GUIHandler.getQuicktype().getWords();
         var list = myMap.stream().filter(
                         xx -> xx.shortCut().contains(
                                 AddedWord.sortString((shortCut.getText()).trim())))
@@ -179,7 +164,7 @@ public class FullEditForm {
         myFrame.setLayout(new BorderLayout());
         myFrame.add(northPanel, BorderLayout.NORTH);
         myFrame.add(southPanel, BorderLayout.SOUTH);
-        myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        myFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         myFrame.getContentPane().setBackground(Color.DARK_GRAY);
         myFrame.add(this.info, BorderLayout.CENTER);
     }
@@ -188,32 +173,23 @@ public class FullEditForm {
 class HintTextField extends JTextField implements FocusListener {
 
     private final String hint;
-    private boolean showingHint;
 
     public HintTextField(final String hint) {
         super(hint);
         this.hint = hint;
-        this.showingHint = true;
         super.addFocusListener(this);
     }
 
     @Override
     public void focusGained(FocusEvent e) {
-        if(this.getText().isEmpty()) {
+        if(this.getText().isEmpty() || this.getText().equals("-") || this.getText().equals(hint)) {
             super.setText("");
-            showingHint = false;
         }
     }
     @Override
     public void focusLost(FocusEvent e) {
-        if(this.getText().isEmpty()) {
+        if(this.getText().isEmpty() || this.getText().equals("-")) {
             super.setText(hint);
-            showingHint = true;
         }
-    }
-
-    @Override
-    public String getText() {
-        return showingHint ? "" : super.getText();
     }
 }

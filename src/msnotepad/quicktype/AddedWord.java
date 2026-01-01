@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
-public class AddedWord {
+public class AddedWord implements Comparable<AddedWord>{
     public String[] data;
 
     public AddedWord(String[] data) {
@@ -111,7 +111,7 @@ public class AddedWord {
 
     static boolean[] bools = {false, false, false, false, false, false};
 
-    public static void createText(String text, Map<String, AddedWord> data) {
+    public static String createText(String text, Map<String, AddedWord> data) {
 //she< [vh zt sz zer r bn so< unhappy for< [-cz a ln tn-.-] ()*&^%$#@!!:{}
         var split = Arrays.stream(text.split("[ \\-]")).toList();
         for (String shortCut : split) {
@@ -134,12 +134,11 @@ public class AddedWord {
             //for(int<<i=0;i\<int;i++)
             text = text.replaceFirst("(?:^|(?<=[ \\-]))" + Pattern.quote(shortCut) + "(?:$|(?=[ \\-]))", chosen.replace("\\", "\\\\"));
         }
-        System.out.print(
-                text.replaceAll("-(?!-)", "")
+        return text.replaceAll("-(?!-)", "")
                         .replaceAll("--", "-")
                         .replaceAll("(?<!\\\\)<<", " ")
                         .replaceAll("(?<![\\\\<])<(?!<)", "")
-                        .replaceAll("\\\\<", "<"));
+                        .replaceAll("\\\\<", "<");
     }
 
     private static String getString(AddedWord item) {
@@ -167,5 +166,15 @@ public class AddedWord {
         var newCut = text.replace(find, "");
         bools[index] = newCut.length() != text.length();
         return newCut;
+    }
+
+    @Override
+    public boolean equals(Object o){
+        return o instanceof AddedWord && (((AddedWord) o).shortCut()).equals(shortCut());
+    }
+
+    @Override
+    public int compareTo(AddedWord o) {
+        return o.shortCut().compareTo(shortCut());
     }
 }

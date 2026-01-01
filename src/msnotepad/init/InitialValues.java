@@ -157,9 +157,6 @@ public class InitialValues {
 		caretPosition.set(value);
 	}
 
-
-
-
 	/**
 	 * writeToFile method is help to save the value in the file
 	 */

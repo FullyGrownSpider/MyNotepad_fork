@@ -20,7 +20,7 @@ public class OptionPane extends JOptionPane {
 	 * @return the response of the OptionPane.
 	 */
 	public static int showOptionPane() {
-		String[] options = new String[]{"Don't Save", "Save", "Cancel"};
+		String[] options = new String[]{"Don't Save", "Save"};
 		String message = "Do you want to save changes to \"" + InitialValues.getFileName() + "\" ?";
 
 		JLabel label = new JLabel(message);
@@ -30,7 +30,7 @@ public class OptionPane extends JOptionPane {
 			GUIHandler.getFrame(),
 				label,
 			"MyNotepad",
-			YES_NO_CANCEL_OPTION,
+			YES_NO_OPTION,
 			PLAIN_MESSAGE,
 			null,
 				options,

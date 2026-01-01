@@ -76,11 +76,17 @@ public class GUIHandler {
             @Override
             public void windowClosing(WindowEvent e) {
                 if (GUIHandler.getNotSaved()) {
-                    int value = OptionPane.showOptionPane();
-                    if (value == 1) {
-                        GUIHandler.getSaveAsMenuItem().doClick();
-                    } else if (value == 2) {
-                        return;
+
+                    if (InitialValues.getFilePath() != null) {
+                        FileMenuActions.saveFile();
+                    } else {
+                        int value = OptionPane.showOptionPane();
+                        if (value == 1) {
+                            GUIHandler.getSaveAsMenuItem().doClick();
+                        }
+                        if (value == 0) {
+                            return;
+                        }
                     }
                 }
                 InitialValues.writeToFile();
@@ -97,10 +103,11 @@ public class GUIHandler {
 
         statusBar = new StatusBar();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(editorScrollPane, BorderLayout.WEST);
-        mainPanel.add(editorQuickOutArea, BorderLayout.EAST);
+        var splitPanel =
+                new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, editorScrollPane, editorQuickOutArea);
+        splitPanel.setResizeWeight(.5);
+        mainPanel.add(splitPanel, BorderLayout.CENTER);
         mainPanel.add(statusBar, BorderLayout.SOUTH);
-//TODO add the other pane
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
@@ -136,11 +143,8 @@ public class GUIHandler {
         }
     }
 
-    /**
-     * initialiseScrollPane method is help to setup the text editor of the MSNotepad.
-     */
-    private void initialiseScrollPane() {
-        editorTextArea = new JTextArea() {
+    private JTextArea initTextArea(){
+         var textArea = new JTextArea() {
             @Override
             public void setFont(Font font) {
                 String family = font.getFamily();
@@ -154,9 +158,9 @@ public class GUIHandler {
                 super.setFont(font);
             }
         };
-        editorTextArea.setBackground(Color.darkGray);
-        editorTextArea.setForeground(Color.lightGray);
-        editorTextArea.addFocusListener(new FocusListener() {
+        textArea.setBackground(Color.darkGray);
+        textArea.setForeground(Color.lightGray);
+        textArea.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent focusEvent) {
 
@@ -170,96 +174,17 @@ public class GUIHandler {
                 }
             }
         });
-        editorTextArea.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                count = 2;
-                if (e.isControlDown() || e.isAltDown()) return;
-                int charTyped = e.getKeyChar();
-                if (e.isActionKey()){
-                    if (undoIndex == MAX_LIST){
-                        return;
-                    } else if (undoActionList.get(undoIndex) != null){
-                        undoIndex++;
-                        return;
-                    }
-                }
-                var selected = editorTextArea.getSelectedText();
-                if (selected != null) {
-                    addRemoveToUndo(selected);
-                    undoIndex++;
-                    if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
-                        return;
-                    }
-                    if (e.isShiftDown() && charTyped == KeyEvent.VK_ENTER) {
-                        e.consume();
-                        editorTextArea.insert("\n", editorTextArea.getSelectionStart());
-                    }
-                    addToUndo(charTyped);
-                    undoIndex++;
-                }
-                else if (charTyped == KeyEvent.VK_ENTER || charTyped == KeyEvent.VK_SPACE) {
-                    addToUndo(charTyped);
-                    undoIndex++;
-                    if (e.isShiftDown() && charTyped == KeyEvent.VK_ENTER) {
-                        e.consume();
-                        editorTextArea.insert("\n", editorTextArea.getSelectionEnd());
-                    }
-                } else if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
-                    int location = editorTextArea.getSelectionEnd();
-                    try {
-                        if (charTyped == KeyEvent.VK_BACK_SPACE) {
-                            if (location == 0) {
-                                e.consume();
-                                return;
-                            }
-                            addRemoveToUndo(editorTextArea.getText(location -1, 1));
-                        } else {
-                            addRemoveToUndo(editorTextArea.getText(location, 1));
-                        }
-                        undoIndex++;
-                    } catch (BadLocationException ex) {
-                        e.consume();
-                    }
-                } else {
-                    addToUndo(charTyped);
-                }
 
-//                if space or enter 1 create undo action 2 make text appear in other thing
-                //TODO update other text with space
-                super.keyTyped(e);
-            }
-        });
-        editorQuickOutArea = new JTextArea();
-        editorScrollPane = new JScrollPane(editorTextArea);
-        editorScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        editorScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-        editorScrollPane.setBorder(new LineBorder(Color.WHITE, 0));
         Border outside = new MatteBorder(1, 0, 0, 0, mainPanel.getBackground());
-        Border inside = new MatteBorder(0, 4, 0, 0, editorTextArea.getBackground());
-        editorTextArea.setBorder(new CompoundBorder(outside, inside));
+        Border inside = new MatteBorder(0, 4, 0, 0, textArea.getBackground());
+        textArea.setBorder(new CompoundBorder(outside, inside));
 
         Font font = InitialValues.getEditorFont();
-        editorTextArea.setFont(font);
-        editorTextArea.setLineWrap(InitialValues.getWrapTheLine());
-        editorTextArea.setTabSize(4);
+        textArea.setFont(font);
+        textArea.setLineWrap(InitialValues.getWrapTheLine());
+        textArea.setTabSize(4);
 
-        if (InitialValues.getFilePath() != null) {
-            loadFileToEditor();
-        }
-
-        doUpdateWork();
-        editorTextArea.addCaretListener(e -> {
-            if (editorTextArea.getSelectedText() == null) {
-                cutEdit.setEnabled(false);
-                copyEdit.setEnabled(false);
-            } else {
-                cutEdit.setEnabled(true);
-                copyEdit.setEnabled(true);
-            }
-        });
-        editorTextArea.getDocument().addDocumentListener(new DocumentListener() {
+        textArea.getDocument().addDocumentListener(new DocumentListener() {
 
             @Override
             public void removeUpdate(DocumentEvent e) {
@@ -281,9 +206,131 @@ public class GUIHandler {
             public void changedUpdate(DocumentEvent arg0) {
             }
         });
+        return textArea;
+    }
+    /**
+     * initialiseScrollPane method is help to setup the text editor of the MSNotepad.
+     */
+    private void initialiseScrollPane() {
+        editorTextArea = initTextArea();
+        editorQuickOutArea = initTextArea();
+        editorTextArea.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                super.keyTyped(e);
+                fullCompare(e.getKeyChar());
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                count = 2;
+                if (e.isControlDown() || e.isAltDown()) return;
+                int charTyped = e.getKeyChar();
+                //TODO shift tab (for every line remove one tab)
+                if (e.isActionKey()){
+                    if (undoIndex == MAX_LIST){
+                        return;
+                    } else if (undoActionList.get(undoIndex) != null){
+                        undoIndex++;
+                        return;
+                    }
+                }
+                var selected = editorTextArea.getSelectedText();
+                if (selected != null) {
+                    addRemoveToUndo(selected);
+//                    removeCompare();
+                    undoIndex++;
+                    if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
+                        return;
+                    }
+                    if (e.isShiftDown() && charTyped == KeyEvent.VK_ENTER) {
+                        e.consume();
+                        editorTextArea.insert("\n", editorTextArea.getSelectionStart());
+                    }
+                    addToUndo(charTyped);
+                    undoIndex++;
+                }
+                else if (isSplitter(charTyped) ) {
+                    addToUndo(charTyped);
+//                    doCompare();
+                    undoIndex++;
+                    if (e.isShiftDown() && charTyped == KeyEvent.VK_ENTER) {
+                        e.consume();
+                        editorTextArea.insert("\n", editorTextArea.getSelectionEnd());
+                    }
+                } else if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
+                    int location = editorTextArea.getSelectionEnd();
+                    try {
+                        if (charTyped == KeyEvent.VK_BACK_SPACE) {
+                            if (location == 0) {
+                                e.consume();
+                                return;
+                            }
+                            addRemoveToUndo(editorTextArea.getText(location -1, 1));
+                        } else {
+                            addRemoveToUndo(editorTextArea.getText(location, 1));
+                        }
+//                        removeCompare();
+                        undoIndex++;
+                    } catch (BadLocationException ex) {
+                        e.consume();
+                    }
+                } else {
+                    addToUndo(charTyped);
+                }
+                removeThingsAhead();
+                super.keyPressed(e);
+            }
+        });
+        editorScrollPane = new JScrollPane(editorTextArea);
+        editorScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        editorScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+        editorScrollPane.setBorder(new LineBorder(Color.WHITE, 0));
+
+
+        if (InitialValues.getFilePath() != null) {
+            loadFileToEditor();
+        }
+
+        doUpdateWork();
+        editorTextArea.addCaretListener(e -> {
+            if (editorTextArea.getSelectedText() == null) {
+                cutEdit.setEnabled(false);
+                copyEdit.setEnabled(false);
+            } else {
+                cutEdit.setEnabled(true);
+                copyEdit.setEnabled(true);
+            }
+        });
 
         editorTextArea.addCaretListener(e -> findNSetPositionIndicator());
         editorTextArea.setSelectionStart(editorTextArea.getText().length());
+    }
+
+    private void removeCompare() {
+//        fullCompare();
+        //TODO
+    }
+
+    private void doCompare() {
+        //TODO
+//        fullCompare();
+    }
+
+    public static void fullCompare(int lastChar){
+        if (lastChar == KeyEvent.VK_BACK_SPACE || lastChar == KeyEvent.VK_DELETE) return;
+
+        var textOld = editorTextArea.getText();
+        var text = (textOld.substring(0, editorTextArea.getSelectionStart()) + Character.toString(lastChar) + textOld.substring(editorTextArea.getSelectionStart()));
+
+        editorQuickOutArea.setText("");
+        editorQuickOutArea.setText(AddedWord.createText(text, quicktype.data));
+        //TODO
+    }
+
+    private boolean isSplitter(int c){
+        return c == KeyEvent.VK_ENTER || c == KeyEvent.VK_SPACE || c == KeyEvent.VK_TAB;
     }
 
     public static void findNSetPositionIndicator() {
@@ -398,7 +445,7 @@ public class GUIHandler {
         if (fileText.length() - 1 > -1)
             editorTextArea.setText(fileText.substring(0, fileText.length() - 1));
         try {
-            editorTextArea.setCaretPosition(InitialValues.getCaretPosition());
+            editorTextArea.setCaretPosition(InitialValues.getCaretPosition());//TODO
         } catch (Exception e) {
             editorTextArea.setCaretPosition(0);
             InitialValues.setCaretPosition(0);
@@ -443,6 +490,7 @@ public class GUIHandler {
         JMenuItem openFile = makeMenuItem(new FileMenuActions.OpenFileAction());
         JMenuItem editQuicktype = makeMenuItem(new FileMenuActions.OpenQuickTypeEditAction());
         saveAsFile = makeMenuItem(new FileMenuActions.SaveAsFileAction());
+        JMenuItem exportQuicktype = makeMenuItem(new FileMenuActions.exportQuickTypeAction());
         JMenuItem exitFile = makeMenuItem(new FileMenuActions.ExitFileAction());
         fileMenu.add(newFile);
         fileMenu.add(newWindowFile);
@@ -451,6 +499,7 @@ public class GUIHandler {
         fileMenu.add(saveAsFile);
         fileMenu.add(openFile);
         fileMenu.add(editQuicktype);
+        fileMenu.add(exportQuicktype);
         fileMenu.addSeparator();
         fileMenu.add(exitFile);
 
@@ -532,6 +581,11 @@ public class GUIHandler {
         return editorTextArea;
     }
 
+    public static String getFullQuicktypeExport() {
+        fullCompare(KeyEvent.VK_ENTER);
+        return editorQuickOutArea.getText();
+    }
+
     /**
      * getStatusBar method is the getter of statusBar.
      *
@@ -595,6 +649,7 @@ public class GUIHandler {
     public static void setZoomValue(int value) {
         zoomLevel = value;
         editorTextArea.setFont(InitialValues.getEditorFont());
+        editorQuickOutArea.setFont(InitialValues.getEditorFont());
     }
 
     /**
@@ -607,6 +662,10 @@ public class GUIHandler {
 
     public static List<AddedWord> getWordList() {
         return quicktype.getWords();
+    }
+
+    public static Quicktype getQuicktype() {
+        return quicktype;
     }
 
     public static UndoAction getUndoAction() {

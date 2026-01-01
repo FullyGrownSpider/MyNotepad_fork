@@ -30,13 +30,15 @@ public class FileMenuActions {
         @Override
         public void actionPerformed(ActionEvent e) {
             if(GUIHandler.getNotSaved()) {
-                int value = OptionPane.showOptionPane();
-
-                if(value == 1) {
-                    GUIHandler.getSaveAsMenuItem().doClick();
-                } 
-                else if(value == 2) {
-                    return;
+                if (InitialValues.getFilePath() != null) {
+                    FileMenuActions.saveFile();
+                } else {
+                    int value = OptionPane.showOptionPane();
+                    if (value == 1) {
+                        GUIHandler.getSaveAsMenuItem().doClick();
+                    } else if (value == 0) {
+                        return;
+                    }
                 }
             }
             GUIHandler.setIsLoadingFile(true);
@@ -170,6 +172,33 @@ public class FileMenuActions {
         @Override
         public void actionPerformed(ActionEvent e) {
             new FullEditForm(GUIHandler.getWordList());
+        }
+    }
+
+    public static class exportQuickTypeAction extends AbstractAction {
+        public exportQuickTypeAction() {
+            super();
+            putValue(AbstractAction.NAME, "Export Quicktype");
+            putValue(MNEMONIC_KEY, KeyEvent.VK_P);
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, CTRL_DOWN_MASK));
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFileChooser fileChooser = new JFileChooser();
+            int value = fileChooser.showSaveDialog(GUIHandler.getFrame());
+            if(value == JFileChooser.APPROVE_OPTION) {
+                String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+                File file = new File(filePath);
+                try {
+                    FileWriter writer = new FileWriter(file);
+                    writer.write(GUIHandler.getFullQuicktypeExport());
+                    writer.close();
+                    GUIHandler.setIsSaved(true);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                GUIHandler.updateFrameTitle();
+            }
         }
     }
 

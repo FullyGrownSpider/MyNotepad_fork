@@ -10,7 +10,7 @@ public class Loading {
     public static String path;
     public static ArrayList<AddedWord> getData() throws IOException {
         String file = Files.readString(Path.of(path));
-        return new ArrayList<>(Arrays.stream(file.split("\n")).map((x) -> new AddedWord(x.trim().split(" "))).toList());
+        return new ArrayList<>(Arrays.stream(file.split("\n")).map((x) -> new AddedWord(x.trim().split(" "))).sorted().distinct().toList());
     }
 
     public static void save(ArrayList<AddedWord> wordList) throws IOException {
