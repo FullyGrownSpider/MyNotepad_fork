@@ -8,6 +8,9 @@ import quicktype.Quicktype;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
@@ -219,8 +222,27 @@ public class GUIHandler {
             @Override
             public void keyPressed(KeyEvent e) {
                 count = 2;
-                if (e.isControlDown() || e.isAltDown()) return;
                 int charTyped = e.getKeyChar();
+                if (e.isControlDown() || e.isAltDown()) {
+                    if (e.isControlDown() && charTyped == KeyEvent.VK_V) {
+                        Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
+                        String text;
+                        try {
+                            var trans = cb.getContents(null);
+                            if (trans.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                                text = (String) trans.getTransferData(DataFlavor.stringFlavor);
+                            } else {
+                                System.out.println("Couldn't get data from the clipboard");
+                                return;
+                            }
+                            addToUndo(text);
+                        } catch (IOException | UnsupportedFlavorException ex) {
+                            throw new RuntimeException(ex);
+                        }
+
+                        return;
+                    }
+                }
                 if (e.isActionKey()) {
                     if (undoIndex == MAX_LIST) {
                         return;
@@ -231,7 +253,7 @@ public class GUIHandler {
                 }
                 var selected = editorTextArea.getSelectedText();
                 if (selected != null) {
-                    if (e.getKeyChar() == KeyEvent.VK_TAB) {
+                    if (charTyped == KeyEvent.VK_TAB) {
                         try {
                             removeTab(e.isShiftDown());
                         } catch (BadLocationException ex) {
@@ -241,7 +263,7 @@ public class GUIHandler {
                         return;
                     }
 
-                    fullCompare(e.getKeyChar());
+                    fullCompare(charTyped);
                     addRemoveToUndo(selected);
                     undoIndex++;
                     if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
@@ -256,7 +278,7 @@ public class GUIHandler {
 
                 } else if (isSplitter(charTyped)) {
                     try {
-                        doCompare(e.getKeyChar());
+                        doCompare(charTyped);
                     } catch (BadLocationException ignored) {
                     }
                     addToUndo(charTyped);
@@ -266,7 +288,7 @@ public class GUIHandler {
                         editorTextArea.insert("\n", editorTextArea.getSelectionEnd());
                     }
                 } else if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
-                    fullCompare(e.getKeyChar());
+                    fullCompare(charTyped);
                     int location = editorTextArea.getSelectionEnd();
                     try {
                         if (charTyped == KeyEvent.VK_BACK_SPACE) {
@@ -283,7 +305,7 @@ public class GUIHandler {
                         e.consume();
                     }
                 } else {
-                    if (e.isShiftDown() && e.getKeyChar() == KeyEvent.VK_TAB){
+                    if (e.isShiftDown() && charTyped == KeyEvent.VK_TAB) {
                         try {
                             removeTab(true);
                         } catch (BadLocationException ex) {
@@ -292,13 +314,11 @@ public class GUIHandler {
                         return;
                     }
                     try {
-                        doCompare(e.getKeyChar());
+                        doCompare(charTyped);
                     } catch (BadLocationException ignored) {
                     }
                     addToUndo(charTyped);
                 }
-
-                removeThingsAhead();
                 super.keyPressed(e);
             }
         });
@@ -331,12 +351,12 @@ public class GUIHandler {
     private void removeTab(boolean shiftDown) throws BadLocationException {
         var lineNumQuickEnd = editorTextArea.getLineOfOffset(editorTextArea.getSelectionEnd());
         var lineNumQuickStart = editorTextArea.getLineOfOffset(editorTextArea.getSelectionStart());
-        for (int i = lineNumQuickStart; i <= lineNumQuickEnd; i++){
+        for (int i = lineNumQuickStart; i <= lineNumQuickEnd; i++) {
             int index = editorTextArea.getLineStartOffset(i);
-            if (shiftDown){
-                if (editorTextArea.getText(index,1).equals("\t")) {
+            if (shiftDown) {
+                if (editorTextArea.getText(index, 1).equals("\t")) {
                     editorTextArea.setText(editorTextArea.getText(0, index) +
-                            editorTextArea.getText(index+1, editorTextArea.getText().length() -index - 1)
+                            editorTextArea.getText(index + 1, editorTextArea.getText().length() - index - 1)
                     );
                 }
             } else {
@@ -362,14 +382,14 @@ public class GUIHandler {
         var newText = AddedWord.createText(text, quicktype.data);
         var oldReplace = editorQuickOutArea.getText().substring(lineNumOffsetQuick);
         lineLocationEnd = oldReplace.indexOf("\n");
-        if (lineLocationEnd==-1){
-            lineLocationEnd = oldReplace.length()-1;
+        if (lineLocationEnd == -1) {
+            lineLocationEnd = oldReplace.length() - 1;
         }
         try {
             editorQuickOutArea.replaceRange("", lineNumOffsetQuick, lineNumOffsetQuick + lineLocationEnd + 1);
         } catch (Exception ignored) {
         }
-        editorQuickOutArea.insert(AddedWord.createText(newText, quicktype.data), lineNumOffsetQuick);
+        editorQuickOutArea.insert(newText, lineNumOffsetQuick);
     }
 
     public static void fullCompare(int lastChar) {
@@ -380,7 +400,6 @@ public class GUIHandler {
 
         editorQuickOutArea.setText("");
         editorQuickOutArea.setText(AddedWord.createText(text, quicktype.data));
-        //TODO
     }
 
     private boolean isSplitter(int c) {
@@ -415,6 +434,14 @@ public class GUIHandler {
         } else {
             undo.text.append(Character.toString(keyChar));
         }
+    }
+
+    private void addToUndo(String full) {
+        removeThingsAhead();
+        undoActionList.set(undoIndex,
+                new UndoAction(editorTextArea.getSelectionEnd(),
+                        full,
+                        false));
     }
 
     /**
@@ -546,6 +573,7 @@ public class GUIHandler {
         JMenuItem editQuicktype = makeMenuItem(new FileMenuActions.OpenQuickTypeEditAction());
         saveAsFile = makeMenuItem(new FileMenuActions.SaveAsFileAction());
         JMenuItem exportQuicktype = makeMenuItem(new FileMenuActions.exportQuickTypeAction());
+        JMenuItem copyQuicktype = makeMenuItem(new FileMenuActions.copyQuickTypeAction());
         JMenuItem exitFile = makeMenuItem(new FileMenuActions.ExitFileAction());
         fileMenu.add(newFile);
         fileMenu.add(newWindowFile);
@@ -554,6 +582,7 @@ public class GUIHandler {
         fileMenu.add(saveAsFile);
         fileMenu.add(openFile);
         fileMenu.add(editQuicktype);
+        fileMenu.add(copyQuicktype);
         fileMenu.add(exportQuicktype);
         fileMenu.addSeparator();
         fileMenu.add(exitFile);

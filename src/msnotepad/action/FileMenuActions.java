@@ -1,9 +1,12 @@
 /*
  * Copyright (c) 2021 Mohit Saini, Under MIT License. Use is subject to license terms.
- * 
+ *
  */
 
 
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -19,7 +22,7 @@ import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
 
 public class FileMenuActions {
-    
+
     public static class NewFileAction extends AbstractAction {
         public NewFileAction() {
             super();
@@ -27,9 +30,10 @@ public class FileMenuActions {
             putValue(MNEMONIC_KEY, KeyEvent.VK_N);
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, CTRL_DOWN_MASK));
         }
+
         @Override
         public void actionPerformed(ActionEvent e) {
-            if(GUIHandler.getNotSaved()) {
+            if (GUIHandler.getNotSaved()) {
                 if (InitialValues.getFilePath() != null) {
                     FileMenuActions.saveFile();
                 } else {
@@ -58,6 +62,7 @@ public class FileMenuActions {
             putValue(MNEMONIC_KEY, KeyEvent.VK_W);
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, CTRL_DOWN_MASK + SHIFT_DOWN_MASK));
         }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             String fileName = InitialValues.getFileName();
@@ -83,11 +88,12 @@ public class FileMenuActions {
             putValue(MNEMONIC_KEY, KeyEvent.VK_O);
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             JFileChooser fileChooser = new JFileChooser();
             int value = fileChooser.showOpenDialog(GUIHandler.getFrame());
-            if(value == JFileChooser.APPROVE_OPTION) {
+            if (value == JFileChooser.APPROVE_OPTION) {
                 GUIHandler.setIsLoadingFile(true);
                 File file = fileChooser.getSelectedFile();
                 String filePath = fileChooser.getSelectedFile().getAbsolutePath();
@@ -98,7 +104,7 @@ public class FileMenuActions {
                 StringBuilder fileText = new StringBuilder();
                 try {
                     Scanner read = new Scanner(file);
-                    while(read.hasNextLine()) {
+                    while (read.hasNextLine()) {
                         fileText.append(read.nextLine()).append("\n");
                     }
                     read.close();
@@ -112,7 +118,7 @@ public class FileMenuActions {
             }
         }
     }
-    
+
     public static class SaveAsFileAction extends AbstractAction {
         public SaveAsFileAction() {
             super();
@@ -120,11 +126,12 @@ public class FileMenuActions {
             putValue(MNEMONIC_KEY, KeyEvent.VK_A);
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK));
         }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             JFileChooser fileChooser = new JFileChooser();
             int value = fileChooser.showSaveDialog(GUIHandler.getFrame());
-            if(value == JFileChooser.APPROVE_OPTION) {
+            if (value == JFileChooser.APPROVE_OPTION) {
                 String filePath = fileChooser.getSelectedFile().getAbsolutePath();
                 String fileName = fileChooser.getSelectedFile().getName();
                 InitialValues.setFileName(fileName);
@@ -135,7 +142,8 @@ public class FileMenuActions {
             }
         }
     }
-    public static void saveFile(){
+
+    public static void saveFile() {
         File file = new File(InitialValues.getFilePath());
 
         try {
@@ -153,11 +161,14 @@ public class FileMenuActions {
         public ExitFileAction() {
             super();
             putValue(AbstractAction.NAME, "Kill");
+            putValue(MNEMONIC_KEY, KeyEvent.VK_Q);
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Q, CTRL_DOWN_MASK));
         }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             System.exit(0);
-            
+
         }
     }
 
@@ -169,6 +180,7 @@ public class FileMenuActions {
             putValue(MNEMONIC_KEY, KeyEvent.VK_E);
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_E, CTRL_DOWN_MASK));
         }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             new FullEditForm(GUIHandler.getWordList());
@@ -180,13 +192,14 @@ public class FileMenuActions {
             super();
             putValue(AbstractAction.NAME, "Export Quicktype");
             putValue(MNEMONIC_KEY, KeyEvent.VK_P);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, CTRL_DOWN_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, SHIFT_DOWN_MASK | CTRL_DOWN_MASK));
         }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             JFileChooser fileChooser = new JFileChooser();
             int value = fileChooser.showSaveDialog(GUIHandler.getFrame());
-            if(value == JFileChooser.APPROVE_OPTION) {
+            if (value == JFileChooser.APPROVE_OPTION) {
                 String filePath = fileChooser.getSelectedFile().getAbsolutePath();
                 File file = new File(filePath);
                 try {
@@ -202,4 +215,25 @@ public class FileMenuActions {
         }
     }
 
+    public static class copyQuickTypeAction extends AbstractAction {
+        public copyQuickTypeAction() {
+            super();
+            putValue(AbstractAction.NAME, "Copy Quicktype");
+            putValue(MNEMONIC_KEY, KeyEvent.VK_P);
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, CTRL_DOWN_MASK));
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
+            var export = new StringSelection(GUIHandler.getFullQuicktypeExport());
+            cb.setContents(export, export);
+            try {
+                Thread.sleep(10);
+            } catch (Exception ignored) {
+            }
+
+        }
+    }
 }
+
