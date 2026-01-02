@@ -2,10 +2,7 @@ import quicktype.AddedWord;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -146,6 +143,7 @@ public class FullEditForm {
             textToThing();
         });
         southPanel.add(remove);
+        add.setFocusable(false);remove.setFocusable(false);info.setFocusable(false);
     }
 
     private void textToThing() {
@@ -166,6 +164,19 @@ public class FullEditForm {
         myFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         myFrame.getContentPane().setBackground(Color.DARK_GRAY);
         myFrame.add(this.info, BorderLayout.CENTER);
+
+        KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+        myFrame.getRootPane().registerKeyboardAction(x -> myFrame.dispose(), stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+        KeyStroke strokeAdd = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK);
+        myFrame.getRootPane().registerKeyboardAction(x -> {
+            GUIHandler.getQuicktype().addWord(new AddedWord(Arrays.stream(fieldList).map(xo -> xo.getText().replaceAll(" ", "<<")).toList().toArray(new String[8])));
+            textToThing();
+            for (JTextField jTextField : fieldList) {
+                jTextField.setText("");
+            }
+            fieldList[0].grabFocus();
+            }, strokeAdd, JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 }
 
