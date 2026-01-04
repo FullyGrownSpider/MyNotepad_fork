@@ -35,7 +35,7 @@ import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
  */
 public class GUIHandler {
     private static JFrame frame;
-    private static JScrollPane editorScrollPane;
+    private static JScrollPane editorScrollPane, editorScrollPaneOutArea;
     private static JMenuBar menuBar;
     private static JPanel mainPanel;
     private static JTextArea editorTextArea;
@@ -107,7 +107,7 @@ public class GUIHandler {
         statusBar = new StatusBar();
         mainPanel.setLayout(new BorderLayout());
         var splitPanel =
-                new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, editorScrollPane, editorQuickOutArea);
+                new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, editorScrollPane, editorScrollPaneOutArea);
         splitPanel.setResizeWeight(.5);
         mainPanel.add(splitPanel, BorderLayout.CENTER);
         mainPanel.add(statusBar, BorderLayout.SOUTH);
@@ -323,10 +323,14 @@ public class GUIHandler {
             }
         });
         editorScrollPane = new JScrollPane(editorTextArea);
+        editorScrollPaneOutArea = new JScrollPane(editorQuickOutArea);
         editorScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        editorScrollPaneOutArea.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         editorScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        editorScrollPaneOutArea.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         editorScrollPane.setBorder(new LineBorder(Color.WHITE, 0));
+        editorScrollPaneOutArea.setBorder(new LineBorder(Color.WHITE, 0));
 
 
         if (InitialValues.getFilePath() != null) {
