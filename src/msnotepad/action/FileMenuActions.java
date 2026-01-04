@@ -174,6 +174,7 @@ public class FileMenuActions {
 
 
     public static class OpenQuickTypeEditAction extends AbstractAction {
+        FullEditForm f;
         public OpenQuickTypeEditAction() {
             super();
             putValue(AbstractAction.NAME, "Open Quicktype Edit");
@@ -183,7 +184,10 @@ public class FileMenuActions {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            new FullEditForm(GUIHandler.getWordList());
+            if (f == null)
+                f = new FullEditForm(GUIHandler.getWordList());
+            else
+                f.myFrame.requestFocus();
         }
     }
 

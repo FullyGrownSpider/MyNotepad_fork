@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public class FullEditForm {
-    private final JFrame myFrame = new JFrame("typer inputEdit");
+    public final JFrame myFrame = new JFrame("typer inputEdit");
     private static final Font usedFont = new Font("Ariel", Font.BOLD, 14);
     private final JTextField
             shortCut = new HintTextField("Quicktype"),
