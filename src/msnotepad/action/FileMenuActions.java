@@ -184,10 +184,10 @@ public class FileMenuActions {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (f == null)
-                f = new FullEditForm(GUIHandler.getWordList());
-            else
-                f.myFrame.requestFocus();
+            if (f != null){
+                f.myFrame.dispose();
+            }
+            f = new FullEditForm(GUIHandler.getWordList());
         }
     }
 
