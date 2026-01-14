@@ -57,19 +57,6 @@ public class EditMenuActions {
         }
     }
 
-    public static class DeleteEditAction extends AbstractAction {
-        public DeleteEditAction() {
-            super();
-            putValue(AbstractAction.NAME, "Delete");
-            putValue(MNEMONIC_KEY, KeyEvent.VK_L);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, CTRL_DOWN_MASK));
-        }
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            GUIHandler.getEditorTextArea().replaceSelection("");
-        }
-    }
-
     public static class FindEditAction extends AbstractAction {
         public FindEditAction() {
             super();

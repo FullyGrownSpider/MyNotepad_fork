@@ -11,6 +11,6 @@ public class UndoAction {
 
     @Override
     public String toString(){
-        return text.toString();
+        return location + "-" + text.toString();
     }
 }

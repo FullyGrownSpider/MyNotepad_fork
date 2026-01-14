@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
 import java.io.File;
@@ -26,8 +27,6 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
-
-import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
 /**
  * GUIHandler class handle the main gui functioning of the MSNotepad, this is the point of
@@ -52,9 +51,6 @@ public class GUIHandler {
 
     private static JMenu fileMenu, editMenu, formatMenu, viewMenu;
     private static JMenuItem saveAsFile;
-    private static JMenuItem cutEdit;
-    private static JMenuItem copyEdit;
-    private static JMenuItem pasteEdit;
     private static JMenuItem findEdit;
     private static JMenuItem replaceEdit;
 
@@ -223,102 +219,87 @@ public class GUIHandler {
             public void keyPressed(KeyEvent e) {
                 count = 2;
                 int charTyped = e.getKeyChar();
-                if (e.isControlDown() || e.isAltDown()) {
-                    if (e.isControlDown() && charTyped == KeyEvent.VK_V) {
-                        Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
-                        String text;
-                        try {
-                            var trans = cb.getContents(null);
-                            if (trans.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-                                text = (String) trans.getTransferData(DataFlavor.stringFlavor);
-                            } else {
-                                System.out.println("Couldn't get data from the clipboard");
-                                return;
-                            }
-                            addToUndo(text);
-                        } catch (IOException | UnsupportedFlavorException ex) {
-                            throw new RuntimeException(ex);
-                        }
-
+                int charCode = e.getKeyCode();
+                if (ignoreKeys(charCode)) return;
+                if (e.isControlDown()) {
+                    if (charCode == KeyEvent.VK_V) {
+                        pasteIntoEdit();
                         return;
                     }
+                    if (charCode == KeyEvent.VK_X) {
+                        CutIntoEdit();
+                        return;
+                    }
+                    if (charCode == KeyEvent.VK_C) {
+                        CopyIntoEdit();
+                        return;
+                    }
+                }
+                if (e.isShiftDown() && charCode == KeyEvent.VK_DELETE) {
+                    deleteLine();
+                    return;
                 }
                 if (e.isActionKey()) {
-                    if (undoIndex == MAX_LIST) {
-                        return;
-                    } else if (undoActionList.get(undoIndex) != null) {
-                        undoIndex++;
-                        return;
+                    doCompare(-1);
+                    moveToNextIndex();
+                    if (editorTextArea.getSelectedText() != null) {
+                        if (charCode == KeyEvent.VK_LEFT || charCode == KeyEvent.VK_UP) {
+                            editorTextArea.setCaretPosition(editorTextArea.getSelectionStart());
+                        } else if (charCode == KeyEvent.VK_RIGHT || charCode == KeyEvent.VK_DOWN) {
+                            editorTextArea.setCaretPosition(editorTextArea.getSelectionEnd());
+                        }
                     }
+                    return;
+                }
+                if (e.isControlDown() || e.isAltDown()) {
+                    super.keyPressed(e);
+                    return;
                 }
                 var selected = editorTextArea.getSelectedText();
+
+                if (charCode == KeyEvent.VK_TAB && (e.isShiftDown() || selected != null)) {
+                    removeTab(e.isShiftDown());
+                    e.consume();
+                    return;
+                }
                 if (selected != null) {
-                    if (charTyped == KeyEvent.VK_TAB) {
-                        try {
-                            removeTab(e.isShiftDown());
-                        } catch (BadLocationException ex) {
-                            throw new RuntimeException(ex);
-                        }
-                        e.consume();
-                        return;
-                    }
-
-                    fullCompare(charTyped);
                     addRemoveToUndo(selected);
-                    undoIndex++;
-                    if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
+                    editorTextArea.replaceRange("", editorTextArea.getSelectionStart(), editorTextArea.getSelectionEnd());
+                    if (charCode == KeyEvent.VK_BACK_SPACE || charCode == KeyEvent.VK_DELETE) {
+                        fullCompare(-1);
                         return;
                     }
-                    if (e.isShiftDown() && charTyped == KeyEvent.VK_ENTER) {
-                        e.consume();
-                        editorTextArea.insert("\n", editorTextArea.getSelectionStart());
-                    }
                     addToUndo(charTyped);
-                    undoIndex++;
-
-                } else if (isSplitter(charTyped)) {
-                    try {
-                        doCompare(charTyped);
-                    } catch (BadLocationException ignored) {
-                    }
-                    addToUndo(charTyped);
-                    undoIndex++;
-                    if (e.isShiftDown() && charTyped == KeyEvent.VK_ENTER) {
-                        e.consume();
-                        editorTextArea.insert("\n", editorTextArea.getSelectionEnd());
-                    }
-                } else if (charTyped == KeyEvent.VK_BACK_SPACE || charTyped == KeyEvent.VK_DELETE) {
                     fullCompare(charTyped);
-                    int location = editorTextArea.getSelectionEnd();
+                    super.keyPressed(e);
+                    return;
+                }
+                if (charCode == KeyEvent.VK_BACK_SPACE || charCode == KeyEvent.VK_DELETE) {
+                    int location = editorTextArea.getCaretPosition();
                     try {
-                        if (charTyped == KeyEvent.VK_BACK_SPACE) {
+                        if (charCode == KeyEvent.VK_BACK_SPACE) {
                             if (location == 0) {
                                 e.consume();
                                 return;
                             }
                             addRemoveToUndo(editorTextArea.getText(location - 1, 1));
                         } else {
+                            //delete
+                            if (location >= editorTextArea.getLineEndOffset(editorTextArea.getLineCount())) {
+                                e.consume();
+                                return;
+                            }
                             addRemoveToUndo(editorTextArea.getText(location, 1));
                         }
-                        undoIndex++;
                     } catch (BadLocationException ex) {
                         e.consume();
                     }
-                } else {
-                    if (e.isShiftDown() && charTyped == KeyEvent.VK_TAB) {
-                        try {
-                            removeTab(true);
-                        } catch (BadLocationException ex) {
-                            throw new RuntimeException(ex);
-                        }
-                        return;
-                    }
-                    try {
-                        doCompare(charTyped);
-                    } catch (BadLocationException ignored) {
-                    }
-                    addToUndo(charTyped);
+                    super.keyPressed(e);
+                    return;
                 }
+                doCompare(charTyped);
+                addToUndo(charTyped);
+
                 super.keyPressed(e);
             }
         });
@@ -338,76 +319,142 @@ public class GUIHandler {
         }
 
         doUpdateWork();
-        editorTextArea.addCaretListener(e -> {
-            if (editorTextArea.getSelectedText() == null) {
-                cutEdit.setEnabled(false);
-                copyEdit.setEnabled(false);
-            } else {
-                cutEdit.setEnabled(true);
-                copyEdit.setEnabled(true);
-            }
-        });
 
         editorTextArea.addCaretListener(e -> findNSetPositionIndicator());
         editorTextArea.setSelectionStart(editorTextArea.getText().length());
     }
 
-    private void removeTab(boolean shiftDown) throws BadLocationException {
-        var lineNumQuickEnd = editorTextArea.getLineOfOffset(editorTextArea.getSelectionEnd());
-        var lineNumQuickStart = editorTextArea.getLineOfOffset(editorTextArea.getSelectionStart());
-        for (int i = lineNumQuickStart; i <= lineNumQuickEnd; i++) {
-            int index = editorTextArea.getLineStartOffset(i);
-            if (shiftDown) {
-                if (editorTextArea.getText(index, 1).equals("\t")) {
-                    editorTextArea.setText(editorTextArea.getText(0, index) +
-                            editorTextArea.getText(index + 1, editorTextArea.getText().length() - index - 1)
-                    );
-                }
-            } else {
-                editorTextArea.insert("\t", index);
+    private boolean ignoreKeys(int charTyped) {
+        return charTyped == KeyEvent.VK_SHIFT || charTyped == KeyEvent.VK_CONTROL ||
+                charTyped == KeyEvent.VK_ALT || charTyped == KeyEvent.VK_META ||
+                charTyped == KeyEvent.VK_CAPS_LOCK;
+    }
+
+    private void deleteLine() {
+        var caretPosition = editorTextArea.getCaretPosition();
+        int lineStart, lineEnd;
+        try {
+            int line = editorTextArea.getLineOfOffset(caretPosition);
+            lineStart = editorTextArea.getLineStartOffset(line);
+            lineEnd = editorTextArea.getLineEndOffset(line);
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
+        }
+        editorTextArea.select(lineStart, lineEnd);
+        var selected = editorTextArea.getSelectedText();
+        addRemoveToUndo(selected);
+        editorTextArea.replaceRange("", editorTextArea.getSelectionStart(), editorTextArea.getSelectionEnd());
+    }
+
+    private void CopyIntoEdit() {
+        var selected = editorTextArea.getSelectedText();
+        if (selected == null) {
+            var caretPosition = editorTextArea.getCaretPosition();
+            int lineStart, lineEnd;
+            try {
+                int line = editorTextArea.getLineOfOffset(caretPosition);
+                lineStart = editorTextArea.getLineStartOffset(line);
+                lineEnd = editorTextArea.getLineEndOffset(line);
+            } catch (BadLocationException e) {
+                throw new RuntimeException(e);
             }
+            editorTextArea.select(lineStart, lineEnd);
+            selected = editorTextArea.getSelectedText();
+        }
+        Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
+
+        StringSelection data = new StringSelection(selected);
+        cb.setContents(data, null);
+    }
+
+    private void CutIntoEdit() {
+        CopyIntoEdit();
+
+        var selected = editorTextArea.getSelectedText();
+        addRemoveToUndo(selected);
+        editorTextArea.replaceRange("", editorTextArea.getSelectionStart(), editorTextArea.getSelectionEnd());
+    }
+
+    private void pasteIntoEdit() {
+        var selected = editorTextArea.getSelectedText();
+        if (selected != null) {
+            addRemoveToUndo(selected);
+            editorTextArea.replaceRange("", editorTextArea.getSelectionStart(), editorTextArea.getSelectionEnd());
+        }
+        Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
+        try {
+            String text;
+            var trans = cb.getContents(null);
+            if (trans.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                text = (String) trans.getTransferData(DataFlavor.stringFlavor);
+            } else {
+                System.out.println("Couldn't get data from the clipboard");
+                return;
+            }
+            addToUndo(text);
+        } catch (IOException | UnsupportedFlavorException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
-    private void doCompare(int lastChar) throws BadLocationException {
+    private void removeTab(boolean shiftDown) {
+        undoIndex = 0;
+        for (int i = 0; i < MAX_LIST; i++) {
+            undoActionList.set(i, null);
+        }
+        try {
+            var lineNumQuickEnd = editorTextArea.getLineOfOffset(editorTextArea.getSelectionEnd());
+            var lineNumQuickStart = editorTextArea.getLineOfOffset(editorTextArea.getSelectionStart());
+            for (int i = lineNumQuickStart; i <= lineNumQuickEnd; i++) {
+                int index = editorTextArea.getLineStartOffset(i);
+                if (shiftDown) {
+                    if (editorTextArea.getText(index, 1).equals("\t")) {
+                        editorTextArea.setText(editorTextArea.getText(0, index) +
+                                editorTextArea.getText(index + 1, editorTextArea.getText().length() - index - 1)
+                        );
+                    }
+                } else {
+                    editorTextArea.insert("\t", index);
+                }
+            }
+        } catch (BadLocationException ignored) {
+
+        }
+    }
+
+    private void doCompare(int lastChar) {
         if (editorQuickOutArea.getText().isEmpty()) {
             fullCompare(lastChar);
             return;
         }
-        var textOld = editorTextArea.getText();
-        var caretPosition = editorTextArea.getCaretPosition();
-        var lineNumOffsetQuick = editorQuickOutArea.getLineStartOffset(editorTextArea.getLineOfOffset(caretPosition));
-        var text = (textOld.substring(0, editorTextArea.getSelectionStart()) + Character.toString(lastChar) + textOld.substring(editorTextArea.getSelectionStart()))
-                .substring(editorTextArea.getLineStartOffset(editorTextArea.getLineOfOffset(caretPosition)));
-        int lineLocationEnd = text.indexOf("\n");
-        if (lineLocationEnd != -1) {
-            text = text.substring(0, lineLocationEnd + 1);
-        }
-        var newText = AddedWord.createText(text, quicktype.data);
-        var oldReplace = editorQuickOutArea.getText().substring(lineNumOffsetQuick);
-        lineLocationEnd = oldReplace.indexOf("\n");
-        if (lineLocationEnd == -1) {
-            lineLocationEnd = oldReplace.length() - 1;
-        }
         try {
-            editorQuickOutArea.replaceRange("", lineNumOffsetQuick, lineNumOffsetQuick + lineLocationEnd + 1);
+            int line, lineStart;
+
+            line = editorTextArea.getLineOfOffset(editorTextArea.getCaretPosition());
+            lineStart = editorTextArea.getLineStartOffset(line);
+
+            var newText = AddedWord.createText(editorTextArea.getText(lineStart, editorTextArea.getLineEndOffset(line) - lineStart), quicktype.data);
+
+            while (editorQuickOutArea.getLineCount() <= line)
+                editorQuickOutArea.append("\n");
+
+            editorQuickOutArea.replaceRange(newText, editorQuickOutArea.getLineStartOffset(line), editorQuickOutArea.getLineEndOffset(line));
         } catch (Exception ignored) {
         }
-        editorQuickOutArea.insert(newText, lineNumOffsetQuick);
     }
 
     public static void fullCompare(int lastChar) {
-        if (lastChar == KeyEvent.VK_BACK_SPACE || lastChar == KeyEvent.VK_DELETE) return;
+        String addedChar = "";
+        if (lastChar != -1) addedChar = Character.toString(lastChar);
 
         var textOld = editorTextArea.getText();
-        var text = (textOld.substring(0, editorTextArea.getSelectionStart()) + Character.toString(lastChar) + textOld.substring(editorTextArea.getSelectionStart()));
+        var text = (textOld.substring(0, editorTextArea.getSelectionStart()) + addedChar + textOld.substring(editorTextArea.getSelectionStart()));
 
-        editorQuickOutArea.setText("");
         editorQuickOutArea.setText(AddedWord.createText(text, quicktype.data));
     }
 
     private boolean isSplitter(int c) {
-        return c == KeyEvent.VK_ENTER || c == KeyEvent.VK_SPACE || c == KeyEvent.VK_TAB;
+        return c == KeyEvent.VK_ENTER || c == KeyEvent.VK_SPACE || c == KeyEvent.VK_TAB || c == KeyEvent.VK_MINUS;
     }
 
     public static void findNSetPositionIndicator() {
@@ -420,62 +467,56 @@ public class GUIHandler {
             lineNum = editorTextArea.getLineOfOffset(caretPosition);
             columnNum = caretPosition - editorTextArea.getLineStartOffset(lineNum);
 
-        } catch (BadLocationException ee) {
-            ee.printStackTrace();
+        } catch (BadLocationException ignored) {
         }
         if (statusBar != null)
             statusBar.setCaretPosition(lineNum, columnNum);
     }
 
+    /// move to the next index of the list or clip the list
+    private void moveToNextIndex() {
+        if (null == undoActionList.get(undoIndex)) {
+            return;
+        }
+        if (undoIndex == MAX_LIST - 1) {
+            undoListSubFirst();
+        } else {
+            undoIndex++;
+        }
+    }
+
     private void addToUndo(int keyChar) {
-        removeThingsAhead();
-        var undo = undoActionList.get(undoIndex);
-        if (undo == null) {
+        if (isSplitter(keyChar)) {
+            moveToNextIndex();
+        }
+        var currentUndo = undoActionList.get(undoIndex);
+        if (currentUndo == null) {
             undoActionList.set(undoIndex,
-                    new UndoAction(editorTextArea.getSelectionEnd(),
+                    new UndoAction(editorTextArea.getCaretPosition(),
                             Character.toString(keyChar),
                             false));
         } else {
-            undo.text.append(Character.toString(keyChar));
+            currentUndo.text.append(Character.toString(keyChar));
         }
     }
 
     private void addToUndo(String full) {
-        removeThingsAhead();
+        moveToNextIndex();
         undoActionList.set(undoIndex,
-                new UndoAction(editorTextArea.getSelectionEnd(),
+                new UndoAction(editorTextArea.getSelectionStart(),
                         full,
                         false));
+        moveToNextIndex();
     }
 
-    /**
-     * the protections of the list
-     * will call the list shuffle (0 = 1, 1 = 2...)
-     * else will check if there are any redo's ahead of the current index
-     */
-    private void removeThingsAhead() {
-        if (undoIndex == undoActionList.size()) undoListSubFirst();
-        else if (undoIndex == -1) undoIndex = 0;
-        else {
-            int counter = undoIndex + 1;
-            if (counter != MAX_LIST) {
-                var undo = undoActionList.get(counter);
-                while (undo != null) {
-                    undoActionList.set(counter, null);
-                    counter++;
-                    if (counter == MAX_LIST) break;
-                    undo = undoActionList.get(counter);
-                }
-            }
-        }
-    }
 
     private void addRemoveToUndo(String text) {
-        removeThingsAhead();
+        moveToNextIndex();
         undoActionList.set(undoIndex,
                 new UndoAction(editorTextArea.getSelectionStart(),
                         text,
                         true));
+        moveToNextIndex();
     }
 
     /**
@@ -591,26 +632,18 @@ public class GUIHandler {
         fileMenu.addSeparator();
         fileMenu.add(exitFile);
 
-        cutEdit = makeMenuItem(ClipboardActions.getCutAction());
-        copyEdit = makeMenuItem(ClipboardActions.getCopyAction());
-        pasteEdit = makeMenuItem(ClipboardActions.getPasteAction());
         JMenuItem undoEdit = makeMenuItem(new EditMenuActions.UndoEditAction());
         JMenuItem redoEdit = makeMenuItem(new EditMenuActions.RedoEditAction());
-        JMenuItem deleteEdit = makeMenuItem(new EditMenuActions.DeleteEditAction());
         findEdit = makeMenuItem(new EditMenuActions.FindEditAction());
         replaceEdit = makeMenuItem(new EditMenuActions.ReplaceEditAction());
         JMenuItem selectAllEdit = makeMenuItem(new EditMenuActions.SelectAllEditAction());
         editMenu.add(undoEdit);
         editMenu.add(redoEdit);
         editMenu.addSeparator();
-        editMenu.add(cutEdit);
-        editMenu.add(copyEdit);
-        editMenu.add(pasteEdit);
         editMenu.addSeparator();
         editMenu.add(findEdit);
         editMenu.add(replaceEdit);
         editMenu.addSeparator();
-        editMenu.add(deleteEdit);
         editMenu.add(selectAllEdit);
 
         JCheckBoxMenuItem wordWrapFormat = makeCheckBoxMenuItem(new FormatMenuActions.WordWrapFormatAction());
@@ -631,24 +664,12 @@ public class GUIHandler {
         zoomView.add(zoomIn);
         zoomView.add(zoomOut);
         zoomView.add(defaultZoom);
-
-        setRemainingMnemonicAndAccelerator();
     }
 
     private JCheckBoxMenuItem makeCheckBoxMenuItem(Action a) {
         var newMenu = new JCheckBoxMenuItem(a);
         newMenu.setForeground(Color.green);
         return newMenu;
-    }
-
-    /**
-     * setRemainingMnemonicAndAccelerator method is help to set the MnemonicKeys and
-     * the Accelerator of the remaining items of the menus in the menu bar.
-     */
-    private void setRemainingMnemonicAndAccelerator() {
-        cutEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, CTRL_DOWN_MASK));
-        copyEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, CTRL_DOWN_MASK));
-        pasteEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, CTRL_DOWN_MASK));
     }
 
     /**
