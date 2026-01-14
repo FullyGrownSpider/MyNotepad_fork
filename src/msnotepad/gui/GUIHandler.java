@@ -221,6 +221,9 @@ public class GUIHandler {
                 int charTyped = e.getKeyChar();
                 int charCode = e.getKeyCode();
                 if (ignoreKeys(charCode)) return;
+                if (e.isShiftDown() && charCode == KeyEvent.VK_ENTER){
+                    e.setModifiers(0);
+                }
                 if (e.isControlDown()) {
                     if (charCode == KeyEvent.VK_V) {
                         pasteIntoEdit();
