@@ -226,12 +226,12 @@ public class FontDialog extends ADialog implements ListSelectionListener {
      * @return the int value of the Style.
      */
     private int getStyleNum(String styleName) {
-        switch (styleName.toString()) {
-            case "Bold" : return Font.BOLD;
-            case "Italic" : return Font.ITALIC;
-            case "Bold Italic" : return Font.BOLD + Font.ITALIC;
-            default : return Font.PLAIN;
-        }
+        return switch (styleName) {
+            case "Bold" -> Font.BOLD;
+            case "Italic" -> Font.ITALIC;
+            case "Bold Italic" -> Font.BOLD + Font.ITALIC;
+            default -> Font.PLAIN;
+        };
     }
 
     /**
@@ -255,8 +255,7 @@ public class FontDialog extends ADialog implements ListSelectionListener {
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
-        if(e.getSource() instanceof JList<?>) {
-            JList<?> list = (JList<?>) e.getSource();
+        if(e.getSource() instanceof JList<?> list) {
             String value = list.getSelectedValue().toString();
 
             if(e.getSource() == fontName.list) {

@@ -24,6 +24,7 @@ public class StatusBar extends JPanel{
 	private static JPanel blankPanel;
     private static StatusBarLabel caretPosition;
     private static StatusBarLabel zoomLevel;
+    private static StatusBarLabel hint;
 
     /**
      * StatusBar constructor help to do the initial work.
@@ -38,9 +39,8 @@ public class StatusBar extends JPanel{
     
     @Override
     protected void paintComponent(Graphics g) {
-        if(g instanceof Graphics2D) {
-            
-            Graphics2D g2d = (Graphics2D)g;
+        if(g instanceof Graphics2D g2d) {
+
             g2d.setPaint(new Color(215, 215, 215));
             g2d.drawLine(0, 0, getWidth(), 0);
             
@@ -61,6 +61,10 @@ public class StatusBar extends JPanel{
      */
     public void setCaretPosition(int row, int column) {
         caretPosition.setText("Ln "+ row + ", Col " + column);
+    }
+
+    public void setHintText(String hintText) {
+        hint.setText(hintText);
     }
 
     /**
@@ -85,12 +89,16 @@ public class StatusBar extends JPanel{
         labelHolder.setBackground(new Color(0, 0, 0, 0));
 		
 		caretPosition = new StatusBarLabel("Ln 1, Col 1", 140);
+
+        hint = new StatusBarLabel("", 340);
 		zoomLevel = new StatusBarLabel("100%", 70);
 
         caretPosition.setForeground(Color.green);
+        hint.setForeground(Color.red);
         zoomLevel.setForeground(Color.green);
 
-		labelHolder.add(caretPosition);
+        labelHolder.add(hint);
+        labelHolder.add(caretPosition);
 		labelHolder.add(zoomLevel);
 
         setLayout(new BorderLayout());

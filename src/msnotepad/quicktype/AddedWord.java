@@ -26,6 +26,14 @@ public class AddedWord implements Comparable<AddedWord>{
         return things[nu];
     }
 
+    public boolean amI(String value){
+        return value.equals(data[1]) ||
+               value.equals(data[3]) ||
+               value.equals(data[4]) ||
+               value.equals(data[5]) ||
+               value.equals(data[6]);
+    }
+
     @Override
     public String toString(){
         return what(data[0]) + what(data[1]) +
@@ -47,7 +55,7 @@ public class AddedWord implements Comparable<AddedWord>{
         return out.replaceFirst("( -)*$", "");
     }
 
-    public static String what (String string){
+    public static String what(String string){
         if (string.equals("-")){
             return "";
         } else {
@@ -110,6 +118,15 @@ public class AddedWord implements Comparable<AddedWord>{
     }
 
     static boolean[] bools = {false, false, false, false, false, false};
+
+    public static String exists(String word, Map<String, AddedWord> data){
+        for (var item : data.values()){
+            if (item.amI(word)){
+                return item.shortCut();
+            }
+        }
+        return "";
+    }
 
     public static String createText(String text, Map<String, AddedWord> data) {
 //she< [vh zt sz zer r bn so< unhappy for< [-cz a ln tn-.-] ()*&^%$#@!!:{}
