@@ -27,6 +27,10 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
+//Wn ß gets bk home fm work ß hld qf mr zn enf tm t buy hm mr food.
+//Q looked around it arst about already that
+
+
 
 /**
  * GUIHandler class handle the main gui functioning of the MSNotepad, this is the point of
@@ -477,12 +481,14 @@ public class GUIHandler {
     private static void setIncorrect(String oldText, String newText) {
         var oldWords = Arrays.stream(oldText.split(" ")).distinct().toList();
 
-        for (var word : oldWords){
-            if (word.length() < 3) continue;
-            if (newText.contains(word)){
-                var wrong = AddedWord.exists(word, quicktype.data);
-                statusBar.setHintText(wrong);
-                return;
+        for (int i = Math.max(0, oldWords.size() - 2); i < oldWords.size(); i++) {
+            if (oldWords.get(i).length() < 3) continue;
+            if (newText.contains(oldWords.get(i))){
+                var wrong = AddedWord.exists(oldWords.get(i), quicktype.data);
+                if (!wrong.isEmpty()) {
+                    statusBar.setHintText(wrong);
+                    return;
+                }
             }
         }
         statusBar.setHintText("");
