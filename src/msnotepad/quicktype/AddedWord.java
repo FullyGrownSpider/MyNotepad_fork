@@ -132,6 +132,7 @@ public class AddedWord implements Comparable<AddedWord>{
     public static String createText(String text, Map<String, AddedWord> data) {
 //she< [vh zt sz zer r bn so< unhappy for< [-cz a ln tn-.-] ()*&^%$#@!!:{}
         var split = Arrays.stream(text.split(splita)).toList();
+        StringBuilder buf = new StringBuilder();
         for (String shortCut : split) {
             boolean hasDot = shortCut.endsWith(".");
             if (shortCut.contains("<") || shortCut.contains("ss")) continue;
@@ -160,10 +161,15 @@ public class AddedWord implements Comparable<AddedWord>{
                 String s1 = chosen.substring(0, 1).toUpperCase();
                 chosen = s1 + chosen.substring(1);
             }
+            var matcher = Pattern.compile("(?:^|(?<="+splita+"))" + Pattern.quote(shortCut) + "(?:$|(?="+splita+"))", Pattern.MULTILINE).matcher(text);
 
-            text = Pattern.compile("(?:^|(?<="+splita+"))" + Pattern.quote(shortCut) + "(?:$|(?="+splita+"))", Pattern.MULTILINE).matcher(text).replaceFirst(chosen.replace("\\", "\\\\"));
+            matcher.find();
+            matcher.appendReplacement(buf, chosen.replace("\\", "\\\\"));
+            var end = matcher.end();
+            text = text.substring(end);
         }
-        return text.replaceAll("-(?!-)", "")
+        buf.append(text);
+        return buf.toString().replaceAll("-(?!-)", "")
                         .replaceAll("--", "-")
                         .replaceAll("(?<!\\\\)<<", " ")
                         .replaceAll("(?<![\\\\<])<(?!<)", "")
