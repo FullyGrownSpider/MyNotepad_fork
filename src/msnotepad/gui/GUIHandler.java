@@ -107,7 +107,7 @@ public class GUIHandler {
         statusBar = new StatusBar();
         mainPanel.setLayout(new BorderLayout());
         var splitPanel =
-                new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, editorScrollPane, editorScrollPaneOutArea);
+                new JSplitPane(JSplitPane.VERTICAL_SPLIT, editorScrollPane, editorScrollPaneOutArea);
         splitPanel.setResizeWeight(.5);
         mainPanel.add(splitPanel, BorderLayout.CENTER);
         mainPanel.add(statusBar, BorderLayout.SOUTH);

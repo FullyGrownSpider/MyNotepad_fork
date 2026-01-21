@@ -118,6 +118,7 @@ public class AddedWord implements Comparable<AddedWord>{
     }
 
     static boolean[] bools = {false, false, false, false, false, false};
+    private static final String splita = "[ \\-\n\t{})(\"']";
 
     public static String exists(String word, Map<String, AddedWord> data){
         for (var item : data.values()){
@@ -130,9 +131,10 @@ public class AddedWord implements Comparable<AddedWord>{
 
     public static String createText(String text, Map<String, AddedWord> data) {
 //she< [vh zt sz zer r bn so< unhappy for< [-cz a ln tn-.-] ()*&^%$#@!!:{}
-        var split = Arrays.stream(text.split("[ \\-\n]")).toList();
+        var split = Arrays.stream(text.split(splita)).toList();
         for (String shortCut : split) {
-            if (shortCut.contains("<")) continue;
+            boolean hasDot = shortCut.endsWith(".");
+            if (shortCut.contains("<") || shortCut.contains("ss")) continue;
             var unCap = shortCut.toLowerCase(Locale.ROOT);
             unCap = check("s", unCap, (byte) 0);
             unCap = check("y", unCap, (byte) 1);
@@ -142,15 +144,24 @@ public class AddedWord implements Comparable<AddedWord>{
             unCap = check(",", unCap, (byte) 5);
 
             var item = data.get(AddedWord.sortString(unCap));//scr t= scribe
-            if (item == null) continue;
-            String chosen = getString(item);
+            String chosen;
+            if (item == null) {
+                if (!hasDot) {
+                    continue;
+                }
+                unCap = unCap.substring(0, unCap.length()-1);
+                item = data.get(AddedWord.sortString(unCap));
+                if (item == null) continue;
+                chosen = getString(item) + ".";
+            } else {
+                chosen = getString(item);
+            }
             if (!shortCut.toLowerCase(Locale.ROOT).equals(shortCut)) {
                 String s1 = chosen.substring(0, 1).toUpperCase();
                 chosen = s1 + chosen.substring(1);
             }
-            //for(int<<i=0;i\<int;i++)
 
-            text = Pattern.compile("(?:^|(?<=[ \\-]))" + Pattern.quote(shortCut) + "(?:$|(?=[ \\-]))", Pattern.MULTILINE).matcher(text).replaceFirst(chosen.replace("\\", "\\\\"));
+            text = Pattern.compile("(?:^|(?<="+splita+"))" + Pattern.quote(shortCut) + "(?:$|(?="+splita+"))", Pattern.MULTILINE).matcher(text).replaceFirst(chosen.replace("\\", "\\\\"));
         }
         return text.replaceAll("-(?!-)", "")
                         .replaceAll("--", "-")
