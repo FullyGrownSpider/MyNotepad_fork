@@ -77,8 +77,11 @@ public class AddedWord implements Comparable<AddedWord>{
     public String getWord() {
         return data[1];
     }
-    public String getS() {
-        return getEm(data[2], "s");
+    public String getS(String base) {
+        if (!base.isEmpty()){
+            return base + "s";
+        }
+        return getEm(data[2],"s");
     }
     public String getY() {
         return getEm(data[3], "y");
@@ -178,9 +181,7 @@ public class AddedWord implements Comparable<AddedWord>{
 
     private static String getString(AddedWord item) {
         String chosen;
-        if (bools[0]) {
-            chosen = item.getS();
-        } else if (bools[1]) {
+        if (bools[1]) {
             chosen = item.getY();
         } else if (bools[2]) {
             chosen = item.getING();
@@ -188,14 +189,23 @@ public class AddedWord implements Comparable<AddedWord>{
             chosen = item.getED();
         } else if (bools[4]) {
             chosen = item.getER();
-        } else {
+        } else if (!bools[0]){
             chosen = item.getWord();
+        } else {
+            chosen = "";
         }
+
         if (bools[5]) {
-            return item.getNot(chosen);
+            if (chosen.isEmpty())
+                chosen = item.getS(chosen);
+            chosen = item.getNot(chosen);
+        }
+        if (bools[0]) {
+            chosen = item.getS(chosen);
         }
         return chosen;
     }
+
 
     public static String check(String find, String text, byte index) {
         var newCut = text.replace(find, "");
