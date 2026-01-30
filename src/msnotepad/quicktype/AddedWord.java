@@ -121,7 +121,7 @@ public class AddedWord implements Comparable<AddedWord>{
     }
 
     static boolean[] bools = {false, false, false, false, false, false};
-    private static final String splita = "[ \\-\n\t{})(\"']";
+    private static final String splita = "[ ?\\-\n\t{})(\"']";
 
     public static String exists(String word, Map<String, AddedWord> data){
         for (var item : data.values()){
