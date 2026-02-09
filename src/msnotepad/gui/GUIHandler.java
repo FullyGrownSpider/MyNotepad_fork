@@ -19,6 +19,8 @@ import java.util.*;
 import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -48,10 +50,11 @@ public class GUIHandler {
     private static final AtomicBoolean isSaved = new AtomicBoolean(true);
     private static final AtomicBoolean isLoadingFile = new AtomicBoolean(false);
     private static final Quicktype quicktype = new Quicktype();
-    private static byte count = 0;
+    static byte count = 0;
     private static int undoIndex = 0;
     private static final int MAX_LIST = 48;
     private static final ArrayList<UndoAction> undoActionList = new ArrayList<>(MAX_LIST);
+    private static final Pattern spaceOrEnter = Pattern.compile("[ \n]");
 
     private static JMenu fileMenu, editMenu, formatMenu, viewMenu;
     private static JMenuItem saveAsFile;
@@ -218,103 +221,7 @@ public class GUIHandler {
     private void initialiseScrollPane() {
         editorTextArea = initTextArea();
         editorQuickOutArea = initTextArea();
-        editorTextArea.addKeyListener(new KeyAdapter() {
-        private boolean needFullReset = false;
-            public void keyReleased(KeyEvent e) {
-                if (needFullReset){
-                    fullCompare();
-                    return;
-                }
-                if (e.getKeyCode() == KeyEvent.VK_ENTER){
-                    enterCompare();
-                    return;
-                }
-                if (e.getKeyCode() == KeyEvent.VK_DELETE){
-                    enterCompare();
-                    return;
-                }
-                doCompare();
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                super.keyPressed(e);
-                count = 2;
-                int charCode = e.getKeyCode();
-                if (ignoreKeys(charCode)) return;
-                if (e.isAltDown()) return;
-                if (charCode == KeyEvent.VK_ENTER){
-                    if (e.isShiftDown()) {
-                        e.setModifiers(0);
-                    }
-                }
-                if (e.isControlDown()) {
-                    if (charCode == KeyEvent.VK_V) {
-                        pasteIntoEdit();
-                    }
-                    else if (charCode == KeyEvent.VK_X) {
-                        CopyIntoEdit(true);
-                    }
-                    else if (charCode == KeyEvent.VK_C) {
-                        CopyIntoEdit(false);
-                    }
-                    needFullReset = true;
-                    return;
-                }
-                if (e.isActionKey()) {
-                    moveToNextIndex();
-                    if (!e.isShiftDown() && editorTextArea.getSelectedText() != null) {
-                        if (charCode == KeyEvent.VK_LEFT || charCode == KeyEvent.VK_UP) {
-                            editorTextArea.setCaretPosition(editorTextArea.getSelectionStart());
-                        } else if (charCode == KeyEvent.VK_RIGHT || charCode == KeyEvent.VK_DOWN) {
-                            editorTextArea.setCaretPosition(editorTextArea.getSelectionEnd());
-                        }
-                    }
-                    return;
-                }
-                var selected = editorTextArea.getSelectedText();
-                needFullReset = selected != null;
-
-                if (charCode == KeyEvent.VK_TAB && (e.isShiftDown() || needFullReset)) {
-                    removeTab(e.isShiftDown());
-                    needFullReset = true;
-                    return;
-                }
-                if (needFullReset) {
-                    addRemoveToUndo(selected);
-                    editorTextArea.replaceRange("", editorTextArea.getSelectionStart(), editorTextArea.getSelectionEnd());
-                    if (charCode == KeyEvent.VK_BACK_SPACE || charCode == KeyEvent.VK_DELETE) {
-                        return;
-                    }
-                    addToUndo(e.getKeyChar());
-                    return;
-                }
-                if (e.isShiftDown() && charCode == KeyEvent.VK_DELETE) {
-                    deleteLine();
-                    return;
-                }
-                if (charCode == KeyEvent.VK_BACK_SPACE || charCode == KeyEvent.VK_DELETE) {
-                    int location = editorTextArea.getCaretPosition();
-                    try {
-                        if (charCode == KeyEvent.VK_BACK_SPACE) {
-                            if (location == 0) {
-                                return;
-                            }
-                            addRemoveToUndo(editorTextArea.getText(location - 1, 1));
-                        } else {
-                            if (location >= editorTextArea.getLineEndOffset(editorTextArea.getLineCount())) {
-                                return;
-                            }
-                            addRemoveToUndo(editorTextArea.getText(location, 1));
-                        }
-                        needFullReset = true;
-                    } catch (BadLocationException ignored) {
-                    }
-                    return;
-                }
-                addToUndo(e.getKeyChar());
-            }
-        });
+        editorTextArea.addKeyListener(new StrangeKeyAdapter());
         editorScrollPane = new JScrollPane(editorTextArea);
         editorScrollPaneOutArea = new JScrollPane(editorQuickOutArea);
         editorScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -336,13 +243,72 @@ public class GUIHandler {
         editorTextArea.setSelectionStart(editorTextArea.getText().length());
     }
 
-    private boolean ignoreKeys(int charTyped) {
+    static int getPreviousEnterIndex() {
+        var caretPosition = editorTextArea.getSelectionStart() - 1;
+        int lineStart;
+        try {
+            int line;
+            if (caretPosition == -1) {
+                line = editorTextArea.getLineOfOffset(editorTextArea.getText().length()- 1);
+            } else {
+                line = editorTextArea.getLineOfOffset(caretPosition);
+            }
+            lineStart = editorTextArea.getLineStartOffset(line);
+            return lineStart;
+        } catch (BadLocationException e) {
+            return 0;
+        }
+    }
+    static int getNextEnterIndex() {
+        var caretPosition = editorTextArea.getSelectionEnd();
+        int lineStart;
+        try {
+            int line = editorTextArea.getLineOfOffset(caretPosition) + 1;
+            lineStart = editorTextArea.getLineStartOffset(line);
+            return lineStart;
+        } catch (BadLocationException e) {
+            return editorTextArea.getText().length();
+        }
+    }
+
+    static int getLastSpaceIndex() {
+        var caretPosition = editorTextArea.getSelectionStart();
+        try {
+            Matcher matcher = spaceOrEnter.matcher(editorTextArea.getText(0, caretPosition-1));
+            int lastIndex = -1;
+            while (matcher.find()) {
+                lastIndex = matcher.start();
+            }
+            return lastIndex + 1;
+        } catch (BadLocationException e) {
+            return 0;
+        }
+    }
+
+    static int getNextSpaceIndex() {
+        var caretPosition = editorTextArea.getSelectionEnd();
+        try {
+            Matcher matcher = spaceOrEnter.matcher(editorTextArea.getText(caretPosition, editorTextArea.getText().length() - caretPosition));
+            int lastIndex = -1;
+            if (matcher.find()) {
+                lastIndex = matcher.start();
+            }
+            if (lastIndex == -1){
+                return editorTextArea.getText().length();
+            }
+            return caretPosition + lastIndex + 1;
+        } catch (BadLocationException e) {
+            return editorTextArea.getText().length();
+        }
+    }
+
+    static boolean ignoreKeys(int charTyped) {
         return charTyped == KeyEvent.VK_SHIFT || charTyped == KeyEvent.VK_CONTROL ||
                 charTyped == KeyEvent.VK_ALT || charTyped == KeyEvent.VK_META ||
                 charTyped == KeyEvent.VK_CAPS_LOCK;
     }
 
-    private void deleteLine() {
+    static void deleteLine() {
         var caretPosition = editorTextArea.getCaretPosition();
         int lineStart, lineEnd;
         try {
@@ -359,7 +325,7 @@ public class GUIHandler {
         editorTextArea.replaceRange("", editorTextArea.getSelectionStart(), editorTextArea.getSelectionEnd());
     }
 
-    private void CopyIntoEdit(boolean cut) {
+    static void CopyIntoEdit(boolean cut) {
         var selected = editorTextArea.getSelectedText();
         if (selected == null) {
             var caretPosition = editorTextArea.getCaretPosition();
@@ -385,7 +351,7 @@ public class GUIHandler {
         cb.setContents(data, null);
     }
 
-    private void pasteIntoEdit() {
+    static void pasteIntoEdit() {
         var selected = editorTextArea.getSelectedText();
         if (selected != null) {
             addRemoveToUndo(selected);
@@ -407,7 +373,7 @@ public class GUIHandler {
         }
     }
 
-    private void removeTab(boolean shiftDown) {
+    static void removeTab(boolean shiftDown) {
         undoIndex = 0;
         for (int i = 0; i < MAX_LIST; i++) {
             undoActionList.set(i, null);
@@ -432,7 +398,7 @@ public class GUIHandler {
         }
     }
 
-    private void enterCompare() {
+    static void enterCompare() {
         try {
             int line = editorTextArea.getLineOfOffset(editorTextArea.getCaretPosition());
 
@@ -499,7 +465,7 @@ public class GUIHandler {
         editorQuickOutArea.setText(AddedWord.createText(textOld, quicktype.data));
     }
 
-    private boolean isSplitter(int c) {
+    private static boolean isSplitter(int c) {
         return c == KeyEvent.VK_ENTER || c == KeyEvent.VK_SPACE || c == KeyEvent.VK_TAB || c == KeyEvent.VK_MINUS;
     }
 
@@ -520,7 +486,7 @@ public class GUIHandler {
     }
 
     /// move to the next index of the list or clip the list
-    private void moveToNextIndex() {
+    static void moveToNextIndex() {
         if (undoIndex < 0) {
             undoIndex++;
             return;
@@ -535,11 +501,14 @@ public class GUIHandler {
         }
     }
 
-    private void addToUndo(int keyChar) {
+    static void addToUndo(int keyChar) {
         if (isSplitter(keyChar)) {
             moveToNextIndex();
         }
-        var currentUndo = undoActionList.get(undoIndex);
+        UndoAction currentUndo = null;
+        if (undoIndex!= -1) {
+            currentUndo = undoActionList.get(undoIndex);
+        }
         if (currentUndo == null) {
             undoActionList.set(undoIndex,
                     new UndoAction(editorTextArea.getCaretPosition(),
@@ -550,7 +519,7 @@ public class GUIHandler {
         }
     }
 
-    private void addToUndo(String full) {
+    static void addToUndo(String full) {
         moveToNextIndex();
         undoActionList.set(undoIndex,
                 new UndoAction(editorTextArea.getSelectionStart(),
@@ -560,7 +529,7 @@ public class GUIHandler {
     }
 
 
-    private void addRemoveToUndo(String text) {
+    static void addRemoveToUndo(String text) {
         moveToNextIndex();
         undoActionList.set(undoIndex,
                 new UndoAction(editorTextArea.getSelectionStart(),
@@ -572,7 +541,7 @@ public class GUIHandler {
     /**
      * if the counter is on the max you need to make the items in the list go one back, and forget the first one
      */
-    private void undoListSubFirst() {
+    private static void undoListSubFirst() {
         if (undoIndex < 0)
             undoIndex--;
         int max = MAX_LIST - 1;
