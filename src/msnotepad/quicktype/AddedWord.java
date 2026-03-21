@@ -138,8 +138,10 @@ public class AddedWord implements Comparable<AddedWord>{
         StringBuilder buf = new StringBuilder();
         for (String shortCut : split) {
             boolean hasDot = shortCut.endsWith(".");
-            if (shortCut.contains("<") || shortCut.contains("ss")) continue;
             var unCap = shortCut.toLowerCase(Locale.ROOT);
+            int sindex = unCap.indexOf("s");
+            if (shortCut.contains("<") || (sindex != -1 &&
+                    sindex != unCap.lastIndexOf("s"))) continue;
             unCap = check("s", unCap, (byte) 0);
             unCap = check("y", unCap, (byte) 1);
             unCap = check("=", unCap, (byte) 2);

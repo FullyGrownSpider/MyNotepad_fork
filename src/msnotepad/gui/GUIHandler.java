@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.text.BadLocationException;
+import javax.swing.text.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.LineBorder;
@@ -44,7 +44,8 @@ public class GUIHandler {
     private static JMenuBar menuBar;
     private static JPanel mainPanel;
     private static JTextArea editorTextArea;
-    private static JTextArea editorQuickOutArea;
+
+    private static JTextPane editorQuickOutArea;
     private static final Timer autoSave = new Timer();
     private static StatusBar statusBar;
     private static final AtomicBoolean isSaved = new AtomicBoolean(true);
@@ -63,6 +64,9 @@ public class GUIHandler {
 
     private static int zoomLevel = 100;
     public static JCheckBoxMenuItem statusBarView;
+
+    private static Style _defaultStyle;
+    private static Style _selectedStyle;
 
     /**
      * handle method is help to setup the major components and getting the frame ready to
@@ -149,6 +153,49 @@ public class GUIHandler {
         }
     }
 
+    private JTextPane initTextPane(){
+        var textArea = new JTextPane() {
+            @Override
+            public void setFont(Font font) {
+                String family = font.getFamily();
+                int style = font.getStyle();
+                int size = font.getSize();
+
+                int originalPix = InitialValues.getEditorFont().getSize() + 5;
+                int zoomPix = (zoomLevel * originalPix) / 100 - originalPix;
+
+                font = new Font(family, style, size + zoomPix + 5);
+                super.setFont(font);
+            }
+        };
+        textArea.setEditable(false);
+        textArea.setBackground(Color.darkGray);
+        textArea.setForeground(Color.lightGray);
+        textArea.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent focusEvent) {
+
+            }
+
+            @Override
+            public void focusLost(FocusEvent focusEvent) {
+                count = -5;
+                if (InitialValues.getFilePath() != null && getNotSaved()) {
+                    FileMenuActions.saveFile();
+                }
+            }
+        });
+
+        Border outside = new MatteBorder(1, 0, 0, 0, mainPanel.getBackground());
+        Border inside = new MatteBorder(0, 4, 0, 0, textArea.getBackground());
+        textArea.setBorder(new CompoundBorder(outside, inside));
+
+        Font font = InitialValues.getEditorFont();
+        textArea.setFont(font);
+
+        return textArea;
+    }
+
     private JTextArea initTextArea() {
         var textArea = new JTextArea() {
             @Override
@@ -219,8 +266,15 @@ public class GUIHandler {
      * initialiseScrollPane method is help to setup the text editor of the MSNotepad.
      */
     private void initialiseScrollPane() {
+
+        StyleContext styleContext = new StyleContext();
+        _defaultStyle = styleContext.getStyle(StyleContext.DEFAULT_STYLE);
+        _selectedStyle = styleContext.addStyle("ConstantWidth", null);
+        StyleConstants.setForeground(_selectedStyle, Color.lightGray);
+        StyleConstants.setBold(_selectedStyle, true);
+
         editorTextArea = initTextArea();
-        editorQuickOutArea = initTextArea();
+        editorQuickOutArea = initTextPane();
         editorTextArea.addKeyListener(new StrangeKeyAdapter());
         editorScrollPane = new JScrollPane(editorTextArea);
         editorScrollPaneOutArea = new JScrollPane(editorQuickOutArea);
@@ -409,11 +463,15 @@ public class GUIHandler {
             line--;
 
             int lineStart = editorTextArea.getLineStartOffset(line);
-            int lineStartOut = 0;
-            if (line != 0) lineStartOut = editorQuickOutArea.getLineStartOffset(line);
+            int lineStartOut = lineOffsetOutArea(line);
+
             int lineEnd = editorTextArea.getLineEndOffset(editorTextArea.getLineCount() - 1);
-            var newText = editorQuickOutArea.getText(0, lineStartOut) + AddedWord.createText(editorTextArea.getText(lineStart, lineEnd - lineStart), quicktype.data);
+            var newText =
+                    editorQuickOutArea.getText(0, lineStartOut) +
+                    AddedWord.createText(editorTextArea.getText(lineStart, lineEnd - lineStart), quicktype.data);
             editorQuickOutArea.setText(newText);
+
+            setSpaceCounter();
         } catch (Exception ignored){
 
         }
@@ -422,9 +480,47 @@ public class GUIHandler {
     public static void doCompare(){
         try {
             doCompare(editorTextArea.getLineOfOffset(editorTextArea.getCaretPosition()));
+            setSpaceCounter();
         } catch (Exception ignored){
 
         }
+    }
+
+    private static void setSpaceCounter() {
+        //TODO if cursor in/left/right of word make bold
+        var input = GUIHandler.getEditorTextArea();
+
+        int start = input.getSelectionStart();
+        int end = input.getSelectionEnd();
+        if (end != start){ return;}
+
+        var outPut = GUIHandler.getDisplayTextArea();
+        int counter = -1;
+        int wordStartTo = 0;
+
+        while (wordStartTo < start){
+            counter++;
+            if (wordStartTo == -1) {
+                //when there are no spaces after start
+                counter--;
+                break;
+            }
+            wordStartTo = input.getText().indexOf(" ", wordStartTo + 1);
+        }
+
+
+        outPut.getStyledDocument().setCharacterAttributes(0, outPut.getText().length(), _defaultStyle, true);
+        int startingSpace = 0;
+        for (int i = 0; i < counter; i++) {
+            startingSpace = outPut.getText().indexOf(" ", startingSpace + 1);
+        }
+
+        int endingSpace =  outPut.getText().indexOf(" ", startingSpace + 1) - startingSpace;
+        if (1 > endingSpace)
+            endingSpace = outPut.getText().length();
+
+        outPut.getStyledDocument().setCharacterAttributes(startingSpace, endingSpace, _selectedStyle, true);
+
     }
 
     public static void doCompare(int line){
@@ -436,13 +532,47 @@ public class GUIHandler {
 
             setIncorrect(oldText, newText);
 
-            while (editorQuickOutArea.getLineCount() <= line)
-                editorQuickOutArea.append("\n");
+            var lines = new ArrayList<>(Arrays.stream(editorQuickOutArea.getText().split("\n", -1)).toList());
+            StringBuilder buf = new StringBuilder(editorQuickOutArea.getText());
+            while (lines.size() <= line) {
+                lines.add("\n");
+                buf.append("\n");
+            }
+            int startIndex = 0;
+            for (int i = 0; i < line; i++) {
+                startIndex = buf.indexOf("\n", startIndex) + 1;
+            }
 
-            editorQuickOutArea.replaceRange(newText, editorQuickOutArea.getLineStartOffset(line), editorQuickOutArea.getLineEndOffset(line));
+            buf.replace(startIndex, startIndex + lines.get(line).length() +1, newText);
+
+            editorQuickOutArea.setText(buf.toString());
+
         } catch (Exception ignored) {
         }
     }
+
+    private static int lineOffsetOutArea(int line) {
+        var lines = new ArrayList<>(Arrays.stream(editorQuickOutArea.getText().split("\n", -1)).toList());
+        StringBuilder buf = new StringBuilder(editorQuickOutArea.getText());
+        while (lines.size() <= line) {
+            lines.add("\n");
+            buf.append("\n");
+        }
+        int startIndex = 0;
+        for (int i = 0; i < line; i++) {
+            startIndex = buf.indexOf("\n", startIndex) + 1;
+        }
+        return startIndex;
+    }
+
+//    private static void setOutText(){
+//        StyledDocument doc = editorQuickOutArea.getStyledDocument();
+//        var lines = new ArrayList<>(Arrays.stream(editorQuickOutText.split("\n")).toList());
+//        for (int i = 0; i < lines.size(); i++) {
+//            doc.insertString(STRING POSITION, STRING, null);
+//        }
+//        //TODO colour the selected word(s)
+//    }
 
     private static void setIncorrect(String oldText, String newText) {
         var oldWords = Arrays.stream(oldText.split(" ")).distinct().toList();
@@ -463,6 +593,8 @@ public class GUIHandler {
     public static void fullCompare() {
         var textOld = editorTextArea.getText();
         editorQuickOutArea.setText(AddedWord.createText(textOld, quicktype.data));
+
+        setSpaceCounter();
     }
 
     private static boolean isSplitter(int c) {
@@ -597,6 +729,7 @@ public class GUIHandler {
             InitialValues.setCaretPosition(0);
         }
         setIsLoadingFile(false);
+        fullCompare();
     }
 
     /**
@@ -708,6 +841,15 @@ public class GUIHandler {
      */
     public static JTextArea getEditorTextArea() {
         return editorTextArea;
+    }
+
+    /**
+     * getEditorTextArea method is the getter of display text-area.
+     *
+     * @return the editorTextArea.
+     */
+    public static JTextPane getDisplayTextArea() {
+        return editorQuickOutArea;
     }
 
     public static String getFullQuicktypeExport() {

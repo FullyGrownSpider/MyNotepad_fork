@@ -1,4 +1,5 @@
-import javax.swing.text.BadLocationException;
+import javax.swing.text.*;
+import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -176,12 +177,13 @@ public class StrangeKeyAdapter extends KeyAdapter {
         return false;
     }
 
-    private static boolean doBackspace(KeyEvent e, int charCode) {
+    private boolean doBackspace(KeyEvent e, int charCode) {
         if (charCode == KeyEvent.VK_BACK_SPACE){
             if (GUIHandler.getEditorTextArea().getSelectedText() != null){
                 GUIHandler.addRemoveToUndo(GUIHandler.getEditorTextArea().getSelectedText());
                 GUIHandler.getEditorTextArea().replaceSelection("");
                 e.consume();
+                needFullReset = true;
                 return true;
             }
             if (!e.isControlDown()){
@@ -194,6 +196,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
                         throw new RuntimeException(ex);
                     }
                 }
+                needFullReset = true;
                 return true;
             }
             int to = GUIHandler.getLastSpaceIndex();
@@ -205,17 +208,19 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 GUIHandler.getEditorTextArea().replaceSelection("");
             }
             e.consume();
+            needFullReset = true;
             return true;
         }
         return false;
     }
 
-    private static boolean doDelete(KeyEvent e, int charCode) {
+    private boolean doDelete(KeyEvent e, int charCode) {
         if (charCode == KeyEvent.VK_DELETE){
             if (e.isControlDown()) {
                 if (GUIHandler.getEditorTextArea().getSelectedText() != null) {
                     GUIHandler.addRemoveToUndo(GUIHandler.getEditorTextArea().getSelectedText());
                     e.consume();
+                    needFullReset = true;
                     return true;
                 }
                 int to = GUIHandler.getNextSpaceIndex();
@@ -231,11 +236,13 @@ public class StrangeKeyAdapter extends KeyAdapter {
                     GUIHandler.getEditorTextArea().replaceSelection("");
                 }
                 e.consume();
+                needFullReset = true;
                 return true;
             }
             if (e.isShiftDown()) {
                 GUIHandler.deleteLine();
                 e.consume();
+                needFullReset = true;
                 return true;
             }
             var selected = GUIHandler.getEditorTextArea().getSelectedText();
@@ -243,6 +250,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 GUIHandler.addRemoveToUndo(selected);
                 GUIHandler.getEditorTextArea().replaceSelection("");
                 e.consume();
+                needFullReset = true;
                 return true;
             }
             int location = GUIHandler.getEditorTextArea().getCaretPosition();
@@ -253,6 +261,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
             } catch (BadLocationException ex) {
                 throw new RuntimeException(ex);
             }
+            needFullReset = true;
             return true;
         }
         return false;
