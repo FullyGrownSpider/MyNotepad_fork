@@ -29,11 +29,6 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
-//Wn ß gets bk home fm work ß hld qf mr zn enf tm t buy hm mr food.
-//Q looked around it arst about already that
-
-
-
 /**
  * GUIHandler class handle the main gui functioning of the MSNotepad, this is the point of
  * distribution of work to other classes.
@@ -57,12 +52,11 @@ public class GUIHandler {
     private static final ArrayList<UndoAction> undoActionList = new ArrayList<>(MAX_LIST);
     private static final Pattern spaceOrEnter = Pattern.compile("[ \n]");
 
-    private static JMenu fileMenu, editMenu, formatMenu, viewMenu;
+    private static JMenu fileMenu, editMenu, optionsMenu, viewMenu;
     private static JMenuItem saveAsFile;
     private static JMenuItem findEdit;
     private static JMenuItem replaceEdit;
 
-    private static int zoomLevel = 100;
     public static JCheckBoxMenuItem statusBarView;
 
     private static Style _defaultStyle;
@@ -85,6 +79,12 @@ public class GUIHandler {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+                //store where you have location
+                InitialValues.setFrameHeight(GUIHandler.getFrame().getHeight());
+                InitialValues.setFrameWidth(GUIHandler.getFrame().getWidth());
+                InitialValues.setFrameX(GUIHandler.getFrame().getX());
+                InitialValues.setFrameY(GUIHandler.getFrame().getY());
+                //file not saved
                 if (GUIHandler.getNotSaved()) {
 
                     if (InitialValues.getFilePath() != null) {
@@ -103,6 +103,8 @@ public class GUIHandler {
             }
         });
         frame.setSize(InitialValues.getFrameWidth(), InitialValues.getFrameHeight());
+        //TODO use screen distances so the thing is not hidden
+        frame.setLocation(InitialValues.getFrameX(), InitialValues.getFrameY());
 
         frame.setTitle(InitialValues.getFileName());
         mainPanel = (JPanel) frame.getContentPane();
@@ -120,7 +122,6 @@ public class GUIHandler {
         mainPanel.add(statusBar, BorderLayout.SOUTH);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
         undoInit();
@@ -153,7 +154,7 @@ public class GUIHandler {
         }
     }
 
-    private JTextPane initTextPane(){
+    private JTextPane initTextPane() {
         var textArea = new JTextPane() {
             @Override
             public void setFont(Font font) {
@@ -162,7 +163,7 @@ public class GUIHandler {
                 int size = font.getSize();
 
                 int originalPix = InitialValues.getEditorFont().getSize() + 5;
-                int zoomPix = (zoomLevel * originalPix) / 100 - originalPix;
+                int zoomPix = (InitialValues.getZoom() * originalPix) / 100 - originalPix;
 
                 font = new Font(family, style, size + zoomPix + 5);
                 super.setFont(font);
@@ -205,7 +206,7 @@ public class GUIHandler {
                 int size = font.getSize();
 
                 int originalPix = InitialValues.getEditorFont().getSize() + 5;
-                int zoomPix = (zoomLevel * originalPix) / 100 - originalPix;
+                int zoomPix = (InitialValues.getZoom() * originalPix) / 100 - originalPix;
 
                 font = new Font(family, style, size + zoomPix + 5);
                 super.setFont(font);
@@ -303,7 +304,7 @@ public class GUIHandler {
         try {
             int line;
             if (caretPosition == -1) {
-                line = editorTextArea.getLineOfOffset(editorTextArea.getText().length()- 1);
+                line = editorTextArea.getLineOfOffset(editorTextArea.getText().length() - 1);
             } else {
                 line = editorTextArea.getLineOfOffset(caretPosition);
             }
@@ -313,6 +314,7 @@ public class GUIHandler {
             return 0;
         }
     }
+
     static int getNextEnterIndex() {
         var caretPosition = editorTextArea.getSelectionEnd();
         int lineStart;
@@ -328,7 +330,7 @@ public class GUIHandler {
     static int getLastSpaceIndex() {
         var caretPosition = editorTextArea.getSelectionStart();
         try {
-            Matcher matcher = spaceOrEnter.matcher(editorTextArea.getText(0, caretPosition-1));
+            Matcher matcher = spaceOrEnter.matcher(editorTextArea.getText(0, caretPosition - 1));
             int lastIndex = -1;
             while (matcher.find()) {
                 lastIndex = matcher.start();
@@ -347,7 +349,7 @@ public class GUIHandler {
             if (matcher.find()) {
                 lastIndex = matcher.start();
             }
-            if (lastIndex == -1){
+            if (lastIndex == -1) {
                 return editorTextArea.getText().length();
             }
             return caretPosition + lastIndex + 1;
@@ -456,7 +458,7 @@ public class GUIHandler {
         try {
             int line = editorTextArea.getLineOfOffset(editorTextArea.getCaretPosition());
 
-            if (line == 0){
+            if (line == 0) {
                 fullCompare();
                 return;
             }
@@ -468,67 +470,101 @@ public class GUIHandler {
             int lineEnd = editorTextArea.getLineEndOffset(editorTextArea.getLineCount() - 1);
             var newText =
                     editorQuickOutArea.getText(0, lineStartOut) +
-                    AddedWord.createText(editorTextArea.getText(lineStart, lineEnd - lineStart), quicktype.data);
+                            AddedWord.createText(editorTextArea.getText(lineStart, lineEnd - lineStart), quicktype.data, InitialValues.getReplaceQuote(), InitialValues.getException());
             editorQuickOutArea.setText(newText);
 
-            setSpaceCounter();
-        } catch (Exception ignored){
+            boldCursorText();
+        } catch (Exception ignored) {
 
         }
     }
 
-    public static void doCompare(){
+    public static void doCompare() {
         try {
             doCompare(editorTextArea.getLineOfOffset(editorTextArea.getCaretPosition()));
-            setSpaceCounter();
-        } catch (Exception ignored){
+            boldCursorText();
+        } catch (Exception ignored) {
 
         }
     }
 
-    private static void setSpaceCounter() {
-        //TODO if cursor in/left/right of word make bold
-        var input = GUIHandler.getEditorTextArea();
+    private static void boldCursorText() {
+        try {
+            var input = GUIHandler.getEditorTextArea();
 
-        int start = input.getSelectionStart();
-        int end = input.getSelectionEnd();
-        if (end != start){ return;}
+            int start = input.getSelectionStart();
+            int end = input.getSelectionEnd();
 
-        var outPut = GUIHandler.getDisplayTextArea();
-        int counter = -1;
-        int wordStartTo = 0;
+            clearBold(editorQuickOutArea);
 
-        while (wordStartTo < start){
-            counter++;
-            if (wordStartTo == -1) {
-                //when there are no spaces after start
-                counter--;
-                break;
+            if (end != start) {
+                return;
             }
-            wordStartTo = input.getText().indexOf(" ", wordStartTo + 1);
+
+            int line = editorTextArea.getLineOfOffset(editorTextArea.getCaretPosition());
+            int lineStart = editorTextArea.getLineStartOffset(line);
+            int lineEnd = editorTextArea.getLineEndOffset(line);
+
+            String outText = editorQuickOutArea.getText();
+            if (!outText.contains(" "))
+                return;
+            int outTextLine = 0;
+            for (int i = 0; i < line; i++) {
+                outTextLine += outText.indexOf("\n", outTextLine) - outTextLine + 1;
+            }
+
+            String inputLine = editorTextArea.getText(lineStart, lineEnd - lineStart);
+
+            int wordStartTo = 0;
+            int last = 0;
+
+            while (last + lineStart < editorTextArea.getCaretPosition()) {
+                wordStartTo = last;
+                int calc = inputLine.indexOf(" ", wordStartTo + 1);
+                if (calc == -1) {
+                    break;
+                }
+                last = calc;
+            }
+
+            var checkForWords = wordStartTo == 0 ? "" : isWhatWords(inputLine.substring(0, wordStartTo + 1));
+
+            int startingSpace = checkForWords.length() + outTextLine - (wordStartTo != 0? 1: 0);
+
+            var full = editorTextArea.getText();
+            if (full.length() <= lineStart + wordStartTo + 1) return;
+            String half = full.substring(lineStart + wordStartTo + 1);
+            if (half.isEmpty()) return;
+            int correctIndex = half.indexOf(" ") + 1;
+            int tempIndex = half.indexOf("\n") + 1;
+            if (tempIndex != 0 && (correctIndex == 0 || correctIndex > tempIndex))
+                correctIndex = tempIndex;
+            int endingSpace;
+            if (correctIndex == 0)
+                endingSpace = outText.length();
+            else
+                endingSpace = isWhatWords(inputLine.substring(wordStartTo, wordStartTo + correctIndex)).length();
+            makeBold(editorQuickOutArea, startingSpace, endingSpace);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-
-        outPut.getStyledDocument().setCharacterAttributes(0, outPut.getText().length(), _defaultStyle, true);
-        int startingSpace = 0;
-        for (int i = 0; i < counter; i++) {
-            startingSpace = outPut.getText().indexOf(" ", startingSpace + 1);
-        }
-
-        int endingSpace =  outPut.getText().indexOf(" ", startingSpace + 1) - startingSpace;
-        if (1 > endingSpace)
-            endingSpace = outPut.getText().length();
-
-        outPut.getStyledDocument().setCharacterAttributes(startingSpace, endingSpace, _selectedStyle, true);
-
     }
 
-    public static void doCompare(int line){
+    private static void clearBold(JTextPane outPut) {
+        outPut.getStyledDocument().setCharacterAttributes(0, outPut.getText().length(), _defaultStyle, true);
+    }
+
+    private static void makeBold(JTextPane outPut, int startingSpace, int endingSpace){
+        outPut.getStyledDocument().setCharacterAttributes(startingSpace, endingSpace, _selectedStyle, true);
+    }
+
+    public static void doCompare(int line) {
         try {
             int lineStart = editorTextArea.getLineStartOffset(line);
 
             var oldText = editorTextArea.getText(lineStart, editorTextArea.getLineEndOffset(line) - lineStart);
-            var newText = AddedWord.createText(oldText, quicktype.data);
+            var newText = AddedWord.createText(oldText, quicktype.data, InitialValues.getReplaceQuote(), InitialValues.getException());
 
             setIncorrect(oldText, newText);
 
@@ -543,9 +579,18 @@ public class GUIHandler {
                 startIndex = buf.indexOf("\n", startIndex) + 1;
             }
 
-            buf.replace(startIndex, startIndex + lines.get(line).length() +1, newText);
+            buf.replace(startIndex, startIndex + lines.get(line).length() + 1, newText);
 
+            String outText = buf.toString();
             editorQuickOutArea.setText(buf.toString());
+            if (outText.isEmpty())
+                return;
+            int outTextLine = 0;
+            for (int i = 0; i < line; i++) {
+                outTextLine += outText.indexOf("\n", outTextLine) - outTextLine + 1;
+            }
+
+            editorQuickOutArea.setCaretPosition(outTextLine);
 
         } catch (Exception ignored) {
         }
@@ -565,21 +610,18 @@ public class GUIHandler {
         return startIndex;
     }
 
-//    private static void setOutText(){
-//        StyledDocument doc = editorQuickOutArea.getStyledDocument();
-//        var lines = new ArrayList<>(Arrays.stream(editorQuickOutText.split("\n")).toList());
-//        for (int i = 0; i < lines.size(); i++) {
-//            doc.insertString(STRING POSITION, STRING, null);
-//        }
-//        //TODO colour the selected word(s)
-//    }
+    private static String isWhatWords(String word){
+        return AddedWord.createText(word, quicktype.data, false, InitialValues.getException());
+    }
 
     private static void setIncorrect(String oldText, String newText) {
+        if (statusBar == null || !statusBar.isVisible()) return;
+
         var oldWords = Arrays.stream(oldText.split(" ")).distinct().toList();
 
         for (int i = Math.max(0, oldWords.size() - 2); i < oldWords.size(); i++) {
             if (oldWords.get(i).length() < 3) continue;
-            if (newText.contains(oldWords.get(i))){
+            if (newText.contains(oldWords.get(i))) {
                 var wrong = AddedWord.exists(oldWords.get(i), quicktype.data);
                 if (!wrong.isEmpty()) {
                     statusBar.setHintText(wrong);
@@ -592,9 +634,9 @@ public class GUIHandler {
 
     public static void fullCompare() {
         var textOld = editorTextArea.getText();
-        editorQuickOutArea.setText(AddedWord.createText(textOld, quicktype.data));
-
-        setSpaceCounter();
+        editorQuickOutArea.setText(AddedWord.createText(textOld, quicktype.data, InitialValues.getReplaceQuote(), InitialValues.getException()));
+        setIncorrect(textOld, editorQuickOutArea.getText());
+        boldCursorText();
     }
 
     private static boolean isSplitter(int c) {
@@ -638,7 +680,7 @@ public class GUIHandler {
             moveToNextIndex();
         }
         UndoAction currentUndo = null;
-        if (undoIndex!= -1) {
+        if (undoIndex != -1) {
             currentUndo = undoActionList.get(undoIndex);
         }
         if (currentUndo == null) {
@@ -674,7 +716,7 @@ public class GUIHandler {
      * if the counter is on the max you need to make the items in the list go one back, and forget the first one
      */
     private static void undoListSubFirst() {
-        if (undoIndex < 0)
+        if (undoIndex > 0)
             undoIndex--;
         int max = MAX_LIST - 1;
         for (int i = 0; i < max; i++) {
@@ -742,13 +784,13 @@ public class GUIHandler {
 
         fileMenu = makeMenu("File");
         editMenu = makeMenu("Edit");
-        formatMenu = makeMenu("Format");
+        optionsMenu = makeMenu("Program");
         viewMenu = makeMenu("View");
         initialiseMenuItems();
 
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
-        menuBar.add(formatMenu);
+        menuBar.add(optionsMenu);
         menuBar.add(viewMenu);
     }
 
@@ -764,6 +806,7 @@ public class GUIHandler {
         return newMenu;
     }
 
+    /// init all values and create menus
     private void initialiseMenuItems() {
         JMenuItem newFile = makeMenuItem(new FileMenuActions.NewFileAction());
         JMenuItem newWindowFile = makeMenuItem(new FileMenuActions.NewWindowFileAction());
@@ -799,11 +842,14 @@ public class GUIHandler {
         editMenu.addSeparator();
         editMenu.add(selectAllEdit);
 
+        JCheckBoxMenuItem replaceQuotes = makeCheckBoxMenuItem(new FormatMenuActions.shouldReplaceQuotes());
+        replaceQuotes.setState(InitialValues.getReplaceQuote());
         JCheckBoxMenuItem wordWrapFormat = makeCheckBoxMenuItem(new FormatMenuActions.WordWrapFormatAction());
         wordWrapFormat.setState(InitialValues.getWrapTheLine());
         JMenuItem fontChangeFormat = makeMenuItem(new FormatMenuActions.FontChangeFormatAction());
-        formatMenu.add(wordWrapFormat);
-        formatMenu.add(fontChangeFormat);
+        optionsMenu.add(replaceQuotes);
+        optionsMenu.add(wordWrapFormat);
+        optionsMenu.add(fontChangeFormat);
 
         JMenu zoomView = makeMenu("Zoom");
         statusBarView = makeCheckBoxMenuItem(new ViewMenuActions.StatusBarViewAction());
@@ -825,31 +871,12 @@ public class GUIHandler {
         return newMenu;
     }
 
-    /**
-     * getFrame is the getter of the frame.
-     *
-     * @return the frame.
-     */
     public static JFrame getFrame() {
         return frame;
     }
 
-    /**
-     * getEditorTextArea method is the getter of main text-area.
-     *
-     * @return the editorTextArea.
-     */
     public static JTextArea getEditorTextArea() {
         return editorTextArea;
-    }
-
-    /**
-     * getEditorTextArea method is the getter of display text-area.
-     *
-     * @return the editorTextArea.
-     */
-    public static JTextPane getDisplayTextArea() {
-        return editorQuickOutArea;
     }
 
     public static String getFullQuicktypeExport() {
@@ -857,76 +884,37 @@ public class GUIHandler {
         return editorQuickOutArea.getText();
     }
 
-    /**
-     * getStatusBar method is the getter of statusBar.
-     *
-     * @return the statusBar.
-     */
     public static JPanel getStatusBar() {
         return statusBar;
     }
 
-    /**
-     * getSaveAsMenuItem method is the getter of saveAsFile.
-     *
-     * @return the saveAsFile.
-     */
     public static JMenuItem getSaveAsMenuItem() {
         return saveAsFile;
     }
 
-    /**
-     * getIsSaved method is the getter of isSaved variable.
-     *
-     * @return the isSaved variable.
-     */
     public static boolean getNotSaved() {
         return !isSaved.get();
     }
 
-    /**
-     * setIsSave method is set the isSaved value the variable.
-     *
-     * @param value the value of isSaved.
-     */
     public static void setIsSaved(boolean value) {
         isSaved.set(value);
         updateFrameTitle();
     }
 
-    /**
-     * setIsLoadingFile method is set the loading flag of the this app.
-     *
-     * @param value loading flag.
-     */
+    public static void setReplaceQuotes() {
+        fullCompare();
+    }
+
     public static void setIsLoadingFile(boolean value) {
         isLoadingFile.set(value);
     }
 
-    /**
-     * getZoomValue method is help to the zoomValue of the textArea.
-     *
-     * @return the zoomLevel.
-     */
-    public static int getZoomValue() {
-        return zoomLevel;
-    }
-
-    /**
-     * setZoomValue method is help to set the zoom level of the editor textArea.
-     *
-     * @param value the zoom level.
-     */
     public static void setZoomValue(int value) {
-        zoomLevel = value;
+        InitialValues.setZoom(value);
         editorTextArea.setFont(InitialValues.getEditorFont());
         editorQuickOutArea.setFont(InitialValues.getEditorFont());
     }
 
-    /**
-     * updateFrameTitle method is help to change the file name and unsaved mark
-     * of the opened file.
-     */
     public static void updateFrameTitle() {
         frame.setTitle(InitialValues.getFileName());
     }

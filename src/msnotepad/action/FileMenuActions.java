@@ -109,12 +109,12 @@ public class FileMenuActions {
                     }
                     read.close();
                     GUIHandler.setIsSaved(true);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                } catch (Exception ignored) {
                 }
                 GUIHandler.getEditorTextArea().setText(fileText.substring(0, fileText.length() - 1));
                 GUIHandler.getEditorTextArea().setCaretPosition(0);
                 GUIHandler.setIsLoadingFile(false);
+                GUIHandler.fullCompare();
             }
         }
     }
@@ -151,8 +151,8 @@ public class FileMenuActions {
             writer.write(GUIHandler.getEditorTextArea().getText());
             writer.close();
             GUIHandler.setIsSaved(true);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception ignored) {
+
         }
         GUIHandler.updateFrameTitle();
     }
@@ -211,8 +211,8 @@ public class FileMenuActions {
                     writer.write(GUIHandler.getFullQuicktypeExport());
                     writer.close();
                     GUIHandler.setIsSaved(true);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                } catch (Exception ignored) {
+
                 }
                 GUIHandler.updateFrameTitle();
             }

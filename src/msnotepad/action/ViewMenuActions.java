@@ -44,8 +44,9 @@ public class ViewMenuActions {
         }
         @Override
         public void actionPerformed(ActionEvent e) {
-            int zoomLevel = GUIHandler.getZoomValue();
+            int zoomLevel = InitialValues.getZoom();
             zoomLevel = zoomLevel + 20;
+            InitialValues.setZoom(zoomLevel);
             GUIHandler.setZoomValue(zoomLevel);
             StatusBar.setZoomLevel(zoomLevel);
         }
@@ -60,9 +61,10 @@ public class ViewMenuActions {
         }
         @Override
         public void actionPerformed(ActionEvent e) {
-            int zoomLevel = GUIHandler.getZoomValue();
+            int zoomLevel = InitialValues.getZoom();
             if (zoomLevel == 20) return;
             zoomLevel = zoomLevel - 20;
+            InitialValues.setZoom(zoomLevel);
             GUIHandler.setZoomValue(zoomLevel);
             StatusBar.setZoomLevel(zoomLevel);
         }
@@ -77,6 +79,7 @@ public class ViewMenuActions {
         }
         @Override
         public void actionPerformed(ActionEvent e) {
+            InitialValues.setZoom(100);
             GUIHandler.setZoomValue(100);
             StatusBar.setZoomLevel(100);
         }

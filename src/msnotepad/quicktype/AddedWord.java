@@ -123,6 +123,12 @@ public class AddedWord implements Comparable<AddedWord>{
     static boolean[] bools = {false, false, false, false, false, false};
     private static final String splita = "[ ?\\-\n\t{})(\"']";
 
+    private static final String leftQuote = "“";
+    private static final String rightQuote = "”";
+
+    private static final String leftSingleQuote = "‘";
+    private static final String rightSingleQuote = "’";
+
     public static String exists(String word, Map<String, AddedWord> data){
         for (var item : data.values()){
             if (item.amI(word)){
@@ -132,7 +138,7 @@ public class AddedWord implements Comparable<AddedWord>{
         return "";
     }
 
-    public static String createText(String text, Map<String, AddedWord> data) {
+    public static String createText(String text, Map<String, AddedWord> data, boolean replaceQuotes, boolean exceptions) {
 //she< [vh zt sz zer r bn so< unhappy for< [-cz a ln tn-.-] ()*&^%$#@!!:{}
         var split = Arrays.stream(text.split(splita)).toList();
         StringBuilder buf = new StringBuilder();
@@ -158,9 +164,9 @@ public class AddedWord implements Comparable<AddedWord>{
                 unCap = unCap.substring(0, unCap.length()-1);
                 item = data.get(AddedWord.sortString(unCap));
                 if (item == null) continue;
-                chosen = getString(item) + ".";
+                chosen = getString(item, exceptions) + ".";
             } else {
-                chosen = getString(item);
+                chosen = getString(item, exceptions);
             }
             if (!shortCut.toLowerCase(Locale.ROOT).equals(shortCut)) {
                 String s1 = chosen.substring(0, 1).toUpperCase();
@@ -174,14 +180,24 @@ public class AddedWord implements Comparable<AddedWord>{
             text = text.substring(end);
         }
         buf.append(text);
-        return buf.toString().replaceAll("-(?!-)", "")
-                        .replaceAll("--", "-")
+        return finalOptions(buf, replaceQuotes);
+    }
+
+    private static String finalOptions(StringBuilder buf, boolean changeQuotes) {
+        var out = buf.toString().replaceAll("-(?!-)", "")
+                        .replace("--", "-")
                         .replaceAll("(?<!\\\\)<<", " ")
                         .replaceAll("(?<![\\\\<])<(?!<)", "")
                         .replaceAll("\\\\<", "<");
+        if (changeQuotes)
+            out = out.replaceAll("(?<=\\w)\"", rightQuote)
+                    .replace("\"", leftQuote)
+                    .replaceAll("(?<=\\w)'", rightSingleQuote)
+                    .replace("'", leftSingleQuote);
+        return out;
     }
 
-    private static String getString(AddedWord item) {
+    private static String getString(AddedWord item, boolean exceptions) {
         String chosen;
         if (bools[1]) {
             chosen = item.getY();
@@ -198,7 +214,16 @@ public class AddedWord implements Comparable<AddedWord>{
         }
 
         if (bools[5]) {
-            if (chosen.isEmpty())
+            //exception w.[,
+            if (bools[3] && exceptions){
+                if (chosen.equals("would")){
+                    return "wouldn't";
+                }
+                if (chosen.equals("could")){
+                    return "couldn't";
+                }
+            }
+            else if (chosen.isEmpty())
                 chosen = item.getS(chosen);
             chosen = item.getNot(chosen);
         }

@@ -6,10 +6,13 @@
 import java.awt.Font;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -20,13 +23,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class InitialValues {
 	public static final String NEW_FILE = "Untitled";
     private static final AtomicBoolean showStatusBar = new AtomicBoolean(true);
-    private static final AtomicBoolean wrapTheLine = new AtomicBoolean(false);
+	private static final AtomicBoolean wrapTheLine = new AtomicBoolean(false);
+	private static final AtomicBoolean replaceQuote = new AtomicBoolean(true);
+	private static final AtomicBoolean exception = new AtomicBoolean(true);
 	private static final AtomicInteger frameWidth = new AtomicInteger(600);
 	private static final AtomicInteger frameHeight = new AtomicInteger(450);
+	private static final AtomicInteger frameX = new AtomicInteger(450);
+	private static final AtomicInteger frameY = new AtomicInteger(450);
 	private static final AtomicInteger caretPosition = new AtomicInteger(0);
+	private static final AtomicInteger zoomLevel = new AtomicInteger(100);
+	private static final AtomicInteger editorFontSize = new AtomicInteger(24);
+	private static final AtomicInteger editorFontStyle = new AtomicInteger(0);
+	//TODO
+	private static final AtomicReference<String> editorFontFamily = new AtomicReference<>("Consolas");
+	private static final AtomicReference<String> fileName = new AtomicReference<>(NEW_FILE);
+	private static final AtomicReference<String> filePath = new AtomicReference<>("");
+
 	private static Font editorFont = new Font("Consolas", Font.PLAIN, 24);
-	private static String fileName = NEW_FILE;
-	private static String filePath = null;
+
+	private static final Map <String, Serializable> settingReader = new HashMap<>();
 
 	/**
 	 * getShowStatusBar method is help to get the showStatusBar variable.
@@ -44,12 +59,24 @@ public class InitialValues {
 		showStatusBar.set(value);
 	}
 
-	/**
-	 * getWrapTheLine method is help to get the wrapTheLine variable.
-	 * @return	the wrapTheLine value.
-	 */
 	public static Boolean getWrapTheLine() {
 		return wrapTheLine.get();
+	}
+
+	public static Boolean getReplaceQuote() {
+		return replaceQuote.get();
+	}
+
+	public static void setReplaceQuote(Boolean value) {
+		replaceQuote.set(value);
+	}
+
+	public static int getZoom() {
+		return zoomLevel.get();
+	}
+
+	public static void setZoom(int value) {
+		zoomLevel.set(value);
 	}
 
 	/**
@@ -92,6 +119,20 @@ public class InitialValues {
 		frameHeight.set(value);
 	}
 
+	public static int getFrameX(){
+		return frameX.get();
+	}
+
+	public static int getFrameY(){
+		return frameY.get();
+	}
+
+	public static void setFrameX(int value) {
+		frameX.set(value);
+	}
+	public static void setFrameY(int value) {
+		frameY.set(value);
+	}
 	/**
 	 * getEditorFont method is help to get the editorFont variable.
 	 * @return	the editorFont boolean value.
@@ -114,7 +155,7 @@ public class InitialValues {
 	 * @return	the fileName value.
 	 */
 	public static String getFileName() {
-		return fileName;
+		return fileName.get();
 	}
 
 	/**
@@ -122,7 +163,7 @@ public class InitialValues {
 	 * @param name the value of fileName.
 	 */
 	public static void setFileName(String name) {
-		fileName = name;
+		fileName.set(name);
 	}
 
 	/**
@@ -130,7 +171,7 @@ public class InitialValues {
 	 * @return	the filePath value.
 	 */
 	public static String getFilePath() {
-		return filePath;
+		return filePath.get();
 	}
 
 	/**
@@ -138,7 +179,9 @@ public class InitialValues {
 	 * @param path the value of filePath.
 	 */
 	public static void setFilePath(String path) {
-		filePath = path;
+		if (path == null)
+			path = "";
+		filePath.set(path);
 	}
 
 	/**
@@ -159,24 +202,19 @@ public class InitialValues {
 
 	/**
 	 * writeToFile method is help to save the value in the file
+	 * decide what to store here
 	 */
 	public static void writeToFile() {
 		try {
 			caretPosition.set(GUIHandler.getEditorTextArea().getCaretPosition());
 			File file = new File("Settings.txt");
 			FileWriter writer = new FileWriter(file);
-			writer.write("Show-StatusBar : " + showStatusBar + "\n");
-			writer.write("Wrap-The-Line : " + wrapTheLine + "\n");
-			writer.write("Frame-Width : " + frameWidth + "\n");
-			writer.write("Frame-Height : " + frameHeight + "\n");
-			writer.write("Font-Family : " + editorFont.getFamily() + "\n");
-			writer.write("Font-Style : " + editorFont.getStyle() + "\n");
-			writer.write("Font-Size : " + editorFont.getSize() + "\n");
-			writer.write("Opened-File-Name : " + fileName + "\n");
-			writer.write("Opened-File-Path : " + filePath + "\n");
-			writer.write("Caret-Position : " + caretPosition + "\n");
+			for (var item : settingReader.entrySet()) {
+				writer.write(item.getKey() + " : " +item.getValue().toString() + "\n");
+			}
 			writer.close();
-		} catch (IOException ex) {
+			System.out.println(file.getAbsolutePath());
+		} catch (Exception ex) {
 			System.out.println("Unable to write Setting.text file !");
 		}
 	}
@@ -186,76 +224,57 @@ public class InitialValues {
 	 * readFromFile method is help to load the variables from the file.
 	 */
 	public static void readFromFile() {
+		//TODO cant find out how to do it properly so it goes here for now
+		settingReader.put("Show-StatusBar", showStatusBar);
+		settingReader.put("Wrap-The-Line", wrapTheLine);
+		settingReader.put("Zoom-Level", zoomLevel);
+		settingReader.put("replaceQuote", replaceQuote);
+		settingReader.put("Font-Family", editorFontFamily);
+		settingReader.put("Font-Style", editorFontStyle);
+		settingReader.put("Font-Size", editorFontSize);
+		settingReader.put("Opened-File-Name", fileName);
+		settingReader.put("Opened-File-Path", filePath);
+		settingReader.put("Caret-Position", caretPosition);
+		settingReader.put("Frame-Width", frameWidth);
+		settingReader.put("Frame-Height", frameHeight);
+		settingReader.put("Frame-X", frameX);
+		settingReader.put("Frame-Y", frameY);
+		settingReader.put("Exception", exception);
+		//TODO is maximized?
+
 		try {
 			File file = new File("Settings.txt");
 			Scanner read = new Scanner(file);
-			if(read.hasNextLine())
-			{
+			while (read.hasNext()){
 				String value = read.nextLine();
-				value = value.substring(value.indexOf(":") + 1);
-				value = value.trim();
-				showStatusBar.set(value.equals("true"));
-			}
-			if(read.hasNextLine())
-			{
-				String value = read.nextLine();
-				value = value.substring(value.indexOf(":") + 1);
-				value = value.trim();
-				wrapTheLine.set(value.equals("true"));
-			}
-			if(read.hasNextLine())
-			{
-				String width = read.nextLine();
-				width = width.substring(width.indexOf(":") + 1);
-				width = width.trim();
-				frameWidth.set(Integer.parseInt(width));
-			}
-			if(read.hasNextLine())
-			{
-				String height = read.nextLine();
-				height = height.substring(height.indexOf(":") + 1);
-				height = height.trim();
-				frameHeight.set(Integer.parseInt(height));
-			}
-			if(read.hasNextLine())
-			{
-				String family = read.nextLine();
-				family = family.substring(family.indexOf(":") + 1);
-				family = family.trim();
-
-				String style = read.nextLine();
-				style = style.substring(style.indexOf(":") + 1);
-				style = style.trim();
-
-				String size = read.nextLine();
-				size = size.substring(size.indexOf(":") + 1);
-				size = size.trim();
-
-				editorFont = new Font(family, Integer.parseInt(style), Integer.parseInt(size));
-			}
-			if(read.hasNextLine())
-			{
-				String name = read.nextLine();
-				name = name.substring(name.indexOf(":") + 1);
-				name = name.trim();
-				
-				String path = read.nextLine();
-				path = path.substring(path.indexOf(":") + 1);
-				path = path.trim();
-				
-				String position = read.nextLine();
-				position = position.substring(position.indexOf(":") + 1);
-				position = position.trim();
-				
-				fileName = name;
-				caretPosition.set(Integer.parseInt(position));
-				if(!path.equals("null")) {
-					filePath = path;
+				int valueLocation = value.indexOf(":");
+				if (valueLocation == -1) continue;
+				var toEdit = settingReader.get(value.substring(0, valueLocation).trim());
+				if (toEdit == null) continue;
+				valueLocation++;
+				if (toEdit instanceof AtomicBoolean){
+					((AtomicBoolean) toEdit).set(Boolean.parseBoolean(value.substring(valueLocation).trim()));
+				} else if (toEdit instanceof AtomicInteger){
+					((AtomicInteger) toEdit).set(Integer.parseInt(value.substring(valueLocation).trim()));
+				} else {
+                    //noinspection unchecked
+                    ((AtomicReference<String>) toEdit).set(value.substring(valueLocation).trim());
 				}
 			}
+
 			read.close();
-		} catch (IOException ex) {
+            //noinspection MagicConstant
+            editorFont = new Font(editorFontFamily.get(), editorFontStyle.get(), editorFontSize.get());
+		} catch (Exception ex) {
 			System.out.println("default setting work!");
 		}
+	}
+
+	public static boolean getException() {
+		return exception.get();
+	}
+
+	public static void setException(boolean b) {
+		exception.set(b);
 	}
 }

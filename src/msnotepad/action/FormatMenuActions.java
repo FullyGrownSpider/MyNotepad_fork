@@ -20,14 +20,33 @@ public class FormatMenuActions {
         @Override
         public void actionPerformed(ActionEvent e) {
             JTextArea area = GUIHandler.getEditorTextArea();
+            area.setLineWrap(!InitialValues.getWrapTheLine());
+            InitialValues.setWrapTheLine(!InitialValues.getWrapTheLine());
+        }
+    }
 
-            if (InitialValues.getWrapTheLine()) {
-                area.setLineWrap(false);
-                InitialValues.setWrapTheLine(false);
-            } else {
-                area.setLineWrap(true);
-                InitialValues.setWrapTheLine(true);
-            }
+    public static class shouldReplaceQuotes extends AbstractAction {
+        public shouldReplaceQuotes() {
+            super();
+            putValue(AbstractAction.NAME, "Replace \" and ' with “” and ‘’");
+            putValue(MNEMONIC_KEY, KeyEvent.VK_R);
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            GUIHandler.setReplaceQuotes();
+            InitialValues.setReplaceQuote(!InitialValues.getReplaceQuote());
+        }
+    }
+
+    public static class shouldDoExceptions extends AbstractAction {
+        public shouldDoExceptions() {
+            super();
+            putValue(AbstractAction.NAME, "Automatically change couldn't and wouldn't");
+            putValue(MNEMONIC_KEY, KeyEvent.VK_X);
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            InitialValues.setException(!InitialValues.getException());
         }
     }
 
