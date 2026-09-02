@@ -542,8 +542,10 @@ public class GUIHandler {
             int endingSpace;
             if (correctIndex == 0)
                 endingSpace = outText.length();
-            else
+            else {
+                if (correctIndex + wordStartTo >= inputLine.length()) return;
                 endingSpace = isWhatWords(inputLine.substring(wordStartTo, wordStartTo + correctIndex)).length();
+            }
             makeBold(editorQuickOutArea, startingSpace, endingSpace);
 
         } catch (Exception e) {
@@ -679,10 +681,18 @@ public class GUIHandler {
         if (isSplitter(keyChar)) {
             moveToNextIndex();
         }
-        UndoAction currentUndo = null;
-        if (undoIndex != -1) {
-            currentUndo = undoActionList.get(undoIndex);
+        if (undoIndex == -1) {
+            undoIndex = 0;
+            for (int i = 0; i < MAX_LIST; i++) {
+                undoActionList.set(i, null);
+            }
+        } else if (undoIndex < undoActionList.size() && undoActionList.get(undoIndex+1) != null){
+            moveToNextIndex();
+            for (int i = undoIndex; i < MAX_LIST; i++) {
+                undoActionList.set(i, null);
+            }
         }
+        UndoAction currentUndo = undoActionList.get(undoIndex);
         if (currentUndo == null) {
             undoActionList.set(undoIndex,
                     new UndoAction(editorTextArea.getCaretPosition(),

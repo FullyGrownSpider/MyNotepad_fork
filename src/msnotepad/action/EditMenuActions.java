@@ -28,7 +28,7 @@ public class EditMenuActions {
             if (undoAction == null) return;
             GUIHandler.decreaseUndo();
             if (undoAction.deleted){
-                GUIHandler.getEditorTextArea().insert(undoAction.text.toString(), undoAction.location);
+                GUIHandler.getEditorTextArea().insert(undoAction.text.toString(), undoAction.location - 1);
             } else {
                 GUIHandler.getEditorTextArea().replaceRange("", undoAction.location, undoAction.location + undoAction.text.length());
             }

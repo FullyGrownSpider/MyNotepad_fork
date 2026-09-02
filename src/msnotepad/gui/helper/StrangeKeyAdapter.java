@@ -11,6 +11,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
     public void keyReleased(KeyEvent e) {
         if (needFullReset){
             GUIHandler.fullCompare();
+            needFullReset = false;
             return;
         }
         if (e.getKeyCode() == KeyEvent.VK_ENTER){
