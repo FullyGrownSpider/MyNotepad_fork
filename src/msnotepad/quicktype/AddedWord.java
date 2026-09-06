@@ -190,9 +190,9 @@ public class AddedWord implements Comparable<AddedWord>{
                         .replaceAll("(?<![\\\\<])<(?!<)", "")
                         .replaceAll("\\\\<", "<");
         if (changeQuotes)
-            out = out.replaceAll("(?<=\\w)\"", rightQuote)
+            out = out.replaceAll("(?<=[\\w?.])\"", rightQuote)
                     .replace("\"", leftQuote)
-                    .replaceAll("(?<=\\w)'", rightSingleQuote)
+                    .replaceAll("(?<=[\\w?.])'", rightSingleQuote)
                     .replace("'", leftSingleQuote);
         return out;
     }

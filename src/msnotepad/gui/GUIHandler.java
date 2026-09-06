@@ -686,7 +686,7 @@ public class GUIHandler {
             for (int i = 0; i < MAX_LIST; i++) {
                 undoActionList.set(i, null);
             }
-        } else if (undoIndex < undoActionList.size() && undoActionList.get(undoIndex+1) != null){
+        } else if (undoIndex + 1 < undoActionList.size() && undoActionList.get(undoIndex+1) != null){
             moveToNextIndex();
             for (int i = undoIndex; i < MAX_LIST; i++) {
                 undoActionList.set(i, null);
@@ -854,10 +854,13 @@ public class GUIHandler {
 
         JCheckBoxMenuItem replaceQuotes = makeCheckBoxMenuItem(new FormatMenuActions.shouldReplaceQuotes());
         replaceQuotes.setState(InitialValues.getReplaceQuote());
+        JCheckBoxMenuItem doExceptions = makeCheckBoxMenuItem(new FormatMenuActions.shouldDoExceptions());
+        doExceptions.setState(InitialValues.getException());
         JCheckBoxMenuItem wordWrapFormat = makeCheckBoxMenuItem(new FormatMenuActions.WordWrapFormatAction());
         wordWrapFormat.setState(InitialValues.getWrapTheLine());
         JMenuItem fontChangeFormat = makeMenuItem(new FormatMenuActions.FontChangeFormatAction());
         optionsMenu.add(replaceQuotes);
+        optionsMenu.add(doExceptions);
         optionsMenu.add(wordWrapFormat);
         optionsMenu.add(fontChangeFormat);
 
