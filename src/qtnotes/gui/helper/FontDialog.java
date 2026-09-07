@@ -1,8 +1,10 @@
-/*
+package qtnotes.gui.helper;/*
  * Copyright (c) 2021 Mohit Saini, Under MIT License. Use is subject to license terms.
  * 
  */
 
+
+import qtnotes.init.InitialValues;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -36,7 +38,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.GroupLayout;
 
 /**
- * FontDialog class handle the font choosing function of the MSNotepad,
+ * qtnotes.gui.helper.FontDialog class handle the font choosing function of the MSNotepad,
  * this Dialog uses the GroupLayout as the LayoutManager.
  */
 public class FontDialog extends ADialog implements ListSelectionListener {
@@ -49,7 +51,7 @@ public class FontDialog extends ADialog implements ListSelectionListener {
     private JButton okButton, cancelButton;
 
     /**
-     * FontDialog Constructor get parent container and some information
+     * qtnotes.gui.helper.FontDialog Constructor get parent container and some information
      * to initialize the dialog.
      */
     public FontDialog(JFrame frame, String title, boolean mobality) {
@@ -200,7 +202,7 @@ public class FontDialog extends ADialog implements ListSelectionListener {
 
     /**
      * updateSample method update the Sample Label in the
-     * FontDialog.
+     * qtnotes.gui.helper.FontDialog.
      */
     private void updateSample() {
         if(fontName.list.getSelectedValue() != null && fontStyle.list.getSelectedValue() != null ) {

@@ -1,8 +1,12 @@
-/*
+package qtnotes.actions;/*
  * Copyright (c) 2021 Mohit Saini, Under MIT License. Use is subject to license terms.
  * 
  */
 
+
+import qtnotes.gui.GUIHandler;
+import qtnotes.gui.helper.StatusBar;
+import qtnotes.init.InitialValues;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;

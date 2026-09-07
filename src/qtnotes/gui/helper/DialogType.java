@@ -1,11 +1,11 @@
-/*
+package qtnotes.gui.helper;/*
  * Copyright (c) 2021 Mohit Saini, Under MIT License. Use is subject to license terms.
  * 
  */
 
 
 /**
- * DialogType enumeration help to specify the type of dialog
+ * qtnotes.gui.helper.DialogType enumeration help to specify the type of dialog
  * according to the app requirement.
  */
 public enum DialogType {

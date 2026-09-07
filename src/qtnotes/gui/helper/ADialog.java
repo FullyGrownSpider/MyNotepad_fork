@@ -1,4 +1,4 @@
-
+package qtnotes.gui.helper;
 
 import javax.swing.*;
 import java.awt.*;

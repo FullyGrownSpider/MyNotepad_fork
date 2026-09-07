@@ -1,16 +1,22 @@
+package qtnotes.actions;
+
 public class UndoAction {
     public int location;
     public StringBuilder text;
-    public boolean deleted;
+    public UndoActionType actionType;
 
-    public UndoAction(int location, String text, boolean deleted) {
+    public UndoAction(int location, String text, UndoActionType deleted) {
         this.location = location;
         this.text = new StringBuilder(text);
-        this.deleted = deleted;
+        this.actionType = deleted;
     }
 
     @Override
     public String toString(){
         return location + "-" + text.toString();
+    }
+
+    public boolean isTab() {
+        return location == -1;
     }
 }
