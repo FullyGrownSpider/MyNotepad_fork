@@ -1,8 +1,11 @@
-/*
+package qtnotes.gui.helper;/*
  * Copyright (c) 2021 Mohit Saini, Under MIT License. Use is subject to license terms.
  * 
  */
 
+
+import qtnotes.gui.GUIHandler;
+import qtnotes.init.InitialValues;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -17,7 +20,7 @@ import javax.swing.JPanel;
 
 
 /**
- * StatusBar class make basic statusBar for the MSNotepad, with the
+ * qtnotes.gui.helper.StatusBar class make basic statusBar for the MSNotepad, with the
  * help of the JPanel.
  */
 public class StatusBar extends JPanel{
@@ -27,7 +30,7 @@ public class StatusBar extends JPanel{
     private static StatusBarLabel hint;
 
     /**
-     * StatusBar constructor help to do the initial work.
+     * qtnotes.gui.helper.StatusBar constructor help to do the initial work.
      */
 	public StatusBar() {
         super();

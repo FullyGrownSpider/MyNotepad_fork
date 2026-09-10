@@ -1,4 +1,7 @@
-import quicktype.AddedWord;
+package qtnotes.gui.helper;
+
+import qtnotes.gui.GUIHandler;
+import qtnotes.quicktype.AddedWord;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,6 +39,9 @@ public class FullEditForm {
         wordType();
         redo();
     }
+
+//    TODO add qtnotes.spellcheck
+    //TODO reset hints on reset
 
     private void wordType() {
         word.addActionListener(evt -> {

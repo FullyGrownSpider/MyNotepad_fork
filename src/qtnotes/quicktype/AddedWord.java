@@ -1,4 +1,4 @@
-package quicktype;
+package qtnotes.quicktype;
 
 import java.util.Arrays;
 import java.util.Locale;

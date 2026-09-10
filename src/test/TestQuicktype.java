@@ -1,7 +1,7 @@
 package test;
 
 import org.junit.Test;
-import quicktype.AddedWord;
+import qtnotes.quicktype.AddedWord;
 
 import java.util.HashMap;
 import java.util.Map;

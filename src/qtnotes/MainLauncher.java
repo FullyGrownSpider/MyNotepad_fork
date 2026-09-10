@@ -1,16 +1,18 @@
-/*
+package qtnotes;/*
  * Copyright (c) 2021 Mohit Saini, Under MIT License. Use is subject to license terms.
  * 
  */
 
 
-import quicktype.Loading;
+import qtnotes.gui.GUIHandler;
+import qtnotes.quicktype.Loading;
+import qtnotes.spellcheck.Compression;
 
 import javax.swing.UIManager;
 
 /** 
- * MainLauncher is the starting point of this Notepad, Moreover,
- * it also set it's look and launch the GUIHandler class,
+ * qtnotes.MainLauncher is the starting point of this Notepad, Moreover,
+ * it also set it's look and launch the qtnotes.gui.GUIHandler class,
  * Which handle the further execution.
  */
 public class MainLauncher {
@@ -25,6 +27,9 @@ public class MainLauncher {
         if (args.length == 0)
             return;
         Loading.path = args[0];
+        if (args.length > 1) {
+            Compression.path = args[1];
+        }
         loadLookAndFeel();
         new MainLauncher();     //<--- Internal Constructor
 	}

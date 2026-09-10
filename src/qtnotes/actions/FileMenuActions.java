@@ -1,8 +1,12 @@
-/*
+package qtnotes.actions;/*
  * Copyright (c) 2021 Mohit Saini, Under MIT License. Use is subject to license terms.
  *
  */
 
+
+import qtnotes.gui.GUIHandler;
+import qtnotes.gui.helper.OptionPane;
+import qtnotes.init.InitialValues;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -71,7 +75,7 @@ public class FileMenuActions {
             InitialValues.setFilePath(null);
             InitialValues.writeToFile(); // <---- this is because new window should be empty
             try {
-                Runtime.getRuntime().exec("cmd /c start cmd.exe /K \"cd bin && java com.gmail.mohitsainiknl2.mynotepad.MainLauncher && exit\"");
+                Runtime.getRuntime().exec("cmd /c start cmd.exe /K \"cd bin && java com.gmail.mohitsainiknl2.mynotepad.qtnotes.MainLauncher && exit\"");
             } catch (Exception ex) {
                 System.out.println("Your are doing something worng...");
             }
@@ -114,7 +118,7 @@ public class FileMenuActions {
                 GUIHandler.getEditorTextArea().setText(fileText.substring(0, fileText.length() - 1));
                 GUIHandler.getEditorTextArea().setCaretPosition(0);
                 GUIHandler.setIsLoadingFile(false);
-                GUIHandler.fullCompare();
+                GUIHandler.fullTextQT();
             }
         }
     }
@@ -172,25 +176,6 @@ public class FileMenuActions {
         }
     }
 
-
-    public static class OpenQuickTypeEditAction extends AbstractAction {
-        FullEditForm f;
-        public OpenQuickTypeEditAction() {
-            super();
-            putValue(AbstractAction.NAME, "Open Quicktype Edit");
-            putValue(MNEMONIC_KEY, KeyEvent.VK_E);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_E, CTRL_DOWN_MASK));
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (f != null){
-                f.myFrame.dispose();
-            }
-            f = new FullEditForm(GUIHandler.getWordList());
-        }
-    }
-
     public static class exportQuickTypeAction extends AbstractAction {
         public exportQuickTypeAction() {
             super();
@@ -208,7 +193,7 @@ public class FileMenuActions {
                 File file = new File(filePath);
                 try {
                     FileWriter writer = new FileWriter(file);
-                    writer.write(GUIHandler.getFullQuicktypeExport());
+                    writer.write(GUIHandler.getFullQTExport());
                     writer.close();
                     GUIHandler.setIsSaved(true);
                 } catch (Exception ignored) {
@@ -230,7 +215,7 @@ public class FileMenuActions {
         @Override
         public void actionPerformed(ActionEvent e) {
             Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
-            var export = new StringSelection(GUIHandler.getFullQuicktypeExport());
+            var export = new StringSelection(GUIHandler.getFullQTExport());
             cb.setContents(export, export);
             try {
                 Thread.sleep(10);

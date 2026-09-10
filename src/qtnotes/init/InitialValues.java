@@ -1,7 +1,9 @@
-/*
+package qtnotes.init;/*
  * Copyright (c) 2021 Mohit Saini, Under MIT License. Use is subject to license terms.
  * 
  */
+
+import qtnotes.gui.GUIHandler;
 
 import java.awt.Font;
 import java.io.File;
@@ -16,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
- * InitialValues class help to get the initial values of the MSNotepad, and,
+ * qtnotes.init.InitialValues class help to get the initial values of the MSNotepad, and,
  * also save these parameters in the "Settings.txt" file at the window close and
  * load these parameters again in the variables at the start.
  */
@@ -34,7 +36,7 @@ public class InitialValues {
 	private static final AtomicInteger zoomLevel = new AtomicInteger(100);
 	private static final AtomicInteger editorFontSize = new AtomicInteger(24);
 	private static final AtomicInteger editorFontStyle = new AtomicInteger(0);
-	//TODO
+
 	private static final AtomicReference<String> editorFontFamily = new AtomicReference<>("Consolas");
 	private static final AtomicReference<String> fileName = new AtomicReference<>(NEW_FILE);
 	private static final AtomicReference<String> filePath = new AtomicReference<>("");
@@ -224,8 +226,8 @@ public class InitialValues {
 	 * readFromFile method is help to load the variables from the file.
 	 */
 	public static void readFromFile() {
-		//TODO cant find out how to do it properly so it goes here for now
-		settingReader.put("Show-StatusBar", showStatusBar);
+		//init settingReader, because you always have to read before writing
+		settingReader.put("Show-qtnotes.gui.helper.StatusBar", showStatusBar);
 		settingReader.put("Wrap-The-Line", wrapTheLine);
 		settingReader.put("Zoom-Level", zoomLevel);
 		settingReader.put("replaceQuote", replaceQuote);
@@ -240,7 +242,6 @@ public class InitialValues {
 		settingReader.put("Frame-X", frameX);
 		settingReader.put("Frame-Y", frameY);
 		settingReader.put("Exception", exception);
-		//TODO is maximized?
 
 		try {
 			File file = new File("Settings.txt");

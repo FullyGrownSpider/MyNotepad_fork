@@ -26,7 +26,7 @@ There is an interesting fact about this window/dialog. This Window is made up wi
 
 ### Settings File :
 ```css
-Show-StatusBar : true
+Show-qtnotes.gui.helper.StatusBar : true
 Wrap-The-Line : false
 Frame-Width : 600
 Frame-Height : 450
