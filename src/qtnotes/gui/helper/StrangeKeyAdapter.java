@@ -60,7 +60,6 @@ public class StrangeKeyAdapter extends KeyAdapter {
         }
 
         if (doDelete(e, charCode) || doBackspace(e, charCode)) {
-            actionToDo = ACTION.FULL_QT;
             return;
         }
 
@@ -105,11 +104,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 } else {
                     GUIHandler.getEditorTextArea().insert(text, thing.location);
                 }
-                if (text.contains("\n")){
-                    actionToDo = ACTION.FULL_QT;
-                } else {
-                    actionToDo = ACTION.LINE_QT;
-                }
+                correctEdit(text);
             }
             e.consume();
             return true;
@@ -129,11 +124,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 } else {
                     GUIHandler.getEditorTextArea().insert(text, thing.location);
                 }
-                if (text.contains("\n")){
-                    actionToDo = ACTION.FULL_QT;
-                } else {
-                    actionToDo = ACTION.LINE_QT;
-                }
+                correctEdit(text);
             }
             e.consume();
             return true;
@@ -204,6 +195,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
     }
 
     private static boolean DoMovement(KeyEvent e, int charCode) {
+        if (KeyEvent.VK_PAGE_DOWN == charCode || KeyEvent.VK_PAGE_UP == charCode) return true;
         //arrow up and arrow down shift do  not work
         if (!e.isShiftDown() && !e.isControlDown()) {
             if (GUIHandler.getEditorTextArea().getSelectedText() != null) {
@@ -241,7 +233,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
                     GUIHandler.getEditorTextArea().setSelectionStart(0);
                     GUIHandler.getEditorTextArea().setSelectionEnd(GUIHandler.getEditorTextArea().getSelectionEnd());
                 } else {
-                    GUIHandler.getEditorTextArea().setCaretPosition(GUIHandler.getEditorTextArea().getText().length() - 1);
+                    GUIHandler.getEditorTextArea().setCaretPosition(0);
                 }
                 e.consume();
                 return true;
@@ -297,12 +289,15 @@ public class StrangeKeyAdapter extends KeyAdapter {
             if (selectedText != null) {
                 undoer.removeTextUndo(GUIHandler.getCursorLocation(), selectedText);
                 GUIHandler.getEditorTextArea().replaceSelection("");
+                correctEdit(selectedText);
                 e.consume();
                 return true;
             }
             if (!e.isControlDown()) {
                 try {
-                    undoer.removeTextUndo(GUIHandler.getCursorLocation(), GUIHandler.getEditorTextArea().getText(GUIHandler.getCursorLocation() - 1, 1));
+                    var character = GUIHandler.getEditorTextArea().getText(GUIHandler.getCursorLocation(), 1);
+                    correctEdit(character);
+                    undoer.removeTextUndo(GUIHandler.getCursorLocation(), character);
                 } catch (BadLocationException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -315,7 +310,9 @@ public class StrangeKeyAdapter extends KeyAdapter {
             GUIHandler.getEditorTextArea().setSelectionEnd(from);
             if (to != from) {
                 try {
-                    undoer.removeTextUndo(to, GUIHandler.getEditorTextArea().getText(to, from - to));
+                    var text = GUIHandler.getEditorTextArea().getText(to, from - to);
+                    correctEdit(text);
+                    undoer.removeTextUndo(to, text);
                 } catch (BadLocationException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -325,6 +322,14 @@ public class StrangeKeyAdapter extends KeyAdapter {
             return true;
         }
         return false;
+    }
+
+    private static void correctEdit(String selectedText) {
+        if (selectedText.contains("\n")){
+            actionToDo = ACTION.FULL_QT;
+        } else {
+            actionToDo = ACTION.LINE_QT;
+        }
     }
 
     private boolean doDelete(KeyEvent e, int charCode) {
@@ -338,6 +343,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 }
                 GUIHandler.getEditorTextArea().replaceSelection("");
                 undoer.removeTextUndo(GUIHandler.getCursorLocation(), selectedText);
+                correctEdit(selectedText);
                 return true;
             }
 
@@ -345,12 +351,15 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 var line = deleteLine();
                 if (line.isEmpty()) return true;
                 undoer.removeTextUndo(GUIHandler.getCursorLocation(), line);
+                actionToDo = ACTION.FULL_QT;
                 e.consume();
                 return true;
             }
             if (!e.isControlDown()) {
                 try {
-                    undoer.removeTextUndo(GUIHandler.getCursorLocation(), GUIHandler.getEditorTextArea().getText(GUIHandler.getCursorLocation(), 1));
+                    var character = GUIHandler.getEditorTextArea().getText(GUIHandler.getCursorLocation(), 1);
+                    correctEdit(character);
+                    undoer.removeTextUndo(GUIHandler.getCursorLocation(), character);
                 } catch (BadLocationException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -364,7 +373,9 @@ public class StrangeKeyAdapter extends KeyAdapter {
             GUIHandler.getEditorTextArea().setSelectionEnd(from);
             if (to != from) {
                 try {
-                    undoer.removeTextUndo(to, GUIHandler.getEditorTextArea().getText(to, from - to));
+                    var text = GUIHandler.getEditorTextArea().getText(to, from - to);
+                    correctEdit(text);
+                    undoer.removeTextUndo(to, text);
                 } catch (BadLocationException ex) {
                     throw new RuntimeException(ex);
                 }

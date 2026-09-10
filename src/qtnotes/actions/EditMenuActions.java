@@ -9,6 +9,7 @@ import qtnotes.gui.helper.DialogType;
 import qtnotes.gui.helper.FullEditForm;
 import qtnotes.gui.helper.SuggestionsDisplayForm;
 import qtnotes.init.InitialValues;
+import qtnotes.spellcheck.Spellcheck;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -48,16 +49,10 @@ public class EditMenuActions {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO loop through the text in the QTOut
-            //get all incorrect words (in QTOut) and make them red
-            //run suggest on all the words that also appear in editor
-            var list = new ArrayList<String>();
-            list.add("water fallen");
-            list.add("water");
-            list.add("fallen");
-            list.add("who dat");
-            list.add("woemst smat");
-            new SuggestionsDisplayForm(GUIHandler.getFrame(), InitialValues.getEditorFont(), list);
+            //TODO check the word that your cursor is on, if cursor is not on something either loop or choose the first
+            var word = GUIHandler.getNextMistake();
+            var list = Spellcheck.optimizedSearch(word);
+            new SuggestionsDisplayForm(GUIHandler.getFrame(), InitialValues.getEditorFont(), list, GUIHandler.getShouldLoop(word), word);
         }
     }
 }

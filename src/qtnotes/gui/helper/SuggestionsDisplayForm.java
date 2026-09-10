@@ -3,22 +3,19 @@ package qtnotes.gui.helper;
 import qtnotes.gui.GUIHandler;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 public class SuggestionsDisplayForm extends ADialog {
 
-    /**
-     * FindDialog constructor help to specify the parent component and mobality
-     * of the FindDialog.
-     *
-     * @param frame    the parent component.
-     */
-    public SuggestionsDisplayForm(JFrame frame, Font font, ArrayList<String> suggestions) {
+    static final String ignoreText = "'Ignore'", addToDict = "'Add to Dictionary'";
+    boolean shouldLoop;
+    public SuggestionsDisplayForm(JFrame frame, Font font, ArrayList<String> suggestions, boolean shouldLoop, String word) {
         super(frame, "", false);
+        this.shouldLoop = shouldLoop;
+        suggestions.add(0, addToDict);
+        suggestions.add(1, ignoreText);
         initializeDialog(suggestions, font);
         setUndecorated(true);
 
@@ -45,9 +42,9 @@ public class SuggestionsDisplayForm extends ADialog {
                 return suggestions.get(i);
             }
         });
-        this.add(jList);
+        this.add(new JScrollPane(jList));
 
-        jList.setSelectedIndex(0);
+        jList.setSelectedIndex(2);
         KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
         KeyStroke stroke2 = KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0);
         rootPane.registerKeyboardAction(x ->choose(jList.getSelectedValue()), stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -55,8 +52,16 @@ public class SuggestionsDisplayForm extends ADialog {
     }
     
     public void choose(String replace){
-        GUIHandler.replaceMistake(replace);
+        if (replace.equals(addToDict)){
+            GUIHandler.addToDictionary();
+        } else if (replace.equals(ignoreText)){
+            GUIHandler.ignoreWord();
+        }else
+            GUIHandler.replaceMistake(replace);
+        if (shouldLoop){
+            //TODO doesnt work
+            GUIHandler.doAnotherSpellcheck();
+        }
         dispose();
     }
-
 }
