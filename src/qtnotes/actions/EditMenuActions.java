@@ -5,14 +5,13 @@ package qtnotes.actions;/*
 
 
 import qtnotes.gui.GUIHandler;
-import qtnotes.gui.helper.DialogType;
 import qtnotes.gui.helper.FullEditForm;
 import qtnotes.gui.helper.SuggestionsDisplayForm;
 import qtnotes.init.InitialValues;
+import qtnotes.spellcheck.Spellcheck;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 
@@ -48,16 +47,10 @@ public class EditMenuActions {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO loop through the text in the QTOut
-            //get all incorrect words (in QTOut) and make them red
-            //run suggest on all the words that also appear in editor
-            var list = new ArrayList<String>();
-            list.add("water fallen");
-            list.add("water");
-            list.add("fallen");
-            list.add("who dat");
-            list.add("woemst smat");
-            new SuggestionsDisplayForm(GUIHandler.getFrame(), InitialValues.getEditorFont(), list);
+            var word = GUIHandler.getNextMistake();
+            if (word == null) return;
+            var list = Spellcheck.optimizedSearch(word.word);
+            new SuggestionsDisplayForm(GUIHandler.getFrame(), InitialValues.getEditorFont(), list, word.shouldLoop, word.word, word.location);
         }
     }
 }

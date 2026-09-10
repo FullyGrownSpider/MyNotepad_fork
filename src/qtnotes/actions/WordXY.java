@@ -12,4 +12,9 @@ public class WordXY implements Comparable<WordXY>{
     public int compareTo(WordXY o) {
         return x -o.x;
     }
+
+    @Override
+    public boolean equals(Object comparable){
+        return x== ((WordXY)comparable).x;
+    }
 }

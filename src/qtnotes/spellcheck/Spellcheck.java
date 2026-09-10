@@ -13,8 +13,7 @@ public final class Spellcheck {
         }
     }
 
-    public static List<String> suggestions(String word){
-        //TODO sort based on size (same letters length first)
+    private static ArrayList<String> suggestions(String word){
         //replaces f and v, s and z, and such
         List<String> suggestionsList = new ArrayList<>(66000);
 
@@ -32,7 +31,7 @@ public final class Spellcheck {
         }
 
         alphabetMe(suggestionsList);
-        return suggestionsList.stream().distinct().filter((x) -> x.length() < 30).toList();
+        return new ArrayList<>(suggestionsList.stream().distinct().filter((x) -> x.length() < 30).toList());
     }
 
     private static void alphabetMe(List<String> suggestionsList){
@@ -116,7 +115,7 @@ public final class Spellcheck {
         return suggestionsList;
     }
 
-    public static List<String> optimizedSearch(String word){
+    public static ArrayList<String> optimizedSearch(String word){
         try {
             List<String> testList = Spellcheck.suggestions(word);
             List<SearchThread> runs = new ArrayList<>();
@@ -136,11 +135,16 @@ public final class Spellcheck {
             runs.add(firstFinder);
             first.start();
 
+            first.join();
             var actualSugs = new ArrayList<>(firstFinder.getValue());
+
             for (i = 0; i < threads.size(); i++) {
                 threads.get(i).join();
                 actualSugs.addAll(runs.get(i).getValue());
             }
+
+            //more likely to miss letters than to add them... i think
+            actualSugs.sort((a,b) -> b.length() - a.length());
 
             return actualSugs;
         } catch (Exception e) {

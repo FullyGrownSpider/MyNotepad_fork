@@ -10,6 +10,7 @@ import qtnotes.gui.helper.StrangeKeyAdapter;
 import qtnotes.init.InitialValues;
 import qtnotes.quicktype.AddedWord;
 import qtnotes.quicktype.Quicktype;
+import qtnotes.spellcheck.Compression;
 import qtnotes.spellcheck.Spellcheck;
 
 import javax.swing.*;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -49,24 +51,20 @@ public class GUIHandler {
     private static final Quicktype quicktype = new Quicktype();
 
     private static JMenuItem saveAsFile;
+    private static JMenuItem fixSpelling;
     public static JCheckBoxMenuItem statusBarView;
 
     private static Style _defaultStyle;
     private static Style _incorrectStyle;
     private static Style _selectedStyle;
-    private static final List<String> ignored = new ArrayList<>();
-    private static final List<WordXY> incorrectItems = new ArrayList<>();
+    private static Style _selectedIncorrectStyle;
+    private static final List<String> ignoredUnknownWords = new ArrayList<>();
+    private static final Pattern onlyLettersPattern = Pattern.compile("[^A-z]");
+    private static final Pattern splitterPattern = Pattern.compile("[\n\t \"'.,?!]");
+    private static List<WordXY> incorrectItems = new ArrayList<>();
     private static final WordXY emptyPoint = new WordXY(-1, -1);
-    
+
     public static byte saveCount = 0;
-
-    public static void replaceMistake(String replace) {
-        var wordXY = incorrectItems.remove(0);
-        editorTextArea.select(wordXY.x, wordXY.x + wordXY.y);
-        getEditorTextArea().replaceSelection(replace);
-        postQTClean();
-    }
-
     /**
      * handle method is help to setup the major components and getting the frame ready to
      * make it visible on the user screen.
@@ -153,7 +151,6 @@ public class GUIHandler {
      * initialiseScrollPane method is help to setup the text editor of the MSNotepad.
      */
     private void initialiseScrollPane() {
-
         StyleContext styleContext = new StyleContext();
         _defaultStyle = styleContext.getStyle(StyleContext.DEFAULT_STYLE);
         _selectedStyle = styleContext.addStyle("ConstantWidth", null);
@@ -161,6 +158,8 @@ public class GUIHandler {
         StyleConstants.setBold(_selectedStyle, true);
         _incorrectStyle = styleContext.addStyle("ConstantWidth", _selectedStyle);
         StyleConstants.setForeground(_incorrectStyle, new Color(0xf00000));
+        _selectedIncorrectStyle = styleContext.addStyle("ConstantWidth", _selectedStyle);
+        StyleConstants.setForeground(_selectedIncorrectStyle, new Color(0xF35029));
 
         editorTextArea = initTextArea();
         qtOutArea = initTextPane();
@@ -181,7 +180,6 @@ public class GUIHandler {
         }
 
         editorTextArea.addCaretListener(e -> findNSetPositionIndicator());
-        editorTextArea.setSelectionStart(editorTextArea.getText().length());
     }
 
     private JTextPane initTextPane() {
@@ -295,11 +293,12 @@ public class GUIHandler {
         try {
             var word = getCurrentWord();
 
-            spellCheck();
+            spellCheck(false);
             clearBold(qtOutArea);
 
             spellPaint(qtOutArea);
             boldCursorText(word);
+            setQTHint();
         } catch (BadLocationException ignored) {
 
         }
@@ -308,8 +307,9 @@ public class GUIHandler {
     public static void fullTextQT() {
         try {
             qtOutArea.setText("");
-            replaceOutSelection(0, 0, 0,editorTextArea.getText().length());
+            replaceOutSelection(0, 0, 0, editorTextArea.getText().length());
 
+            spellCheck(true);
             postQTClean();
         } catch (BadLocationException ignored) {
 
@@ -321,14 +321,18 @@ public class GUIHandler {
             int line = getCurrentLine();
             var offsetOut = getOutCurrentLine(line);
             var allTextAfterOffset = qtOutArea.getText(offsetOut, qtOutArea.getText().length() - offsetOut + 1);
-            var lineEndOut = allTextAfterOffset.indexOf("\n") - 1;
-            if (lineEndOut == -2) {
+            var editorStartOffset = editorTextArea.getLineStartOffset(line);
+            boolean lastLine = !getTextLength(editorStartOffset, editorTextArea.getText().length() - editorStartOffset).contains("\n");
+            var lineEndOut = allTextAfterOffset.indexOf("\n");
+            if (lineEndOut == -1) {
                 lineEndOut = allTextAfterOffset.length() + offsetOut;
             }
             int lineEditorStart = editorTextArea.getLineStartOffset(line);
-            int lineEditorEnd = editorTextArea.getLineEndOffset(line);
-            replaceOutSelection(offsetOut, offsetOut + lineEndOut + 1, lineEditorStart, lineEditorEnd - lineEditorStart);
-
+            int lineEditorEnd = editorTextArea.getLineEndOffset(line) - 1;
+            replaceOutSelection(offsetOut,
+                    offsetOut + lineEndOut,
+                    lineEditorStart,
+                    lineEditorEnd - lineEditorStart +(lastLine ? 1 : 0));
             postQTClean();
         } catch (Exception ignored) {
         }
@@ -354,7 +358,7 @@ public class GUIHandler {
 
         int outCurrentLine = getOutCurrentLine(line);
 
-        String lineOfTextEditor = editorTextArea.getText(lineEditorStart, lineEditorEnd - lineEditorStart);
+        String lineOfTextEditor = getTextOffset(lineEditorStart, lineEditorEnd);
 
         String lineBeforeWordEditor = lineOfTextEditor.substring(0, editorTextArea.getCaretPosition() - lineEditorStart);
         int wordStartEditor = lineBeforeWordEditor.lastIndexOf(' ') + 1;
@@ -383,10 +387,8 @@ public class GUIHandler {
 
     private static void boldCursorText(WordXY currentPoint) {
         try {
-            var input = GUIHandler.getEditorTextArea();
-
-            int start = input.getSelectionStart();
-            int end = input.getSelectionEnd();
+            int start = editorTextArea.getSelectionStart();
+            int end = editorTextArea.getSelectionEnd();
 
             if (end != start) {
                 return;
@@ -404,54 +406,140 @@ public class GUIHandler {
     }
 
     private static void makeBold(JTextPane outPut, int startingSpace, int endingSpace) {
-        outPut.getStyledDocument().setCharacterAttributes(startingSpace, endingSpace, _selectedStyle, true);
+        var wordIncorrect = false;
+
+        for (var loopWord : incorrectItems) {
+            if (startingSpace == loopWord.x && endingSpace == loopWord.y) {
+                wordIncorrect = true;
+                break;
+            }
+        }
+        if (wordIncorrect){
+            outPut.getStyledDocument().setCharacterAttributes(startingSpace, endingSpace, _selectedIncorrectStyle, true);
+        } else {
+            outPut.getStyledDocument().setCharacterAttributes(startingSpace, endingSpace, _selectedStyle, true);
+        }
     }
 
-    private static void spellCheck() {
+    private static void spellCheck(boolean checkAnyway) {
         try {
-            int currentLine = getCurrentLine();
+            var editorLength = editorTextArea.getText().length();
+            if (editorLength == 0 || (!checkAnyway && editorTextArea.getCaretPosition() == editorLength && !splitterPattern.matcher(editorTextArea.getText(editorLength - 1, 1)).find())) {
+                return;
+            }
+            int currentLine;
+            if (checkAnyway) currentLine =0;
+            else currentLine = getCurrentLine();
             int outCurrentLineOffSet = getOutCurrentLine(currentLine);
             var allTextAfterOffset = new StringBuilder(qtOutArea.getText(outCurrentLineOffSet, qtOutArea.getText().length() - outCurrentLineOffSet));
-            var wordsToCheck = allTextAfterOffset.toString().split("[ \t\n\"'.,?!]");
-            Pattern pat = Pattern.compile("[^A-z]");
             var suggestible = new ArrayList<String>(8);
             var startOffset = editorTextArea.getLineStartOffset(currentLine);
-            var editorText = editorTextArea.getText(editorTextArea.getLineStartOffset(currentLine), editorTextArea.getText().length() - startOffset);
-            for (var word : wordsToCheck){
-                if (word.length() < 3 || word.length() >= 30) continue;
-                if (!pat.matcher(word).find() && !Spellcheck.isCorrectlySpelled(word) && editorText.contains(word)){
+            var editorTextStream = List.of(editorTextArea.getText(editorTextArea.getLineStartOffset(currentLine), editorTextArea.getText().length() - startOffset).split(onlyLettersPattern.pattern()));
+
+            String replaceNumbers = Long.MAX_VALUE + Long.toString(Long.MAX_VALUE);
+            replaceNumbers = replaceNumbers.substring(0, 30);
+            for (var word : allTextAfterOffset.toString().split("[ \t\n\"'.,?!]")) {
+                //skip those too long or short
+                if (word.length() < 4 || word.length() >= 30) continue;
+                //only letters
+                if (!onlyLettersPattern.matcher(word).find()
+                        //do the spell check
+                        && !Spellcheck.isCorrectlySpelled(word.toLowerCase(Locale.ROOT))
+                        //is the word in the editor the same as in the QT
+                        && editorTextStream.contains(word)
+                        //ignore ignored words
+                        && !ignoredUnknownWords.contains(word)) {
                     suggestible.add(word);
+                } else {
+                    var index = allTextAfterOffset.indexOf(word);
+                    //remove all things like prod, which is part of productive so that when
+                    allTextAfterOffset.replace(index, word.length() + index, replaceNumbers.substring(0, word.length()));
                 }
             }
             incorrectItems.sort(WordXY::compareTo);
-            var list = incorrectItems.stream().filter((wordXY -> wordXY.x < outCurrentLineOffSet)).toList();
-            incorrectItems.clear();
-            incorrectItems.addAll((list));
-            String replaceNumbers = Long.MAX_VALUE + Long.toString(Long.MAX_VALUE);
-            replaceNumbers = replaceNumbers.substring(0, 30);
-            for (var badWord : suggestible){
-                var index = allTextAfterOffset.indexOf(badWord);
-                allTextAfterOffset.replace(index, badWord.length() + index, replaceNumbers.substring(0, badWord.length()));
-                incorrectItems.add(new WordXY(index, badWord.length()));
-            }
+            incorrectItems = incorrectItems.stream().filter((wordXY -> wordXY.x < outCurrentLineOffSet)).collect(Collectors.toCollection(ArrayList::new));
 
-            //TODO
-            // remove all checked words from this line
-            // check all words in a line (except the one with the cursor in it
+            for (var badWord : suggestible) {
+                var index = allTextAfterOffset.indexOf(badWord);
+                if (index == -1) return;
+                allTextAfterOffset.replace(index, badWord.length() + index, replaceNumbers.substring(0, badWord.length()));
+                incorrectItems.add(new WordXY(outCurrentLineOffSet + index, badWord.length()));
+            }
 
         } catch (BadLocationException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static void addToIncorrect(WordXY what) {
-        if (!incorrectItems.isEmpty()) {
-            var last = incorrectItems.stream().filter((x) -> x.x == what.x).findFirst();
-            if (last.orElse(emptyPoint).x == what.x) {
-                incorrectItems.remove(last.orElse(emptyPoint));
+    public static PossibleWord getNextMistake() {
+        if (incorrectItems.isEmpty()) return null;
+        try {
+            var location = getCurrentWord();
+            for (var loopWord : incorrectItems) {
+                if (location.x == loopWord.x && location.y == loopWord.y) {
+                    var word = qtOutArea.getText(loopWord.x, loopWord.y);
+                    return new PossibleWord(qtOutArea.getText(loopWord.x, loopWord.y), false, findSpotOnEditor(word, location.x));
+                }
             }
+            var wordL = incorrectItems.get(0);
+            var word = qtOutArea.getText(wordL.x, wordL.y);
+            return new PossibleWord(qtOutArea.getText(wordL.x, wordL.y), true, findSpotOnEditor(word, wordL.x));
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
         }
-        incorrectItems.add(what);
+    }
+
+    private static WordXY findSpotOnEditor(String word, int x) {
+        var text = editorTextArea.getText();
+        var index = text.indexOf(word);
+        var finalIndex = text.lastIndexOf(word);
+        if (index == finalIndex){
+            return new WordXY(index, word.length());
+        }
+        int counter = 0;
+        var textOut = qtOutArea.getText();
+        var indexOut = textOut.indexOf(word);
+        while (indexOut != x){
+            indexOut = textOut.indexOf(word, indexOut + 1);
+            counter++;
+        }
+        for (int i = 0; i < counter; i++) {
+            index = text.indexOf(word, index + 1);
+        }
+        return new WordXY(index, word.length());
+    }
+
+    public static void replaceMistake(String replace, WordXY wordXY) {
+        incorrectItems.remove(wordXY);
+        setSelectedWord(wordXY);
+        editorTextArea.replaceSelection(replace);
+        fullTextQT();
+    }
+
+    public static void doAnotherSpellcheck(){
+        fixSpelling.doClick();
+    }
+
+    public static void ignoreWord() {
+        try {
+            var word = incorrectItems.remove(0);
+            var text = getTextWord(word);
+            ignoredUnknownWords.add(text);
+            postQTClean();
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void addToDictionary() {
+        try {
+            var word = incorrectItems.remove(0);
+            var text = getTextWord(word);
+            Compression.add(text);
+            postQTClean();
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static void spellPaint(JTextPane outPut) {
@@ -464,24 +552,29 @@ public class GUIHandler {
         return AddedWord.createText(word, quicktype.data, InitialValues.getReplaceQuote(), InitialValues.getException());
     }
 
-    private static void setIncorrectQT(String oldText, String newText) {
+    private static void setQTHint() throws BadLocationException {
         if (statusBar == null || !statusBar.isVisible()) return;
 
-        var oldWords = Arrays.stream(oldText.split(" ")).distinct().toList();
+        int line = getCurrentLine();
+        var offsetOut = getOutCurrentLine(line);
+        var allTextAfterOffset = qtOutArea.getText(offsetOut, qtOutArea.getText().length() - offsetOut + 1);
+        var lineEndOut = allTextAfterOffset.indexOf("\n");
+        if (lineEndOut == -1) {
+            lineEndOut = allTextAfterOffset.length() + offsetOut;
+        }
+        var oldWords = Arrays.stream(allTextAfterOffset.substring(0,lineEndOut).split(splitterPattern.pattern())).toList();
 
-        for (int i = Math.max(0, oldWords.size() - 2); i < oldWords.size(); i++) {
-            if (oldWords.get(i).length() < 3) continue;
-            if (newText.contains(oldWords.get(i))) {
-                var wrong = AddedWord.exists(oldWords.get(i), quicktype.data);
-                if (!wrong.isEmpty()) {
-                    statusBar.setHintText(wrong);
-                    return;
-                }
+        for (var word : oldWords) {
+            if (word.length() < 3) continue;
+            var wrong = AddedWord.exists(word, quicktype.data);
+            if (!wrong.isEmpty()){
+                statusBar.setHintText(wrong);
+                return;
             }
         }
         statusBar.setHintText("");
     }
-    
+
     private static void findNSetPositionIndicator() {
         int lineNum = 1;
         int columnNum = 1;
@@ -522,7 +615,7 @@ public class GUIHandler {
         if (fileText.length() - 1 > -1)
             editorTextArea.setText(fileText.substring(0, fileText.length() - 1));
         try {
-            editorTextArea.setCaretPosition(InitialValues.getCaretPosition());//TODO
+            editorTextArea.setCaretPosition(InitialValues.getCaretPosition());
         } catch (Exception e) {
             editorTextArea.setCaretPosition(0);
             InitialValues.setCaretPosition(0);
@@ -566,21 +659,21 @@ public class GUIHandler {
         JMenuItem exportQuicktype = makeMenuItem(new FileMenuActions.exportQuickTypeAction());
         JMenuItem copyQuicktype = makeMenuItem(new FileMenuActions.copyQuickTypeAction());
         JMenuItem exitFile = makeMenuItem(new FileMenuActions.ExitFileAction());
+        fixSpelling = makeMenuItem(new EditMenuActions.SuggestAction());
         fileMenu.add(newFile);
         fileMenu.add(newWindowFile);
         fileMenu.addSeparator();
         fileMenu.add(openFile);
         fileMenu.add(saveAsFile);
         fileMenu.add(openFile);
-        editMenu.add(editQuicktype);
         fileMenu.add(copyQuicktype);
         fileMenu.add(exportQuicktype);
         fileMenu.addSeparator();
         fileMenu.add(exitFile);
 
-        var suggestEdit = makeMenuItem(new EditMenuActions.SuggestAction());
         editMenu.add(editQuicktype);
-        editMenu.add(suggestEdit);
+        editMenu.add(editQuicktype);
+        editMenu.add(fixSpelling);
 
         JCheckBoxMenuItem replaceQuotes = makeCheckBoxMenuItem(new FormatMenuActions.shouldReplaceQuotes());
         replaceQuotes.setState(InitialValues.getReplaceQuote());
@@ -620,6 +713,10 @@ public class GUIHandler {
 
     public static JTextArea getEditorTextArea() {
         return editorTextArea;
+    }
+
+    public static String getEditorText(){
+        return editorTextArea.getText();
     }
 
     public static String getFullQTExport() {
@@ -677,7 +774,74 @@ public class GUIHandler {
             return -1;
         }
     }
-    public static int getCursorLocation() {
+
+    public static int getEditorTextLength() {
+        return editorTextArea.getText().length();
+    }
+
+    public static int getCursorLocationOrSelectStart() {
         return editorTextArea.getSelectionStart();
     }
+
+    public static String getSelectedText() {
+        return editorTextArea.getSelectedText();
+    }
+
+    public static void setSelectedOffset(int offsetStart, int offsetEnd){
+        editorTextArea.setCaretPosition(offsetStart);
+        editorTextArea.moveCaretPosition(offsetEnd);
+    }
+    public static void setSelectedLength(int offsetStart, int length){
+        editorTextArea.setCaretPosition(offsetStart);
+        editorTextArea.moveCaretPosition(offsetStart + length);
+    }
+
+    public static void setSelectedOffsetBack(int offsetBack, int offsetEnd){
+        editorTextArea.setCaretPosition(offsetEnd);
+        editorTextArea.moveCaretPosition(offsetBack);
+    }
+
+    public static int getSelectionEnd() {
+        return getEditorTextArea().getSelectionEnd();
+    }
+
+    public static void setSelectedWord(WordXY wordXY){
+        editorTextArea.select(wordXY.x, wordXY.x + wordXY.y);
+    }
+
+    public static String getTextLength(int offsetStart, int length) throws BadLocationException {
+        return editorTextArea.getText(offsetStart, length);
+    }
+
+    public static String getTextOffset(int offsetStart, int offsetEnd) throws BadLocationException {
+        return editorTextArea.getText(offsetStart, offsetEnd - offsetStart);
+    }
+
+    public static String getTextWord(WordXY wordXY) throws BadLocationException {
+        return editorTextArea.getText(wordXY.x, wordXY.x + wordXY.y - 1);
+    }
+
+    public static void setEditorText(String text) {
+        editorTextArea.setText(text);
+    }
+
+    public static int endOfLine(int line) throws BadLocationException {
+        var totalLength = GUIHandler.getEditorTextLength();
+        line = Math.min(editorTextArea.getLineCount()-1, line);
+        var mount = GUIHandler.getEditorTextArea().getLineEndOffset(line);
+        if (mount != totalLength)
+            return mount-1;
+        else {
+            return totalLength;
+        }
+    }
+
+    public static boolean isLastLine(int offset) {
+        try {
+            return editorTextArea.getLineOfOffset(offset) == editorTextArea.getLineCount() -1;
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

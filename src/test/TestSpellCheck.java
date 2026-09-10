@@ -15,7 +15,7 @@ import java.util.*;
 public class TestSpellCheck {
     String fileLocation = "/home/a804/Documents/MyTyper/words.txt";
     String fileLocation3 = "/home/a804/Documents/MyTyper/words_bin.dat";
-    String testWord = "beatiful";
+    String testWord = "probly";
 
     @Test
     public void removeCheck() throws IOException {
