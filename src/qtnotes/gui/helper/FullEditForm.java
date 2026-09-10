@@ -2,14 +2,13 @@ package qtnotes.gui.helper;
 
 import qtnotes.gui.GUIHandler;
 import qtnotes.quicktype.AddedWord;
+import qtnotes.spellcheck.Spellcheck;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Optional;
 
 public class FullEditForm {
     public final JFrame myFrame = new JFrame("typer inputEdit");
@@ -63,6 +62,8 @@ public class FullEditForm {
         word.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
+                if (e.isControlDown()) return;
+                if (e.getKeyChar() == KeyEvent.VK_ENTER) return;
                 if ((word.getText() + e.getKeyChar()).trim().isEmpty()) {
                     showDoubles();
                     return;
@@ -96,6 +97,7 @@ public class FullEditForm {
         shortCut.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
+                if (e.getKeyChar() == KeyEvent.VK_ENTER && e.isShiftDown()) return;
                 if ((shortCut.getText() + e.getKeyChar()).trim().isEmpty()) {
                     showDoubles();
                     return;
@@ -139,7 +141,7 @@ public class FullEditForm {
     private void southPanelMake() {
         add.setText("add/update");
         add.addActionListener(x -> {
-            GUIHandler.getQuicktype().addWord(new AddedWord(Arrays.stream(fieldList).map(xo -> xo.getText().replaceAll(" ", "<<")).toList().toArray(new String[8])));
+            GUIHandler.getQuicktype().addWord(new AddedWord(Arrays.stream(fieldList).map(xo -> xo.getText().replace(" ", "<<")).toList().toArray(new String[8])));
             textToThing();
         });
         southPanel.add(add);
@@ -169,20 +171,51 @@ public class FullEditForm {
         myFrame.add(southPanel, BorderLayout.SOUTH);
         myFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         myFrame.getContentPane().setBackground(Color.DARK_GRAY);
-        myFrame.add(this.info, BorderLayout.CENTER);
+        myFrame.add(new JScrollPane(this.info), BorderLayout.CENTER);
 
         KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
         myFrame.getRootPane().registerKeyboardAction(x -> myFrame.dispose(), stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         KeyStroke strokeAdd = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK);
         myFrame.getRootPane().registerKeyboardAction(x -> {
-            GUIHandler.getQuicktype().addWord(new AddedWord(Arrays.stream(fieldList).map(xo -> xo.getText().replaceAll(" ", "<<")).toList().toArray(new String[8])));
+            if (shortCut.getText().contains("SS")){
+                var list = GUIHandler.getQuicktype().data.values();
+                var buf = new StringBuilder();
+                list = list.stream().sorted(Comparator.comparing(AddedWord::getWord)).toList();
+                for (var word : list){
+                    buf.append(String.join("  ⬛  ", word.data)).append("\n");
+                }
+                this.info.setText(buf.toString());
+                return;
+            }
+            GUIHandler.getQuicktype().addWord(new AddedWord(Arrays.stream(fieldList).map(xo -> xo.getText().replace(" ", "<<")).toList().toArray(new String[8])));
             textToThing();
             for (JTextField jTextField : fieldList) {
                 jTextField.setText("");
             }
             fieldList[0].grabFocus();
             }, strokeAdd, JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+        KeyStroke strokeSpelling = KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK);
+        myFrame.getRootPane().registerKeyboardAction(x -> {
+            this.info.setText("");
+            for (int i = 1; i <fieldList.length; i++) {
+                var item = fieldList[i];
+                var text= item.getText();
+                if (text.length() < 4) continue;
+                if (!Spellcheck.isCorrectlySpelled(text)){
+                    List<String> suggestions = Spellcheck.optimizedSearch(text);
+                    var buf = new StringBuilder();
+                    for (var sug : suggestions){
+                        if (!buf.isEmpty()){
+                            buf.append(" - ");
+                        }
+                        buf.append(sug);
+                    }
+                    this.info.append(buf + "\n");
+                }
+            }
+        }, strokeSpelling, JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 }
 

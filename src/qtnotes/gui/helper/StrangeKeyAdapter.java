@@ -26,7 +26,6 @@ public class StrangeKeyAdapter extends KeyAdapter {
     public static final Pattern spaceOrEnter = Pattern.compile("[ \n]");
     public Undoer undoer = new Undoer();
 
-
     @Override
     public void keyReleased(KeyEvent e) {
         switch (actionToDo) {
@@ -72,9 +71,14 @@ public class StrangeKeyAdapter extends KeyAdapter {
         var selected = GUIHandler.getEditorTextArea().getSelectedText();
 
         if (charCode == KeyEvent.VK_TAB && (e.isShiftDown() || selected != null)) {
+            var locationStart = GUIHandler.getCursorLocation();
+            var locationEnd = GUIHandler.getEditorTextArea().getSelectionEnd();
             removeTab(e.isShiftDown());
-            actionToDo = ACTION.FULL_QT;
             e.consume();
+            if (e.isShiftDown()){
+                GUIHandler.getEditorTextArea().setSelectionStart(locationStart);
+                GUIHandler.getEditorTextArea().setSelectionEnd(locationEnd);
+            }
             return;
         }
         if (selected != null) {
@@ -295,7 +299,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
             }
             if (!e.isControlDown()) {
                 try {
-                    var character = GUIHandler.getEditorTextArea().getText(GUIHandler.getCursorLocation(), 1);
+                    var character = GUIHandler.getEditorTextArea().getText(GUIHandler.getCursorLocation()-1, 1);
                     correctEdit(character);
                     undoer.removeTextUndo(GUIHandler.getCursorLocation(), character);
                 } catch (BadLocationException ex) {
@@ -519,8 +523,12 @@ public class StrangeKeyAdapter extends KeyAdapter {
                     }
                 } else {
                     GUIHandler.getEditorTextArea().insert("\t", index);
-                    return;
                 }
+            }
+            if (lineNumQuickEnd == lineNumQuickStart){
+                actionToDo = ACTION.LINE_QT;
+            } else {
+                actionToDo = ACTION.FULL_QT;
             }
             undoer.addTabLines(lineNumQuickStart,lineNumQuickEnd,shiftDown);
         } catch (BadLocationException ignored) {

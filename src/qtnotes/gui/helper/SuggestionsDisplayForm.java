@@ -1,5 +1,6 @@
 package qtnotes.gui.helper;
 
+import qtnotes.actions.WordXY;
 import qtnotes.gui.GUIHandler;
 
 import javax.swing.*;
@@ -9,12 +10,15 @@ import java.util.ArrayList;
 
 public class SuggestionsDisplayForm extends ADialog {
 
-    static final String ignoreText = "'Ignore'", addToDict = "'Add to Dictionary'";
+    static final String ignoreText = "'Ignore'", addToDict = " (Add to Dictionary)";
     boolean shouldLoop;
-    public SuggestionsDisplayForm(JFrame frame, Font font, ArrayList<String> suggestions, boolean shouldLoop, String word) {
+    WordXY wordXY;
+
+    public SuggestionsDisplayForm(JFrame frame, Font font, ArrayList<String> suggestions, boolean shouldLoop, String word, WordXY wordXY) {
         super(frame, "", false);
         this.shouldLoop = shouldLoop;
-        suggestions.add(0, addToDict);
+        this.wordXY = wordXY;
+        suggestions.add(0, word+addToDict);
         suggestions.add(1, ignoreText);
         initializeDialog(suggestions, font);
         setUndecorated(true);
@@ -45,6 +49,7 @@ public class SuggestionsDisplayForm extends ADialog {
         this.add(new JScrollPane(jList));
 
         jList.setSelectedIndex(2);
+
         KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
         KeyStroke stroke2 = KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0);
         rootPane.registerKeyboardAction(x ->choose(jList.getSelectedValue()), stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -57,9 +62,8 @@ public class SuggestionsDisplayForm extends ADialog {
         } else if (replace.equals(ignoreText)){
             GUIHandler.ignoreWord();
         }else
-            GUIHandler.replaceMistake(replace);
+            GUIHandler.replaceMistake(replace, wordXY);
         if (shouldLoop){
-            //TODO doesnt work
             GUIHandler.doAnotherSpellcheck();
         }
         dispose();

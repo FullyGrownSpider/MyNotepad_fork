@@ -51,7 +51,7 @@ public class GUIHandler {
     private static final Quicktype quicktype = new Quicktype();
 
     private static JMenuItem saveAsFile;
-    private static JMenuItem editQuicktype;
+    private static JMenuItem fixSpelling;
     public static JCheckBoxMenuItem statusBarView;
 
     private static Style _defaultStyle;
@@ -160,7 +160,7 @@ public class GUIHandler {
         _incorrectStyle = styleContext.addStyle("ConstantWidth", _selectedStyle);
         StyleConstants.setForeground(_incorrectStyle, new Color(0xf00000));
         _selectedIncorrectStyle = styleContext.addStyle("ConstantWidth", _selectedStyle);
-        StyleConstants.setForeground(_selectedIncorrectStyle, new Color(0xf04080));
+        StyleConstants.setForeground(_selectedIncorrectStyle, new Color(0xF35029));
 
         editorTextArea = initTextArea();
         qtOutArea = initTextPane();
@@ -299,6 +299,7 @@ public class GUIHandler {
 
             spellPaint(qtOutArea);
             boldCursorText(word);
+            setQTHint();
         } catch (BadLocationException ignored) {
 
         }
@@ -321,14 +322,18 @@ public class GUIHandler {
             int line = getCurrentLine();
             var offsetOut = getOutCurrentLine(line);
             var allTextAfterOffset = qtOutArea.getText(offsetOut, qtOutArea.getText().length() - offsetOut + 1);
+            var editorStartOffset = editorTextArea.getLineStartOffset(line);
+            boolean lastLine = !editorTextArea.getText(editorStartOffset, editorTextArea.getText().length() - editorStartOffset).contains("\n");
             var lineEndOut = allTextAfterOffset.indexOf("\n");
             if (lineEndOut == -1) {
                 lineEndOut = allTextAfterOffset.length() + offsetOut;
             }
             int lineEditorStart = editorTextArea.getLineStartOffset(line);
             int lineEditorEnd = editorTextArea.getLineEndOffset(line) - 1;
-            replaceOutSelection(offsetOut, offsetOut + lineEndOut, lineEditorStart, lineEditorEnd - lineEditorStart);
-
+            replaceOutSelection(offsetOut,
+                    offsetOut + lineEndOut,
+                    lineEditorStart,
+                    lineEditorEnd - lineEditorStart +(lastLine ? 1 : 0));
             postQTClean();
         } catch (Exception ignored) {
         }
@@ -468,41 +473,53 @@ public class GUIHandler {
         }
     }
 
-    public static String getNextMistake() {
-        if (incorrectItems.isEmpty()) return "";
+    public static PossibleWord getNextMistake() {
+        if (incorrectItems.isEmpty()) return null;
         try {
             var location = getCurrentWord();
             for (var loopWord : incorrectItems) {
                 if (location.x == loopWord.x && location.y == loopWord.y) {
-                    return qtOutArea.getText(loopWord.x, loopWord.y);
+                    var word = qtOutArea.getText(loopWord.x, loopWord.y);
+                    return new PossibleWord(qtOutArea.getText(loopWord.x, loopWord.y), false, findSpotOnEditor(word, location.x));
                 }
             }
-            var word = incorrectItems.get(0);
-            return qtOutArea.getText(word.x, word.y);
+            var wordL = incorrectItems.get(0);
+            var word = qtOutArea.getText(wordL.x, wordL.y);
+            return new PossibleWord(qtOutArea.getText(wordL.x, wordL.y), true, findSpotOnEditor(word, wordL.x));
         } catch (BadLocationException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static boolean getShouldLoop(String toSearch) {
-        try {
-            if (incorrectItems.isEmpty()) return false;
-            var word = incorrectItems.get(0);
-            return qtOutArea.getText(word.x, word.x + word.y - 1).equals(toSearch);
-        } catch (BadLocationException e) {
-            throw new RuntimeException(e);
+    private static WordXY findSpotOnEditor(String word, int x) {
+        var text = editorTextArea.getText();
+        var index = text.indexOf(word);
+        var finalIndex = text.lastIndexOf(word);
+        if (index == finalIndex){
+            return new WordXY(index, word.length());
         }
+        int counter = 0;
+        var textOut = qtOutArea.getText();
+        var indexOut = textOut.indexOf(word);
+        while (indexOut != x){
+            indexOut = textOut.indexOf(word, indexOut + 1);
+            counter++;
+        }
+        for (int i = 0; i < counter; i++) {
+            index = text.indexOf(word, index + 1);
+        }
+        return new WordXY(index, word.length());
     }
 
-    public static void replaceMistake(String replace) {
-        var wordXY = incorrectItems.remove(0);
+    public static void replaceMistake(String replace, WordXY wordXY) {
+        incorrectItems.remove(wordXY);
         editorTextArea.select(wordXY.x, wordXY.x + wordXY.y);
         getEditorTextArea().replaceSelection(replace);
         fullTextQT();
     }
 
     public static void doAnotherSpellcheck(){
-        editQuicktype.doClick();
+        fixSpelling.doClick();
     }
 
     public static void ignoreWord() {
@@ -537,19 +554,24 @@ public class GUIHandler {
         return AddedWord.createText(word, quicktype.data, InitialValues.getReplaceQuote(), InitialValues.getException());
     }
 
-    private static void setQTHint(String oldText, String newText) {
-        if (statusBar == null || !statusBar.isVisible()) return;//TODO readd QT hints
+    private static void setQTHint() throws BadLocationException {
+        if (statusBar == null || !statusBar.isVisible()) return;
 
-        var oldWords = Arrays.stream(oldText.split(" ")).distinct().toList();
+        int line = getCurrentLine();
+        var offsetOut = getOutCurrentLine(line);
+        var allTextAfterOffset = qtOutArea.getText(offsetOut, qtOutArea.getText().length() - offsetOut + 1);
+        var lineEndOut = allTextAfterOffset.indexOf("\n");
+        if (lineEndOut == -1) {
+            lineEndOut = allTextAfterOffset.length() + offsetOut;
+        }
+        var oldWords = Arrays.stream(allTextAfterOffset.substring(0,lineEndOut).split(splitterPattern.pattern())).toList();
 
-        for (int i = Math.max(0, oldWords.size() - 2); i < oldWords.size(); i++) {
-            if (oldWords.get(i).length() < 3) continue;
-            if (newText.contains(oldWords.get(i))) {
-                var wrong = AddedWord.exists(oldWords.get(i), quicktype.data);
-                if (!wrong.isEmpty()) {
-                    statusBar.setHintText(wrong);
-                    return;
-                }
+        for (var word : oldWords) {
+            if (word.length() < 3) continue;
+            var wrong = AddedWord.exists(word, quicktype.data);
+            if (!wrong.isEmpty()){
+                statusBar.setHintText(wrong);
+                return;
             }
         }
         statusBar.setHintText("");
@@ -634,26 +656,26 @@ public class GUIHandler {
         JMenuItem newFile = makeMenuItem(new FileMenuActions.NewFileAction());
         JMenuItem newWindowFile = makeMenuItem(new FileMenuActions.NewWindowFileAction());
         JMenuItem openFile = makeMenuItem(new FileMenuActions.OpenFileAction());
-        editQuicktype = makeMenuItem(new EditMenuActions.OpenQuickTypeEditAction());
+        JMenuItem editQuicktype = makeMenuItem(new EditMenuActions.OpenQuickTypeEditAction());
         saveAsFile = makeMenuItem(new FileMenuActions.SaveAsFileAction());
         JMenuItem exportQuicktype = makeMenuItem(new FileMenuActions.exportQuickTypeAction());
         JMenuItem copyQuicktype = makeMenuItem(new FileMenuActions.copyQuickTypeAction());
         JMenuItem exitFile = makeMenuItem(new FileMenuActions.ExitFileAction());
+        fixSpelling = makeMenuItem(new EditMenuActions.SuggestAction());
         fileMenu.add(newFile);
         fileMenu.add(newWindowFile);
         fileMenu.addSeparator();
         fileMenu.add(openFile);
         fileMenu.add(saveAsFile);
         fileMenu.add(openFile);
-        editMenu.add(editQuicktype);
         fileMenu.add(copyQuicktype);
         fileMenu.add(exportQuicktype);
         fileMenu.addSeparator();
         fileMenu.add(exitFile);
 
-        var suggestEdit = makeMenuItem(new EditMenuActions.SuggestAction());
         editMenu.add(editQuicktype);
-        editMenu.add(suggestEdit);
+        editMenu.add(editQuicktype);
+        editMenu.add(fixSpelling);
 
         JCheckBoxMenuItem replaceQuotes = makeCheckBoxMenuItem(new FormatMenuActions.shouldReplaceQuotes());
         replaceQuotes.setState(InitialValues.getReplaceQuote());

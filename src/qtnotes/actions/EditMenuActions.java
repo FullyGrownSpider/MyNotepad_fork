@@ -5,7 +5,6 @@ package qtnotes.actions;/*
 
 
 import qtnotes.gui.GUIHandler;
-import qtnotes.gui.helper.DialogType;
 import qtnotes.gui.helper.FullEditForm;
 import qtnotes.gui.helper.SuggestionsDisplayForm;
 import qtnotes.init.InitialValues;
@@ -13,7 +12,6 @@ import qtnotes.spellcheck.Spellcheck;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 
@@ -49,10 +47,10 @@ public class EditMenuActions {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO check the word that your cursor is on, if cursor is not on something either loop or choose the first
             var word = GUIHandler.getNextMistake();
-            var list = Spellcheck.optimizedSearch(word);
-            new SuggestionsDisplayForm(GUIHandler.getFrame(), InitialValues.getEditorFont(), list, GUIHandler.getShouldLoop(word), word);
+            if (word == null) return;
+            var list = Spellcheck.optimizedSearch(word.word);
+            new SuggestionsDisplayForm(GUIHandler.getFrame(), InitialValues.getEditorFont(), list, word.shouldLoop, word.word, word.location);
         }
     }
 }
