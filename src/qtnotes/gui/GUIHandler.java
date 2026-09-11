@@ -773,6 +773,10 @@ public class GUIHandler {
         }
     }
 
+    public static int getEditorTextLength() {
+        return editorTextArea.getText().length();
+    }
+
     public static int getCursorLocation() {
         return editorTextArea.getSelectionStart();
     }

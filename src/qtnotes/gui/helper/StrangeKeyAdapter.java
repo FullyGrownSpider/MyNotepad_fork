@@ -75,7 +75,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
             var locationEnd = GUIHandler.getEditorTextArea().getSelectionEnd();
             removeTab(e.isShiftDown());
             e.consume();
-            if (e.isShiftDown()){
+            if (e.isShiftDown()) {
                 GUIHandler.getEditorTextArea().setSelectionStart(locationStart);
                 GUIHandler.getEditorTextArea().setSelectionEnd(locationEnd);
             }
@@ -83,17 +83,17 @@ public class StrangeKeyAdapter extends KeyAdapter {
         }
         if (selected != null) {
             undoer.removeTextUndo(GUIHandler.getCursorLocation(), selected);
-            undoer.addingTextUndo(GUIHandler.getCursorLocation(), ""+e.getKeyChar());
+            undoer.addingTextUndo(GUIHandler.getCursorLocation(), "" + e.getKeyChar());
             actionToDo = ACTION.FULL_QT;
             return;
         }
         actionToDo = ACTION.LINE_QT;
-        undoer.addingTextUndo(GUIHandler.getCursorLocation(), ""+e.getKeyChar());
+        undoer.addingTextUndo(GUIHandler.getCursorLocation(), "" + e.getKeyChar());
     }
 
     private boolean undoRedo(KeyEvent e, int charCode) {
         if (!e.isControlDown()) return false;
-        if (charCode == KeyEvent.VK_Y){
+        if (charCode == KeyEvent.VK_Y) {
             var thing = undoer.redoAnAction();
             if (thing == null) return false;
             if (thing.isTab()) {
@@ -104,7 +104,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
             } else {
                 var text = thing.text.toString();
                 if (thing.actionType != UndoActionType.ADD) {
-                    GUIHandler.getEditorTextArea().replaceRange("", thing.location, thing.location + text.length());
+                    GUIHandler.getEditorTextArea().replaceRange("", thing.location - 1, thing.location + text.length() - 1);
                 } else {
                     GUIHandler.getEditorTextArea().insert(text, thing.location);
                 }
@@ -113,7 +113,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
             e.consume();
             return true;
         }
-        if (charCode == KeyEvent.VK_Z){
+        if (charCode == KeyEvent.VK_Z) {
             var thing = undoer.undoAnAction();
             if (thing == null) return false;
             if (thing.isTab()) {
@@ -126,7 +126,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 if (thing.actionType == UndoActionType.ADD) {
                     GUIHandler.getEditorTextArea().replaceRange("", thing.location, thing.location + text.length());
                 } else {
-                    GUIHandler.getEditorTextArea().insert(text, thing.location);
+                    GUIHandler.getEditorTextArea().insert(text, thing.location - 1);
                 }
                 correctEdit(text);
             }
@@ -200,9 +200,20 @@ public class StrangeKeyAdapter extends KeyAdapter {
 
     private static boolean DoMovement(KeyEvent e, int charCode) {
         if (KeyEvent.VK_PAGE_DOWN == charCode || KeyEvent.VK_PAGE_UP == charCode) return true;
-        //arrow up and arrow down shift do  not work
-        if (!e.isShiftDown() && !e.isControlDown()) {
+        if (charCode == KeyEvent.VK_HOME) {
+            homeOrEnd(e, true);
+            return true;
+        } else if (charCode == KeyEvent.VK_END) {
+            homeOrEnd(e, false);
+            return true;
+        }
+        //up down left right
+        //ctrl
+        int next = getNextCtrlMovement(charCode);
+        if (next == -1) return false;
+        if (!e.isControlDown()) {
             if (GUIHandler.getEditorTextArea().getSelectedText() != null) {
+                //TODO altDown
                 if (KeyEvent.VK_LEFT == charCode) {
                     var location = GUIHandler.getEditorTextArea().getSelectionStart();
                     GUIHandler.getEditorTextArea().setSelectionEnd(location);
@@ -210,81 +221,80 @@ public class StrangeKeyAdapter extends KeyAdapter {
                     return true;
                 }
             }
-            return charCode >= 35 && charCode <= 40;
+            return true;
         }
-        int next = getNext(charCode);
-        if (next != -1) {
+        if (KeyEvent.VK_LEFT == charCode || KeyEvent.VK_RIGHT == charCode) {
             if (e.isShiftDown()) {
                 int from = GUIHandler.getEditorTextArea().getSelectionStart();
-                if (from < next) {
-                    GUIHandler.getEditorTextArea().setSelectionEnd(next);
-                    GUIHandler.getEditorTextArea().setSelectionStart(from);
+                setSelection(from, next);
+            }
+            else if (e.isAltDown()) {
+                int from = GUIHandler.getEditorTextArea().getSelectionStart();
+                if (charCode == KeyEvent.VK_RIGHT) {
+                    from = (rightClosestBorder(from));
+                    next = GUIHandler.getEditorTextArea().getSelectionEnd();
                 } else {
-                    GUIHandler.getEditorTextArea().setSelectionEnd(GUIHandler.getEditorTextArea().getSelectionEnd());
-                    GUIHandler.getEditorTextArea().setSelectionStart(next);
+                    next = (leftClosestBorder(GUIHandler.getEditorTextArea().getSelectionEnd()));
                 }
-
+                if (from == next) {
+                    e.consume();
+                    return true;
+                }
+                setSelection(from, next);
             } else {
                 GUIHandler.getEditorTextArea().setCaretPosition(next);
             }
-            e.consume();
-            return true;
+        } else {
+            GUIHandler.getEditorTextArea().setCaretPosition(next);
         }
+        e.consume();
+        return true;
+    }
 
-        if (charCode == KeyEvent.VK_HOME) {
-            if (e.isControlDown()) {
-                if (e.isShiftDown()) {
-                    GUIHandler.getEditorTextArea().setSelectionStart(0);
-                    GUIHandler.getEditorTextArea().setSelectionEnd(GUIHandler.getEditorTextArea().getSelectionEnd());
-                } else {
-                    GUIHandler.getEditorTextArea().setCaretPosition(0);
-                }
-                e.consume();
-                return true;
-            }
-            int line, lineStart;
-            try {
-                line = GUIHandler.getEditorTextArea().getLineOfOffset(GUIHandler.getEditorTextArea().getSelectionStart());
-                lineStart = GUIHandler.getEditorTextArea().getLineStartOffset(line);
-            } catch (BadLocationException ex) {
-                throw new RuntimeException(ex);
-            }
-            if (e.isShiftDown()) {
-                GUIHandler.getEditorTextArea().setSelectionStart(lineStart);
-                GUIHandler.getEditorTextArea().setSelectionEnd(GUIHandler.getEditorTextArea().getSelectionEnd());
-            } else {
-                GUIHandler.getEditorTextArea().setCaretPosition(lineStart);
-            }
-            e.consume();
-            return true;
-        } else if (charCode == KeyEvent.VK_END) {
-            if (e.isControlDown()) {
-                if (e.isShiftDown()) {
-                    GUIHandler.getEditorTextArea().setSelectionStart(GUIHandler.getEditorTextArea().getSelectionStart());
-                    GUIHandler.getEditorTextArea().setSelectionEnd(GUIHandler.getEditorTextArea().getText().length() - 1);
-                } else {
-                    GUIHandler.getEditorTextArea().setCaretPosition(GUIHandler.getEditorTextArea().getText().length() - 1);
-                }
-                e.consume();
-                return true;
-            }
-            int line, lineEnd;
-            try {
-                line = GUIHandler.getEditorTextArea().getLineOfOffset(GUIHandler.getEditorTextArea().getSelectionStart());
-                lineEnd = GUIHandler.getEditorTextArea().getLineEndOffset(line);
-            } catch (BadLocationException ex) {
-                throw new RuntimeException(ex);
-            }
-            if (e.isShiftDown()) {
-                GUIHandler.getEditorTextArea().setSelectionStart(GUIHandler.getEditorTextArea().getSelectionStart());
-                GUIHandler.getEditorTextArea().setSelectionEnd(lineEnd);
-            } else {
-                GUIHandler.getEditorTextArea().setCaretPosition(lineEnd);
-            }
-            e.consume();
-            return true;
+    private static void setSelection(int from, int next) {
+        if (from < next) {
+            GUIHandler.getEditorTextArea().setSelectionEnd(next);
+            GUIHandler.getEditorTextArea().setSelectionStart(from);
+        } else {
+            GUIHandler.getEditorTextArea().setSelectionEnd(GUIHandler.getEditorTextArea().getSelectionEnd());
+            GUIHandler.getEditorTextArea().setSelectionStart(next);
         }
-        return false;
+    }
+
+    private static void homeOrEnd(KeyEvent e, boolean home) {
+        if (e.isControlDown()) {
+            if (e.isShiftDown()) {
+                GUIHandler.getEditorTextArea().setSelectionStart(home? 0: GUIHandler.getEditorTextArea().getSelectionStart());
+                GUIHandler.getEditorTextArea().setSelectionEnd(home ? GUIHandler.getEditorTextArea().getSelectionEnd() : GUIHandler.getEditorTextLength() - 1);
+            } else {
+                GUIHandler.getEditorTextArea().setCaretPosition(home ? 0: GUIHandler.getEditorTextLength() - 1);
+            }
+        } else {
+            int line, linePoint;
+            try {
+                line = GUIHandler.getEditorTextArea().getLineOfOffset(GUIHandler.getEditorTextArea().getSelectionStart());
+                if (home)
+                linePoint = GUIHandler.getEditorTextArea().getLineStartOffset(line);
+                else {
+                    var totalLength = GUIHandler.getEditorTextLength();
+                    var mount = GUIHandler.getEditorTextArea().getLineEndOffset(line);
+                    if (mount != totalLength)
+                        linePoint = mount-1;
+                    else {
+                        linePoint = totalLength;
+                    }
+                }
+            } catch (BadLocationException ex) {
+                throw new RuntimeException(ex);
+            }
+            if (e.isShiftDown()) {
+                GUIHandler.getEditorTextArea().setSelectionStart(home ? linePoint : GUIHandler.getEditorTextArea().getSelectionStart());
+                GUIHandler.getEditorTextArea().setSelectionEnd(home ? GUIHandler.getEditorTextArea().getSelectionEnd() : linePoint);
+            } else {
+                GUIHandler.getEditorTextArea().setCaretPosition(linePoint);
+            }
+        }
+        e.consume();
     }
 
     private boolean doBackspace(KeyEvent e, int charCode) {
@@ -299,7 +309,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
             }
             if (!e.isControlDown()) {
                 try {
-                    var character = GUIHandler.getEditorTextArea().getText(GUIHandler.getCursorLocation()-1, 1);
+                    var character = GUIHandler.getEditorTextArea().getText(GUIHandler.getCursorLocation() - 1, 1);
                     correctEdit(character);
                     undoer.removeTextUndo(GUIHandler.getCursorLocation(), character);
                 } catch (BadLocationException ex) {
@@ -309,14 +319,14 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 return true;
             }
             int from = GUIHandler.getEditorTextArea().getCaretPosition();
-            int to = getLastSpaceIndex();
+            int to = leftClosestBorder(GUIHandler.getCursorLocation());
             GUIHandler.getEditorTextArea().setSelectionStart(to);
             GUIHandler.getEditorTextArea().setSelectionEnd(from);
             if (to != from) {
                 try {
                     var text = GUIHandler.getEditorTextArea().getText(to, from - to);
                     correctEdit(text);
-                    undoer.removeTextUndo(to, text);
+                    undoer.removeTextUndo(to + 1, text);
                 } catch (BadLocationException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -329,7 +339,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
     }
 
     private static void correctEdit(String selectedText) {
-        if (selectedText.contains("\n")){
+        if (selectedText.contains("\n")) {
             actionToDo = ACTION.FULL_QT;
         } else {
             actionToDo = ACTION.LINE_QT;
@@ -361,9 +371,12 @@ public class StrangeKeyAdapter extends KeyAdapter {
             }
             if (!e.isControlDown()) {
                 try {
+                    if (GUIHandler.getEditorTextLength() == GUIHandler.getCursorLocation()) {
+                        return true;
+                    }
                     var character = GUIHandler.getEditorTextArea().getText(GUIHandler.getCursorLocation(), 1);
                     correctEdit(character);
-                    undoer.removeTextUndo(GUIHandler.getCursorLocation(), character);
+                    undoer.removeTextUndo(GUIHandler.getCursorLocation() + 1, character);
                 } catch (BadLocationException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -371,7 +384,9 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 return true;
             }
 
-            int from = getNextSpaceIndex();
+            int from = rightClosestBorder(GUIHandler.getEditorTextArea().getSelectionEnd());
+            if (from == GUIHandler.getEditorTextLength())
+                from--;
             int to = GUIHandler.getEditorTextArea().getCaretPosition();
             GUIHandler.getEditorTextArea().setSelectionStart(to);
             GUIHandler.getEditorTextArea().setSelectionEnd(from);
@@ -379,7 +394,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 try {
                     var text = GUIHandler.getEditorTextArea().getText(to, from - to);
                     correctEdit(text);
-                    undoer.removeTextUndo(to, text);
+                    undoer.removeTextUndo(to + 1, text);
                 } catch (BadLocationException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -395,12 +410,12 @@ public class StrangeKeyAdapter extends KeyAdapter {
         e.setModifiers(0);
     }
 
-    private static int getNext(int charCode) {
+    private static int getNextCtrlMovement(int charCode) {
         int next = -1;
         if (charCode == KeyEvent.VK_LEFT) {
-            next = (getLastSpaceIndex());
+            next = (leftClosestBorder(GUIHandler.getCursorLocation()));
         } else if (charCode == KeyEvent.VK_RIGHT) {
-            next = (getNextSpaceIndex());
+            next = (rightClosestBorder(GUIHandler.getEditorTextArea().getSelectionEnd()));
         } else if (charCode == KeyEvent.VK_UP) {
             next = (getPreviousEnterIndex());
         } else if (charCode == KeyEvent.VK_DOWN) {
@@ -415,7 +430,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
         try {
             int line;
             if (caretPosition == -1) {
-                line = GUIHandler.getEditorTextArea().getLineOfOffset(GUIHandler.getEditorTextArea().getText().length() - 1);
+                line = GUIHandler.getEditorTextArea().getLineOfOffset(GUIHandler.getEditorTextLength() - 1);
             } else {
                 line = GUIHandler.getCurrentLine();
             }
@@ -427,20 +442,23 @@ public class StrangeKeyAdapter extends KeyAdapter {
     }
 
     static int getNextEnterIndex() {
-        int lineStart;
+        var caretPosition = GUIHandler.getEditorTextArea().getSelectionStart();
         try {
-            int line = GUIHandler.getCurrentLine() + 1;
-            lineStart = GUIHandler.getEditorTextArea().getLineStartOffset(line);
-            return lineStart;
+            Matcher matcher = spaceOrEnter.matcher(
+                    GUIHandler.getEditorTextArea().getText(caretPosition, GUIHandler.getEditorTextLength() - caretPosition).stripLeading());
+            int lastIndex = -1;
+            while (matcher.find()) {
+                lastIndex = matcher.start();
+            }
+            return lastIndex + 1;
         } catch (BadLocationException e) {
-            return GUIHandler.getEditorTextArea().getText().length();
+            return GUIHandler.getEditorTextLength();
         }
     }
 
-    static int getLastSpaceIndex() {
-        var caretPosition = GUIHandler.getEditorTextArea().getSelectionStart();
+    static int leftClosestBorder(int caretPosition) {
         try {
-            Matcher matcher = spaceOrEnter.matcher(GUIHandler.getEditorTextArea().getText(0, caretPosition - 1));
+            Matcher matcher = spaceOrEnter.matcher(GUIHandler.getEditorTextArea().getText(0, caretPosition - 1).stripTrailing());
             int lastIndex = -1;
             while (matcher.find()) {
                 lastIndex = matcher.start();
@@ -451,20 +469,22 @@ public class StrangeKeyAdapter extends KeyAdapter {
         }
     }
 
-    static int getNextSpaceIndex() {
-        var caretPosition = GUIHandler.getEditorTextArea().getSelectionEnd();
+    static int rightClosestBorder(int caretPosition) {
         try {
-            Matcher matcher = spaceOrEnter.matcher(GUIHandler.getEditorTextArea().getText(caretPosition, GUIHandler.getEditorTextArea().getText().length() - caretPosition));
+            var thingo = GUIHandler.getEditorTextArea().getText(caretPosition, GUIHandler.getEditorTextLength() - caretPosition);
+            var bingo = thingo.stripLeading();
+            var calc = thingo.length() - bingo.length();
+            Matcher matcher = spaceOrEnter.matcher(bingo.stripLeading());
             int lastIndex = -1;
             if (matcher.find()) {
-                lastIndex = matcher.start();
+                lastIndex = matcher.start() + calc;
             }
             if (lastIndex == -1) {
-                return GUIHandler.getEditorTextArea().getText().length();
+                return GUIHandler.getEditorTextLength();
             }
-            return caretPosition + lastIndex + 1;
+            return caretPosition + lastIndex;
         } catch (BadLocationException e) {
-            return GUIHandler.getEditorTextArea().getText().length();
+            return GUIHandler.getEditorTextLength();
         }
     }
 
@@ -511,6 +531,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
 
     void removeTab(boolean shiftDown) {
         try {
+            boolean anyTabs = !shiftDown;
             var lineNumQuickEnd = GUIHandler.getEditorTextArea().getLineOfOffset(GUIHandler.getEditorTextArea().getSelectionEnd());
             var lineNumQuickStart = GUIHandler.getEditorTextArea().getLineOfOffset(GUIHandler.getEditorTextArea().getSelectionStart());
             for (int i = lineNumQuickStart; i <= lineNumQuickEnd; i++) {
@@ -518,19 +539,21 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 if (shiftDown) {
                     if (GUIHandler.getEditorTextArea().getText(index, 1).equals("\t")) {
                         GUIHandler.getEditorTextArea().setText(GUIHandler.getEditorTextArea().getText(0, index) +
-                                GUIHandler.getEditorTextArea().getText(index + 1, GUIHandler.getEditorTextArea().getText().length() - index - 1)
-                        );
+                                GUIHandler.getEditorTextArea().getText(index + 1, GUIHandler.getEditorTextLength() - index - 1));
+                        anyTabs = true;
+                        //TODO what if you have 3 lines and the middle one has no tab
                     }
                 } else {
                     GUIHandler.getEditorTextArea().insert("\t", index);
                 }
             }
-            if (lineNumQuickEnd == lineNumQuickStart){
+            if (!anyTabs) return;
+            if (lineNumQuickEnd == lineNumQuickStart) {
                 actionToDo = ACTION.LINE_QT;
             } else {
                 actionToDo = ACTION.FULL_QT;
             }
-            undoer.addTabLines(lineNumQuickStart,lineNumQuickEnd,shiftDown);
+            undoer.addTabLines(lineNumQuickStart, lineNumQuickEnd, shiftDown);
         } catch (BadLocationException ignored) {
 
         }
