@@ -323,7 +323,7 @@ public class GUIHandler {
             var offsetOut = getOutCurrentLine(line);
             var allTextAfterOffset = qtOutArea.getText(offsetOut, qtOutArea.getText().length() - offsetOut + 1);
             var editorStartOffset = editorTextArea.getLineStartOffset(line);
-            boolean lastLine = !editorTextArea.getText(editorStartOffset, editorTextArea.getText().length() - editorStartOffset).contains("\n");
+            boolean lastLine = !getTextLength(editorStartOffset, editorTextArea.getText().length() - editorStartOffset).contains("\n");
             var lineEndOut = allTextAfterOffset.indexOf("\n");
             if (lineEndOut == -1) {
                 lineEndOut = allTextAfterOffset.length() + offsetOut;
@@ -359,7 +359,7 @@ public class GUIHandler {
 
         int outCurrentLine = getOutCurrentLine(line);
 
-        String lineOfTextEditor = editorTextArea.getText(lineEditorStart, lineEditorEnd - lineEditorStart);
+        String lineOfTextEditor = getTextOffset(lineEditorStart, lineEditorEnd);
 
         String lineBeforeWordEditor = lineOfTextEditor.substring(0, editorTextArea.getCaretPosition() - lineEditorStart);
         int wordStartEditor = lineBeforeWordEditor.lastIndexOf(' ') + 1;
@@ -388,10 +388,8 @@ public class GUIHandler {
 
     private static void boldCursorText(WordXY currentPoint) {
         try {
-            var input = GUIHandler.getEditorTextArea();
-
-            int start = input.getSelectionStart();
-            int end = input.getSelectionEnd();
+            int start = editorTextArea.getSelectionStart();
+            int end = editorTextArea.getSelectionEnd();
 
             if (end != start) {
                 return;
@@ -513,8 +511,8 @@ public class GUIHandler {
 
     public static void replaceMistake(String replace, WordXY wordXY) {
         incorrectItems.remove(wordXY);
-        editorTextArea.select(wordXY.x, wordXY.x + wordXY.y);
-        getEditorTextArea().replaceSelection(replace);
+        setSelectedWord(wordXY);
+        editorTextArea.replaceSelection(replace);
         fullTextQT();
     }
 
@@ -525,7 +523,7 @@ public class GUIHandler {
     public static void ignoreWord() {
         try {
             var word = incorrectItems.remove(0);
-            var text = qtOutArea.getText(word.x, word.x + word.y - 1);
+            var text = getTextWord(word);
             ignoredUnknownWords.add(text);
             postQTClean();
         } catch (BadLocationException e) {
@@ -536,7 +534,7 @@ public class GUIHandler {
     public static void addToDictionary() {
         try {
             var word = incorrectItems.remove(0);
-            var text = qtOutArea.getText(word.x, word.x + word.y - 1);
+            var text = getTextWord(word);
             Compression.add(text);
             postQTClean();
         } catch (BadLocationException e) {
@@ -717,6 +715,10 @@ public class GUIHandler {
         return editorTextArea;
     }
 
+    public static String getEditorText(){
+        return editorTextArea.getText();
+    }
+
     public static String getFullQTExport() {
         fullTextQT();
         return qtOutArea.getText();
@@ -777,7 +779,50 @@ public class GUIHandler {
         return editorTextArea.getText().length();
     }
 
-    public static int getCursorLocation() {
+    public static int getCursorLocationOrSelectStart() {
         return editorTextArea.getSelectionStart();
+    }
+
+    public static String getSelectedText() {
+        return editorTextArea.getSelectedText();
+    }
+
+    public static void setSelectedOffset(int offsetStart, int offsetEnd){
+        editorTextArea.select(offsetStart, offsetEnd - offsetStart);
+    }
+
+    public static int getSelectionEnd() {
+        return getEditorTextArea().getSelectionEnd();
+    }
+
+    public static void setSelectedWord(WordXY wordXY){
+        editorTextArea.select(wordXY.x, wordXY.x + wordXY.y);
+    }
+
+    public static String getTextLength(int offsetStart, int length) throws BadLocationException {
+        return editorTextArea.getText(offsetStart, length);
+    }
+
+    public static String getTextOffset(int offsetStart, int offsetEnd) throws BadLocationException {
+        return editorTextArea.getText(offsetStart, offsetEnd - offsetStart);
+    }
+
+    public static String getTextWord(WordXY wordXY) throws BadLocationException {
+        return editorTextArea.getText(wordXY.x, wordXY.x + wordXY.y - 1);
+    }
+
+    public static void setEditorText(String text) {
+        editorTextArea.setText(text);
+    }
+
+    public static int endOfLine(int line) throws BadLocationException {
+        var totalLength = GUIHandler.getEditorTextLength();
+        line = Math.min(editorTextArea.getLineCount()-1, line);
+        var mount = GUIHandler.getEditorTextArea().getLineEndOffset(line);
+        if (mount != totalLength)
+            return mount-1;
+        else {
+            return totalLength;
+        }
     }
 }

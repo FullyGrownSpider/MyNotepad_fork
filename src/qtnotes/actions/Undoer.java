@@ -32,16 +32,16 @@ public class Undoer {
         addToUndo(location, changedText, UndoActionType.ADD);
     }
 
-    public static int[] getTabLines(UndoAction action) {
-        var thing = action.text.toString().split("x");
-        return new int[]{Integer.parseInt(thing[0]), Integer.parseInt(thing[1])};
+    public static String[] getTabLines(UndoAction action) {
+        return action.text.toString().split("x");
     }
 
-    public void addTabLines(int from, int to, boolean added) {
+    public void addTabLines(int from, int to, boolean added, String[] skip) {
+        String dataText = from + "x" + to + (skip.length == 0 ? "" : "x" + String.join("x", skip));
         if (added){
-           addingTextUndo(-1, from +"x"+to);
+           addingTextUndo(-1, dataText);
         } else {
-            removeTextUndo(-1, from +"x"+to);
+            removeTextUndo(-1, dataText);
         }
     }
 
@@ -101,14 +101,11 @@ public class Undoer {
             return true;
         }
         return false;
-
     }
-
 
     private static boolean isSplitter(int c) {
         return c == KeyEvent.VK_ENTER || c == KeyEvent.VK_SPACE || c == KeyEvent.VK_TAB || c == KeyEvent.VK_MINUS;
     }
-
 
     private void moveToNextIndex() {
         if (undoIndex == -1){

@@ -54,7 +54,7 @@ public class FileMenuActions {
             InitialValues.setFileName(InitialValues.NEW_FILE);
             InitialValues.setFilePath(null);
             GUIHandler.setIsSaved(true);
-            GUIHandler.getEditorTextArea().setText("");
+            GUIHandler.setEditorText("");
             GUIHandler.setIsLoadingFile(false);
         }
     }
@@ -115,8 +115,7 @@ public class FileMenuActions {
                     GUIHandler.setIsSaved(true);
                 } catch (Exception ignored) {
                 }
-                GUIHandler.getEditorTextArea().setText(fileText.substring(0, fileText.length() - 1));
-                GUIHandler.getEditorTextArea().setCaretPosition(0);
+                GUIHandler.setEditorText(fileText.substring(0, fileText.length() - 1));
                 GUIHandler.setIsLoadingFile(false);
                 GUIHandler.fullTextQT();
             }
@@ -152,7 +151,7 @@ public class FileMenuActions {
 
         try {
             FileWriter writer = new FileWriter(file);
-            writer.write(GUIHandler.getEditorTextArea().getText());
+            writer.write(GUIHandler.getEditorText());
             writer.close();
             GUIHandler.setIsSaved(true);
         } catch (Exception ignored) {

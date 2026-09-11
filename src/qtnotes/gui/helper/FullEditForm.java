@@ -39,9 +39,6 @@ public class FullEditForm {
         redo();
     }
 
-//    TODO add qtnotes.spellcheck
-    //TODO reset hints on reset
-
     private void wordType() {
         word.addActionListener(evt -> {
             Optional<AddedWord> first = myMap.stream().filter(

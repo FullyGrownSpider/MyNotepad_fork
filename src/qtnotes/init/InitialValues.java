@@ -208,7 +208,7 @@ public class InitialValues {
 	 */
 	public static void writeToFile() {
 		try {
-			caretPosition.set(GUIHandler.getEditorTextArea().getCaretPosition());
+			caretPosition.set(GUIHandler.getCursorLocationOrSelectStart());
 			File file = new File("Settings.txt");
 			FileWriter writer = new FileWriter(file);
 			for (var item : settingReader.entrySet()) {
