@@ -211,9 +211,22 @@ public class StrangeKeyAdapter extends KeyAdapter {
         //ctrl
         int next = getNextCtrlMovement(charCode);
         if (next == -1) return false;
+        if (e.isAltDown()){
+            int from = GUIHandler.getEditorTextArea().getSelectionStart();
+            if (charCode == KeyEvent.VK_RIGHT) {
+                from = (rightClosestBorder(from));
+                next = GUIHandler.getEditorTextArea().getSelectionEnd();
+            } else {
+                next = (leftClosestBorder(GUIHandler.getEditorTextArea().getSelectionEnd()));
+            }
+            if (from != next) {
+                setSelection(from, next);
+            }
+            e.consume();
+            return true;
+        }
         if (!e.isControlDown()) {
             if (GUIHandler.getEditorTextArea().getSelectedText() != null) {
-                //TODO altDown
                 if (KeyEvent.VK_LEFT == charCode) {
                     var location = GUIHandler.getEditorTextArea().getSelectionStart();
                     GUIHandler.getEditorTextArea().setSelectionEnd(location);
@@ -226,20 +239,6 @@ public class StrangeKeyAdapter extends KeyAdapter {
         if (KeyEvent.VK_LEFT == charCode || KeyEvent.VK_RIGHT == charCode) {
             if (e.isShiftDown()) {
                 int from = GUIHandler.getEditorTextArea().getSelectionStart();
-                setSelection(from, next);
-            }
-            else if (e.isAltDown()) {
-                int from = GUIHandler.getEditorTextArea().getSelectionStart();
-                if (charCode == KeyEvent.VK_RIGHT) {
-                    from = (rightClosestBorder(from));
-                    next = GUIHandler.getEditorTextArea().getSelectionEnd();
-                } else {
-                    next = (leftClosestBorder(GUIHandler.getEditorTextArea().getSelectionEnd()));
-                }
-                if (from == next) {
-                    e.consume();
-                    return true;
-                }
                 setSelection(from, next);
             } else {
                 GUIHandler.getEditorTextArea().setCaretPosition(next);
