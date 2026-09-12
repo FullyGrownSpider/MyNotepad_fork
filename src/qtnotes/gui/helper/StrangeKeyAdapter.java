@@ -40,7 +40,6 @@ public class StrangeKeyAdapter extends KeyAdapter {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        super.keyPressed(e);
         GUIHandler.saveCount = 2;
         int charCode = e.getKeyCode();
         if (ignoreKeys(charCode)) {
@@ -107,9 +106,20 @@ public class StrangeKeyAdapter extends KeyAdapter {
             } else {
                 var text = thing.text.toString();
                 if (thing.actionType != UndoActionType.ADD) {
-                    GUIHandler.getEditorTextArea().replaceRange("", thing.location - 1, thing.location + text.length() - 1);
+                    GUIHandler.getEditorTextArea().replaceRange("", thing.location, thing.location + text.length());
+                    if (thing.text.length() > 1){
+                        GUIHandler.setSelectedOffset(thing.location, thing.location + text.length());
+                    } else {
+                        GUIHandler.getEditorTextArea().setCaretPosition(thing.location);
+                    }
+                    GUIHandler.getEditorTextArea().setCaretPosition(thing.location);
                 } else {
                     GUIHandler.getEditorTextArea().insert(text, thing.location);
+                    if (thing.text.length() > 1){
+                        GUIHandler.setSelectedOffset(thing.location, thing.location + text.length());
+                    } else {
+                        GUIHandler.getEditorTextArea().setCaretPosition(thing.location);
+                    }
                 }
                 correctEdit(text);
             }
@@ -125,8 +135,14 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 var text = thing.text.toString();
                 if (thing.actionType == UndoActionType.ADD) {
                     GUIHandler.getEditorTextArea().replaceRange("", thing.location, thing.location + text.length());
+                    GUIHandler.getEditorTextArea().setCaretPosition(thing.location);
                 } else {
-                    GUIHandler.getEditorTextArea().insert(text, Math.max(thing.location - 1,0));
+                    GUIHandler.getEditorTextArea().insert(text, thing.location);
+                    if (thing.text.length() > 1){
+                        GUIHandler.setSelectedOffset(thing.location, thing.location + text.length());
+                    } else {
+                        GUIHandler.getEditorTextArea().setCaretPosition(thing.location);
+                    }
                 }
                 correctEdit(text);
             }
@@ -184,18 +200,21 @@ public class StrangeKeyAdapter extends KeyAdapter {
     }
 
     void pasteIntoEdit() {
-        var selected = GUIHandler.getSelectedText();
-        if (selected != null) {
-            undoer.removeTextUndo(GUIHandler.getCursorLocationOrSelectStart(), selected);
-            GUIHandler.getEditorTextArea().replaceRange("", GUIHandler.getEditorTextArea().getSelectionStart(), GUIHandler.getEditorTextArea().getSelectionEnd());
-        }
         Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
         try {
             String text;
             var trans = cb.getContents(null);
             if (trans.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 text = (String) trans.getTransferData(DataFlavor.stringFlavor);
+                var selected = GUIHandler.getSelectedText();
+                var resetSelect =GUIHandler.getCursorLocationOrSelectStart();
+                if (selected != null) {
+                    undoer.removeTextUndo(GUIHandler.getCursorLocationOrSelectStart(), selected);
+                    GUIHandler.getEditorTextArea().replaceRange("", GUIHandler.getEditorTextArea().getSelectionStart(), GUIHandler.getEditorTextArea().getSelectionEnd());
+                }
+                GUIHandler.getEditorTextArea().insert(text, resetSelect);
                 undoer.addingTextUndo(GUIHandler.getCursorLocationOrSelectStart(), text);
+                GUIHandler.setSelectedLength(resetSelect, text.length());
             }
 
         } catch (IOException | UnsupportedFlavorException ex) {
@@ -220,7 +239,8 @@ public class StrangeKeyAdapter extends KeyAdapter {
         }
         if (cut) {
             undoer.removeTextUndo(GUIHandler.getCursorLocationOrSelectStart(), selected);
-            GUIHandler.getEditorTextArea().replaceRange("", GUIHandler.getEditorTextArea().getSelectionStart(), GUIHandler.getEditorTextArea().getSelectionEnd());
+            GUIHandler.getEditorTextArea().replaceRange("", GUIHandler.getCursorLocationOrSelectStart(), GUIHandler.getEditorTextArea().getSelectionEnd());
+            GUIHandler.getEditorTextArea().setCaretPosition(GUIHandler.getCursorLocationOrSelectStart());
         }
         Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
 
@@ -237,8 +257,6 @@ public class StrangeKeyAdapter extends KeyAdapter {
             homeOrEnd(e, false);
             return true;
         }
-        //up down left right
-        //ctrl
         int next = getNextCtrlMovement(charCode);
         if (next == -1) return false;
         if (e.isAltDown()){
@@ -258,13 +276,9 @@ public class StrangeKeyAdapter extends KeyAdapter {
         if (!e.isControlDown()) {
             return true;
         }
-        if (KeyEvent.VK_LEFT == charCode || KeyEvent.VK_RIGHT == charCode) {
-            if (e.isShiftDown()) {
-                int from = GUIHandler.getEditorTextArea().getSelectionStart();
-                setSelection(from, next);
-            } else {
-                GUIHandler.getEditorTextArea().setCaretPosition(next);
-            }
+        if (e.isShiftDown()) {
+            int from = GUIHandler.getEditorTextArea().getSelectionStart();
+            setSelection(from, next);
         } else {
             GUIHandler.getEditorTextArea().setCaretPosition(next);
         }
@@ -276,16 +290,22 @@ public class StrangeKeyAdapter extends KeyAdapter {
         if (from < next) {
             GUIHandler.setSelectedOffset(from,next);
         } else {
-            GUIHandler.setSelectedOffset(next, GUIHandler.getEditorTextArea().getSelectionEnd());
+            GUIHandler.setSelectedOffsetBack(next, GUIHandler.getEditorTextArea().getSelectionEnd());
         }
     }
 
     private static void homeOrEnd(KeyEvent e, boolean home) {
         if (e.isControlDown()) {
             if (e.isShiftDown()) {
-                GUIHandler.setSelectedOffset(
-                        home ? 0: GUIHandler.getCursorLocationOrSelectStart(),
-                        home ? GUIHandler.getEditorTextArea().getSelectionEnd() : GUIHandler.getEditorTextLength());
+                if (home) {
+                    GUIHandler.setSelectedOffsetBack(
+                            0,
+                            GUIHandler.getEditorTextArea().getSelectionEnd());
+                } else {
+                    GUIHandler.setSelectedOffset(
+                            GUIHandler.getCursorLocationOrSelectStart(),
+                            GUIHandler.getEditorTextLength());
+                }
             } else {
                 GUIHandler.getEditorTextArea().setCaretPosition(home ? 0: GUIHandler.getEditorTextLength());
             }
@@ -302,8 +322,13 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 throw new RuntimeException(ex);
             }
             if (e.isShiftDown()) {
-                GUIHandler.setSelectedOffset(home ? linePoint : GUIHandler.getCursorLocationOrSelectStart(),
-                        home ? GUIHandler.getEditorTextArea().getSelectionEnd() : linePoint);
+                if (home) {
+                    GUIHandler.setSelectedOffsetBack(linePoint,
+                            GUIHandler.getEditorTextArea().getSelectionEnd());
+                } else {
+                    GUIHandler.setSelectedOffset(GUIHandler.getCursorLocationOrSelectStart(),
+                            linePoint);
+                }
             } else {
                 GUIHandler.getEditorTextArea().setCaretPosition(linePoint);
             }

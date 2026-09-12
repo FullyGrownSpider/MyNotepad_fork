@@ -788,7 +788,15 @@ public class GUIHandler {
     }
 
     public static void setSelectedOffset(int offsetStart, int offsetEnd){
-        editorTextArea.select(offsetStart, offsetEnd - offsetStart);
+        editorTextArea.select(offsetStart, offsetEnd);
+    }
+    public static void setSelectedLength(int offsetStart, int length){
+        editorTextArea.select(offsetStart, offsetStart + length);
+    }
+
+    public static void setSelectedOffsetBack(int offsetBack, int offsetEnd){
+        editorTextArea.setCaretPosition(offsetEnd);
+        editorTextArea.moveCaretPosition(offsetBack);
     }
 
     public static int getSelectionEnd() {
