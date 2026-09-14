@@ -38,12 +38,22 @@ public class TestKeyboard {
 
         leftRightUpDown();
         copyPaste();
+        copyException();
         delete();
         backSpace();
         tabbing();
-        //tab
-        //letterWhileSelected
-        //normalTyping(only undo-ing)
+    }
+
+    private void copyException() {
+        //xvz
+        GUIHandler.setEditorText("z");
+        GUIHandler.getEditorTextArea().setCaretPosition(1);
+        pressButton((char) KeyEvent.VK_X, true, false);
+        pressButton((char) KeyEvent.VK_Y, true, false);
+        pressButton((char) KeyEvent.VK_Z, true, false);
+        pressButton((char) KeyEvent.VK_Z, true, false);
+        Assert.assertEquals("z", GUIHandler.getEditorText());
+
     }
 
     private void tabbing() {

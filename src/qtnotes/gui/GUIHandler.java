@@ -525,6 +525,7 @@ public class GUIHandler {
             var word = incorrectItems.remove(0);
             var text = getTextWord(word);
             ignoredUnknownWords.add(text);
+            spellCheck(true);
             postQTClean();
         } catch (BadLocationException e) {
             throw new RuntimeException(e);
@@ -818,7 +819,7 @@ public class GUIHandler {
     }
 
     public static String getTextWord(WordXY wordXY) throws BadLocationException {
-        return editorTextArea.getText(wordXY.x, wordXY.x + wordXY.y - 1);
+        return editorTextArea.getText(wordXY.x, wordXY.x + wordXY.y);
     }
 
     public static void setEditorText(String text) {

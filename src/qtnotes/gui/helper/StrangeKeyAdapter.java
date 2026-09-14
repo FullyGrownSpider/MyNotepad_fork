@@ -242,8 +242,8 @@ public class StrangeKeyAdapter extends KeyAdapter {
                     undoer.removeTextUndo(GUIHandler.getCursorLocationOrSelectStart(), selected);
                     GUIHandler.getEditorTextArea().replaceRange("", GUIHandler.getEditorTextArea().getSelectionStart(), GUIHandler.getEditorTextArea().getSelectionEnd());
                 }
-                GUIHandler.getEditorTextArea().insert(text, resetSelect);
                 undoer.addingTextUndo(GUIHandler.getCursorLocationOrSelectStart(), text);
+                GUIHandler.getEditorTextArea().insert(text, resetSelect);
                 GUIHandler.setSelectedLength(resetSelect, text.length());
             }
 
