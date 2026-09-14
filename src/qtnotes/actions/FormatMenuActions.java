@@ -57,7 +57,7 @@ public class FormatMenuActions {
     public static class FontChangeFormatAction extends AbstractAction {
         public FontChangeFormatAction() {
             super();
-            putValue(AbstractAction.NAME, "Font...");
+            putValue(AbstractAction.NAME, "Change Font");
             putValue(MNEMONIC_KEY, KeyEvent.VK_F);
         }
         @Override
