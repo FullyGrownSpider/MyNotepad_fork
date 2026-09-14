@@ -558,7 +558,7 @@ public class GUIHandler {
 
         int line = getCurrentLine();
         var offsetOut = getOutCurrentLine(line);
-        var allTextAfterOffset = qtOutArea.getText(offsetOut, qtOutArea.getText().length() - offsetOut + 1);
+        var allTextAfterOffset = editorTextArea.getText(offsetOut, editorTextArea.getText().length() - offsetOut + 1);
         var lineEndOut = allTextAfterOffset.indexOf("\n");
         if (lineEndOut == -1) {
             lineEndOut = allTextAfterOffset.length() + offsetOut;

@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="MainLauncher" type="Application" factoryName="Application" nameIsGenerated="true">
+    <option name="MAIN_CLASS_NAME" value="qtnotes.MainLauncher" />
+    <module name="MyNotepad" />
+    <option name="PROGRAM_PARAMETERS" value="$USER_HOME$/Documents/MyTyper/MyChords.txt $USER_HOME$/Documents/MyTyper/words_bin.dat" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
