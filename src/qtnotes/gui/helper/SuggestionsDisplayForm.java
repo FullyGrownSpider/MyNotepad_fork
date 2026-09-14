@@ -57,7 +57,7 @@ public class SuggestionsDisplayForm extends ADialog {
     }
     
     public void choose(String replace){
-        if (replace.equals(addToDict)){
+        if (replace.endsWith(addToDict)){
             GUIHandler.addToDictionary();
         } else if (replace.equals(ignoreText)){
             GUIHandler.ignoreWord();

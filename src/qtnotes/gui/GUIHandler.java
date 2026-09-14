@@ -819,7 +819,7 @@ public class GUIHandler {
     }
 
     public static String getTextWord(WordXY wordXY) throws BadLocationException {
-        return editorTextArea.getText(wordXY.x, wordXY.x + wordXY.y);
+        return qtOutArea.getText(wordXY.x, wordXY.y);
     }
 
     public static void setEditorText(String text) {

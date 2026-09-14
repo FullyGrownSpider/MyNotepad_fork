@@ -15,7 +15,7 @@ import java.util.*;
 public class TestSpellCheck {
     String fileLocation = "/home/a804/Documents/MyTyper/words.txt";
     String fileLocation3 = "/home/a804/Documents/MyTyper/words_bin.dat";
-    String testWord = "probly";
+    String testWord = "managed";
 
     @Test
     public void removeCheck() throws IOException {
@@ -57,8 +57,9 @@ public class TestSpellCheck {
         Path outPath = Path.of(fileLocation3);
         List<String> lines = Files.readAllLines(path);
         lines.sort(String::compareTo);
+        lines = lines.stream().filter(x -> x.length() > 3 && x.length() < Compression.lineSize).toList();
         Files.writeString(path, String.join("\n", lines));
-        var list = lines.stream().map((x) -> Compression.textToLetterCompress(x).toByteArray()).toList();
+        var list = lines.stream().filter(e -> e.length() > 3 && e.length() < Compression.lineSize).map((x) -> Compression.textToLetterCompress(x).toByteArray()).sorted((a,b) -> Compression.compare(BitSet.valueOf(a),BitSet.valueOf(b))).toList();
 
         Files.deleteIfExists(outPath);
         Files.createFile(outPath);
@@ -82,13 +83,30 @@ public class TestSpellCheck {
     }
 
     @Test
+    public void checkCompressionSingleWord() throws IOException {
+//        assertEquals(testWord, Compression.textFromLetterCompress(Compression.padAndFilter(testWord)));
+
+        Compression.path = fileLocation3;
+        var word = testWord;
+        if (!(Compression.find(word) > -1))
+            Assert.fail();
+
+    }
+
+    @Test
     public void checkCompression() throws IOException {
 //        assertEquals(testWord, Compression.textFromLetterCompress(Compression.padAndFilter(testWord)));
-        var x = Compression.textToLetterCompress(testWord);
-        Path path = Paths.get(fileLocation3);
-        Files.write(path, x.toByteArray());
-        var bytes = Files.readAllBytes(path);
-        var y = 0;
+
+        Compression.path = fileLocation3;
+        Path outPath = Path.of(fileLocation);
+        var lines = Files.readAllLines(outPath);
+        List<String> fail = new ArrayList<>(5000);
+        for (var word : lines) {
+            if (word.length() < 4 || word.length() > 28 || Compression.find(word) > -1) continue;
+            fail.add(word);
+        }
+
+        Assert.assertTrue(fail.isEmpty());
     }
 
     @Test

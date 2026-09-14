@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Locale;
 
 public final class Compression {
 
@@ -94,6 +95,8 @@ public final class Compression {
     }
 
     public static BitSet textToLetterCompress(String line) {
+        //should have been done before but we programming defensively now
+        line = line.toLowerCase(Locale.ROOT);
         if (line.length() < 3 || line.length() > lineSize)
             return new BitSet();
         var myBits = new BitSet(lineSize);
@@ -129,7 +132,7 @@ public final class Compression {
         return out.toString();
     }
 
-    static int compare(BitSet b1, BitSet b2) {
+    public static int compare(BitSet b1, BitSet b2) {
         int N = b1.length();
         for (int i = 0; i < N; i++) {
             if (i % charPerChar == 0 && i > charPerCharCheck) {
