@@ -125,7 +125,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
             else {
                 var length =GUIHandler.getEditorText().length();
                 index = selected != null ? selected.indexOf(value) :
-                        GUIHandler.getTextOffset(Math.min(GUIHandler.getCursorLocationOrSelectStart() + 1, length), length).lastIndexOf(value);
+                        GUIHandler.getTextOffset(Math.min(GUIHandler.getCursorLocationOrSelectStart() + 1, length), length).indexOf(value);
             }
         } catch (BadLocationException ex) {
             throw new RuntimeException(ex);
