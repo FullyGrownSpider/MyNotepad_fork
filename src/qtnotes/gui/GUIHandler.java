@@ -557,7 +557,7 @@ public class GUIHandler {
         if (statusBar == null || !statusBar.isVisible()) return;
 
         int line = getCurrentLine();
-        var offsetOut = getOutCurrentLine(line);
+        var offsetOut = editorTextArea.getLineStartOffset(line);
         var allTextAfterOffset = editorTextArea.getText(offsetOut, editorTextArea.getText().length() - offsetOut + 1);
         var lineEndOut = allTextAfterOffset.indexOf("\n");
         if (lineEndOut == -1) {
