@@ -98,7 +98,6 @@ public class StrangeKeyAdapter extends KeyAdapter {
                 keyCode != '\'' &&
                 keyCode != '\"' &&
                 keyCode != '!' &&
-                keyCode != '-' &&
                 keyCode != '?'
         ) return false;
         if (e.isControlDown()) {
@@ -122,15 +121,17 @@ public class StrangeKeyAdapter extends KeyAdapter {
         try {
             if (goingDown)
             index = selected != null ? selected.lastIndexOf(value) : 
-                    GUIHandler.getTextOffset(0, GUIHandler.getCursorLocationOrSelectStart()).lastIndexOf(value);
-            else
-                index = selected != null ? selected.indexOf(value) : 
-                        GUIHandler.getTextOffset(GUIHandler.getCursorLocationOrSelectStart(), GUIHandler.getEditorText().length()).lastIndexOf(value);
+                    GUIHandler.getTextOffset(0, Math.max(GUIHandler.getCursorLocationOrSelectStart() - 1, 0)).lastIndexOf(value);
+            else {
+                var length =GUIHandler.getEditorText().length();
+                index = selected != null ? selected.indexOf(value) :
+                        GUIHandler.getTextOffset(Math.min(GUIHandler.getCursorLocationOrSelectStart() + 1, length), length).lastIndexOf(value);
+            }
         } catch (BadLocationException ex) {
             throw new RuntimeException(ex);
         }
         if (index != -1)
-            GUIHandler.getEditorTextArea().setCaretPosition(index + (goingDown ? 0 : GUIHandler.getCursorLocationOrSelectStart()) + value.length());
+            GUIHandler.getEditorTextArea().setCaretPosition(index + (goingDown ? 0 : GUIHandler.getCursorLocationOrSelectStart() + 1) + value.length());
     }
 
     private boolean undoRedo(KeyEvent e, int charCode) {
