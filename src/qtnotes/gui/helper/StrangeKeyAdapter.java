@@ -72,7 +72,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
 
         if (undoRedo(e, charCode)) return;
 
-        if (e.isControlDown() || e.isAltDown()) return;
+        if (specialSearch(e)) return;
 
         var selected = GUIHandler.getSelectedText();
 
@@ -89,6 +89,48 @@ public class StrangeKeyAdapter extends KeyAdapter {
         }
         actionToDo = ACTION.LINE_QT;
         undoer.addingTextUndo(GUIHandler.getCursorLocationOrSelectStart(), "" + e.getKeyChar());
+    }
+
+    private boolean specialSearch(KeyEvent e) {
+        var keyCode = e.getKeyChar();
+        if (keyCode != '.' &&
+                keyCode != ',' &&
+                keyCode != '\'' &&
+                keyCode != '\"' &&
+                keyCode != '!' &&
+                keyCode != '-' &&
+                keyCode != '?'
+        ) return false;
+        if (e.isControlDown()) {
+            specialSearch(e, true);
+            return true;
+        }
+        else if (e.isAltDown()){
+            specialSearch(e, false);
+            return true;
+        }
+        return false;
+    }
+
+    private static void specialSearch(KeyEvent e, boolean goingDown) {
+        var selected = GUIHandler.getSelectedText();
+        String value = "" + e.getKeyChar();
+        if (e.getKeyCode() == KeyEvent.VK_PERIOD || e.getKeyCode() == KeyEvent.VK_COMMA){
+            value = "-" + value;
+        }
+        int index;
+        try {
+            if (goingDown)
+            index = selected != null ? selected.lastIndexOf(value) : 
+                    GUIHandler.getTextOffset(0, GUIHandler.getCursorLocationOrSelectStart()).lastIndexOf(value);
+            else
+                index = selected != null ? selected.indexOf(value) : 
+                        GUIHandler.getTextOffset(GUIHandler.getCursorLocationOrSelectStart(), GUIHandler.getEditorText().length()).lastIndexOf(value);
+        } catch (BadLocationException ex) {
+            throw new RuntimeException(ex);
+        }
+        if (index != -1)
+            GUIHandler.getEditorTextArea().setCaretPosition(index + (goingDown ? 0 : GUIHandler.getCursorLocationOrSelectStart()) + value.length());
     }
 
     private boolean undoRedo(KeyEvent e, int charCode) {
@@ -395,7 +437,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
     private void removeFunction(KeyEvent e, boolean isDelete) {
         var selectedText = GUIHandler.getSelectedText();
         if (selectedText != null) {
-            if (e.isShiftDown()) {
+            if (e.isShiftDown() && isDelete) {
                 deleteLines(undoer);
                 actionToDo = ACTION.FULL_QT;
             } else {
@@ -437,8 +479,9 @@ public class StrangeKeyAdapter extends KeyAdapter {
             if (isDelete) {
                 from = to;
                 to = rightClosestBorder(to);
+//                to = Math.max(0, to-1);
             } else {
-                from = leftClosestBorder(to);
+                from = leftClosestBorder(to + 1);
             }
             GUIHandler.setSelectedOffset(from, to);
             var text = GUIHandler.getSelectedText();
@@ -509,6 +552,8 @@ public class StrangeKeyAdapter extends KeyAdapter {
             Matcher matcher = spaceOrEnter.matcher(bingo.stripLeading());
             int lastIndex = -1;
             if (matcher.find()) {
+                if (matcher.group().startsWith(" "))
+                    calc += 1;
                 lastIndex = matcher.start() + calc;
             }
             if (lastIndex == -1) {
@@ -561,7 +606,7 @@ public class StrangeKeyAdapter extends KeyAdapter {
             lineOffsetStart = GUIHandler.getEditorTextArea().getLineStartOffset(lineStartX);
             lineOffsetEnd = GUIHandler.getEditorTextArea().getLineEndOffset(lineEndX);
 
-            if (lineOffsetStart != 0 && GUIHandler.isLastLine(lineOffsetEnd)) {
+            if (lineOffsetStart != 0 && GUIHandler.isLastLine(lineOffsetEnd) ) {
                 lineOffsetStart--;
             }
 

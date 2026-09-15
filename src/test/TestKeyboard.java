@@ -42,6 +42,25 @@ public class TestKeyboard {
         delete();
         backSpace();
         tabbing();
+        crazyStuff();
+    }
+
+    private void crazyStuff() {
+        GUIHandler.setEditorText("w. .w[, tw? th th sz-. j!");
+        GUIHandler.getEditorTextArea().setCaretPosition(0);
+        pressButton((char) KeyEvent.VK_PERIOD, false, false, true);
+        checkPosition(22);
+        GUIHandler.getEditorTextArea().setCaretPosition(24);
+        pressButton((char) KeyEvent.VK_PERIOD, true, false, false);
+        checkPosition(22);
+        pressButton((char) KeyEvent.VK_PERIOD, false, false, true);
+        checkPosition(22);
+        GUIHandler.getEditorTextArea().setCaretPosition(15);
+        pressButton((char) KeyEvent.VK_PERIOD, true, false, false);
+        checkPosition(15);
+        GUIHandler.getEditorTextArea().setCaretPosition(24);
+        pressButton((char) KeyEvent.VK_PERIOD, false, false, true);
+        checkPosition(24);
     }
 
     private void copyException() {
@@ -101,6 +120,8 @@ public class TestKeyboard {
     }
 
     private void backSpace() {
+        //delete word
+        doDeleteThing(6, "Text a", KeyEvent.VK_BACK_SPACE, true, false, "Text ", 5, 6, 5);
         //remove first char
         doDeleteThing(1, simpleTestText, KeyEvent.VK_BACK_SPACE, false, false, simpleTestText.substring(1), 0, 1, 0);
         //remove no char
@@ -127,6 +148,8 @@ public class TestKeyboard {
     }
 
     private void delete() {
+        //delete word
+        doDeleteThing(0, "a Text", KeyEvent.VK_DELETE, true, false, "Text", 0, 2, 0);
         //remove first char
         doDeleteThing(0, simpleTestText, KeyEvent.VK_DELETE, false, false, simpleTestText.substring(1), 0, 1, 0);
         //remove nothing because you are at the last char
@@ -264,8 +287,6 @@ public class TestKeyboard {
         checkPosition(14);
 
         pressButton((char) KeyEvent.VK_Z, true, false);
-
-        //TODO cut line
     }
 
     private void leftRightUpDown() {
@@ -435,8 +456,12 @@ public class TestKeyboard {
     }
 
     private void pressButton(int key, boolean ctrlDown, boolean shiftDown) {
+        pressButton(key, ctrlDown, shiftDown, false);
+    }
+
+    private void pressButton(int key, boolean ctrlDown, boolean shiftDown, boolean altDown) {
         int amount = (ctrlDown ? KeyEvent.CTRL_DOWN_MASK : 0) +
-                (shiftDown ? KeyEvent.SHIFT_DOWN_MASK : 0);
+                (shiftDown ? KeyEvent.SHIFT_DOWN_MASK : 0) + (altDown ? KeyEvent.ALT_DOWN_MASK : 0);
         KeyStroke.getKeyStroke(key, amount);
         var event = new KeyEvent(
                 GUIHandler.getEditorTextArea(),
