@@ -118,9 +118,11 @@ public final class Compression {
             } else if (comparison < 0) {
                 // line comes before searchValue
                 bottom = middle + mountUp;
+                middle = bottom -1;
             } else {
                 // line comes after searchValue
                 top = middle - mountDown;
+                middle = top + 1;
             }
         }
 
