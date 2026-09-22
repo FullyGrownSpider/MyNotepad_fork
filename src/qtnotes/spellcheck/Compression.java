@@ -14,6 +14,7 @@ public final class Compression {
     public static final int byteInByteArray = 4;
     public static final int clusterSize = 6;
     public static final int maxSize = 6*8;
+    private static final int minSize = 4;
 
     public static String path;
 
@@ -41,7 +42,7 @@ public final class Compression {
 
     public static void remove(String value) {
         try {
-            var searchValue = Compression.textToLetterCompressOther(value);
+            var searchValue = Compression.textToLetterCompressOther(value.toLowerCase(Locale.ROOT));
             if (searchValue == null) return;
             var start = find(value);
             var pathUsed = Path.of(path);
@@ -131,7 +132,7 @@ public final class Compression {
 //        th, he, in, en, nt
         //should have been done before but we programming defensively now
         line = line.toLowerCase(Locale.ROOT);
-        if (line.length() < byteInByteArray)
+        if (line.length() < minSize || line.length() > maxSize)
             return null;
 
         var list = new ArrayList<byte[]>();
