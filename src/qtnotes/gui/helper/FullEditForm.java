@@ -13,6 +13,15 @@ import java.util.List;
 public class FullEditForm {
     public final JFrame myFrame = new JFrame("typer inputEdit");
     private static final Font usedFont = new Font("Ariel", Font.BOLD, 14);
+    private final JLabel
+            shortCutPane = new JLabel("QT"),
+            wordPane = new JLabel("--"),
+            wordSPane = new JLabel("s"),
+            wordYPane = new JLabel("y"),
+            wordINGPane = new JLabel("="),
+            wordEDPane = new JLabel("["),
+            wordERPane = new JLabel(";"),
+            wordNOTPane = new JLabel(",");
     private final JTextField
             shortCut = new HintTextField("Quicktype"),
             word = new HintTextField("Word"),
@@ -22,6 +31,7 @@ public class FullEditForm {
             wordED = new HintTextField("Ed"),
             wordER = new HintTextField("Er"),
             wordNOT = new HintTextField("Not");
+    private final JLabel[] fieldListPane = new JLabel[]{shortCutPane, wordPane, wordSPane, wordYPane, wordINGPane, wordEDPane, wordERPane, wordNOTPane};
     private final JTextField[] fieldList = new JTextField[]{shortCut, word, wordS, wordY, wordING, wordED, wordER, wordNOT};
     private final JTextArea info = new JTextArea();
     private final JButton add = new JButton(), remove = new JButton();
@@ -129,9 +139,10 @@ public class FullEditForm {
     }
 
     private void northPanelMake() {
-        for (var item : fieldList) {
-            item.setColumns(10);
-            northPanel.add(item);
+        for (int i = 0; i < fieldList.length; i++) {
+            fieldList[i].setColumns(8);
+            northPanel.add(fieldListPane[i]);
+            northPanel.add(fieldList[i]);
         }
     }
 

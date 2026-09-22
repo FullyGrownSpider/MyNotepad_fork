@@ -65,6 +65,7 @@ public class GUIHandler {
     private static final WordXY emptyPoint = new WordXY(-1, -1);
 
     public static byte saveCount = 0;
+
     /**
      * handle method is help to setup the major components and getting the frame ready to
      * make it visible on the user screen.
@@ -289,6 +290,11 @@ public class GUIHandler {
         return textArea;
     }
 
+    public static void recheckSpelling() {
+        GUIHandler.spellCheck(true);
+        GUIHandler.postQTClean();
+    }
+
     public static void postQTClean() {
         try {
             var word = getCurrentWord();
@@ -309,8 +315,7 @@ public class GUIHandler {
             qtOutArea.setText("");
             replaceOutSelection(0, 0, 0, editorTextArea.getText().length());
 
-            spellCheck(true);
-            postQTClean();
+            recheckSpelling();
         } catch (BadLocationException ignored) {
 
         }
@@ -525,8 +530,7 @@ public class GUIHandler {
             var word = incorrectItems.remove(0);
             var text = getTextWord(word);
             ignoredUnknownWords.add(text);
-            spellCheck(true);
-            postQTClean();
+            recheckSpelling();
         } catch (BadLocationException e) {
             throw new RuntimeException(e);
         }
@@ -537,7 +541,7 @@ public class GUIHandler {
             var word = incorrectItems.remove(0);
             var text = getTextWord(word);
             Compression.add(text);
-            postQTClean();
+            recheckSpelling();
         } catch (BadLocationException e) {
             throw new RuntimeException(e);
         }
@@ -661,6 +665,7 @@ public class GUIHandler {
         JMenuItem copyQuicktype = makeMenuItem(new FileMenuActions.copyQuickTypeAction());
         JMenuItem exitFile = makeMenuItem(new FileMenuActions.ExitFileAction());
         fixSpelling = makeMenuItem(new EditMenuActions.SuggestAction());
+        JMenuItem removeSpelling = makeMenuItem(new EditMenuActions.RemoveSuggestion());
         fileMenu.add(newFile);
         fileMenu.add(newWindowFile);
         fileMenu.addSeparator();
@@ -675,6 +680,7 @@ public class GUIHandler {
         editMenu.add(editQuicktype);
         editMenu.add(editQuicktype);
         editMenu.add(fixSpelling);
+        editMenu.add(removeSpelling);
 
         JCheckBoxMenuItem replaceQuotes = makeCheckBoxMenuItem(new FormatMenuActions.shouldReplaceQuotes());
         replaceQuotes.setState(InitialValues.getReplaceQuote());

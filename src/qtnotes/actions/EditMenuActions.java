@@ -6,6 +6,7 @@ package qtnotes.actions;/*
 
 import qtnotes.gui.GUIHandler;
 import qtnotes.gui.helper.FullEditForm;
+import qtnotes.gui.helper.SpellCheckRemove;
 import qtnotes.gui.helper.SuggestionsDisplayForm;
 import qtnotes.init.InitialValues;
 import qtnotes.spellcheck.Spellcheck;
@@ -51,6 +52,18 @@ public class EditMenuActions {
             if (word == null) return;
             var list = Spellcheck.optimizedSearch(word.word);
             new SuggestionsDisplayForm(GUIHandler.getFrame(), InitialValues.getEditorFont(), list, word.shouldLoop, word.word, word.location);
+        }
+    }
+
+    public static class RemoveSuggestion extends AbstractAction {
+        public RemoveSuggestion() {
+            super();
+            putValue(AbstractAction.NAME, "Remove item from Spellchecking");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            new SpellCheckRemove(GUIHandler.getFrame(), InitialValues.getEditorFont());
         }
     }
 }
