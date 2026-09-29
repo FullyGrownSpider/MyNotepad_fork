@@ -52,7 +52,6 @@ public class GUIHandler {
 
     private static JMenuItem saveAsFile;
     private static JMenuItem fixSpelling;
-    public static JCheckBoxMenuItem statusBarView;
 
     private static Style _defaultStyle;
     private static Style _incorrectStyle;
@@ -449,7 +448,7 @@ public class GUIHandler {
                 //only letters
                 if (!onlyLettersPattern.matcher(word).find()
                         //do the spell check
-                        && !Spellcheck.isCorrectlySpelled(word.toLowerCase(Locale.ROOT))
+                        && Spellcheck.isIncorrectlySpelled(word.toLowerCase(Locale.ROOT))
                         //is the word in the editor the same as in the QT
                         && editorTextStream.contains(word)
                         //ignore ignored words
@@ -572,8 +571,8 @@ public class GUIHandler {
         for (var word : oldWords) {
             if (word.length() < 3) continue;
             var wrong = AddedWord.exists(word, quicktype.data);
-            if (!wrong.isEmpty()){
-                statusBar.setHintText(wrong);
+            if (wrong != null && AddedWord.createText(word, quicktype.data, false, false).equals(word)){
+                statusBar.setHintText(wrong.whatAmI(word));
                 return;
             }
         }
@@ -695,7 +694,7 @@ public class GUIHandler {
         optionsMenu.add(fontChangeFormat);
 
         JMenu zoomView = makeMenu("Zoom");
-        statusBarView = makeCheckBoxMenuItem(new ViewMenuActions.StatusBarViewAction());
+        JCheckBoxMenuItem statusBarView = makeCheckBoxMenuItem(new ViewMenuActions.StatusBarViewAction());
         statusBarView.setState(InitialValues.getShowStatusBar());
         viewMenu.add(zoomView);
         viewMenu.add(statusBarView);

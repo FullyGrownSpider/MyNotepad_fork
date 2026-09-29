@@ -5,11 +5,11 @@ import java.util.*;
 
 public final class Spellcheck {
 
-    public static boolean isCorrectlySpelled(String word) {
+    public static boolean isIncorrectlySpelled(String word) {
         try {
-            return Compression.find(word) > -1;
+            return Compression.find(word) <= -1;
         } catch (IOException e) {
-            return false;
+            return true;
         }
     }
 
@@ -141,6 +141,10 @@ public final class Spellcheck {
             for (i = 0; i < threads.size(); i++) {
                 threads.get(i).join();
                 actualSugs.addAll(runs.get(i).getValue());
+            }
+
+            if (actualSugs.isEmpty()){
+                actualSugs.addAll(Compression.read(word));
             }
 
             //more likely to miss letters than to add them... i think

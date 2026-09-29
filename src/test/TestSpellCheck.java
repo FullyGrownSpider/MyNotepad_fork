@@ -90,7 +90,7 @@ public class TestSpellCheck {
             list[1] = x[1+ i];
             list[2] = x[2+ i];
             list[3] = x[3 + i];
-            System.out.println(Compression.textFromLetterCompressCluster(list) + " " + Compression.needNextCluster(list) + " " + Compression.needPreviousCluster(list));
+            System.out.println(Compression.textFromLetterCompressCluster(new ArrayList<>(Collections.singleton(list))) + " " + Compression.needNextCluster(list) + " " + Compression.needPreviousCluster(list));
         }
     }
 
@@ -105,7 +105,7 @@ public class TestSpellCheck {
         var press2 = Compression.textToLetterCompressOther("zzzzzzzzzzzzz");
         var press3 = Compression.textToLetterCompressOther("aahing");
 
-        var dePress = Compression.textFromLetterCompressCluster(press.get(0));
+        var dePress = Compression.textFromLetterCompressCluster(new ArrayList<>(Collections.singleton(press.get(0))));
         var goLeft = Compression.needPreviousCluster(press.get(1));
         var goRight = Compression.needNextCluster(press.get(1));
         BitSet readBits;

@@ -34,6 +34,28 @@ public class AddedWord implements Comparable<AddedWord>{
                value.equals(data[6]);
     }
 
+    public String whatAmI(String value){
+        for (int i = 1; i < 7; i++) {
+            if (value.equals(data[i])){
+                switch (i) {
+                    case 1:
+                        return shortCut();
+                    case 2:
+                        return shortCut() + "s";
+                    case 3:
+                        return shortCut() + "y";
+                    case 4:
+                        return shortCut() + "=";
+                    case 5:
+                        return shortCut() + "[";
+                    case 6:
+                        return shortCut() + ";";
+                }
+            }
+        }
+        return shortCut();
+    }
+
     @Override
     public String toString(){
         return what(data[0]) + what(data[1]) +
@@ -129,13 +151,13 @@ public class AddedWord implements Comparable<AddedWord>{
     private static final String leftSingleQuote = "‘";
     private static final String rightSingleQuote = "’";
 
-    public static String exists(String word, Map<String, AddedWord> data){
+    public static AddedWord exists(String word, Map<String, AddedWord> data){
         for (var item : data.values()){
             if (item.amI(word)){
-                return item.shortCut();
+                return item;
             }
         }
-        return "";
+        return null;
     }
 
     public static String createText(String text, Map<String, AddedWord> data, boolean replaceQuotes, boolean exceptions) {
