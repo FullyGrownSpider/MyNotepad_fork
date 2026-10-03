@@ -2,6 +2,7 @@ package qtnotes.spellcheck;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class Spellcheck {
 
@@ -26,12 +27,14 @@ public final class Spellcheck {
 
         int max = suggestionsList.size();
         defaultMistakes(word, suggestionsList);
+        suggestionsList = suggestionsList.stream().distinct().collect(Collectors.toList());
         for (int i = 0; i < max; i++) {
             defaultMistakes(suggestionsList.get(i), suggestionsList);
         }
+        suggestionsList = suggestionsList.stream().distinct().collect(Collectors.toList());
 
         alphabetMe(suggestionsList);
-        return new ArrayList<>(suggestionsList.stream().distinct().filter((x) -> x.length() < 30).toList());
+        return new ArrayList<>(suggestionsList.stream().distinct().toList());
     }
 
     private static void alphabetMe(List<String> suggestionsList){
@@ -39,8 +42,12 @@ public final class Spellcheck {
         for (int iii = 0; iii < max; iii++) {
             var word = suggestionsList.get(iii);
             int length = word.length();
-            for (int i = 1; i< length; i++){
-                var removed = new StringBuilder(word).replace(i, i + 1, "");
+            for (int i = 0; i< length + 1; i++){
+                StringBuilder removed;
+                if (i == 0 || i == length){
+                    removed = new StringBuilder(word);
+                } else
+                    removed = new StringBuilder(word).replace(i, i + 1, "");
                 suggestionsList.add(removed.toString());
                 for (int ii = 0; ii < 25; ii++) {
                     suggestionsList.add(new StringBuilder(word).insert(i, Character.toChars(((int)'a') + ii)).toString());
@@ -115,7 +122,7 @@ public final class Spellcheck {
         return suggestionsList;
     }
 
-    public static ArrayList<String> optimizedSearch(String word){
+    public static List<String> optimizedSearch(String word){
         try {
             List<String> testList = Spellcheck.suggestions(word);
             List<SearchThread> runs = new ArrayList<>();
@@ -143,16 +150,30 @@ public final class Spellcheck {
                 actualSugs.addAll(runs.get(i).getValue());
             }
 
-            if (actualSugs.isEmpty()){
-                actualSugs.addAll(Compression.read(word));
-            }
+            actualSugs.sort((a, b) -> a.charAt(1) != b.charAt(1) ? word.charAt(1) == a.charAt(1) ? -1 : 1 : 0);
 
-            //more likely to miss letters than to add them... i think
-            actualSugs.sort((a,b) -> b.length() - a.length());
+            actualSugs.sort((a, b) -> - a.length() + b.length() + (word.length() / 2));
 
-            return actualSugs;
+            actualSugs.addAll(Compression.read(word).stream().filter((x) -> x.length() > word.length() - 4 && x.length() < word.length() + 4).sorted().toList());
+
+            actualSugs.sort((a, b) -> weirdCompare(word, a, b));
+
+            return actualSugs.stream().distinct().toList();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+    private static int weirdCompare(String word, String a, String b){
+        int calc = 0;
+        for (int i = 0; i < word.length(); i++) {
+            var chari = word.charAt(i);
+            var lengthy = word.split(String.valueOf(chari)).length;
+            var lengthyA = a.split(String.valueOf(chari)).length;
+            lengthyA = Math.max(lengthy - lengthyA, 0);
+            var lengthyB = b.split(String.valueOf(chari)).length;
+            lengthyB = Math.max(lengthy - lengthyB, 0);
+            calc += (lengthyA - lengthyB) * (word.length() - i);
+        }
+        return calc;
     }
 }

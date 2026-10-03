@@ -13,6 +13,7 @@ import qtnotes.spellcheck.Spellcheck;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 
@@ -51,7 +52,7 @@ public class EditMenuActions {
             var word = GUIHandler.getNextMistake();
             if (word == null) return;
             var list = Spellcheck.optimizedSearch(word.word);
-            new SuggestionsDisplayForm(GUIHandler.getFrame(), InitialValues.getEditorFont(), list, word.shouldLoop, word.word, word.location);
+            new SuggestionsDisplayForm(GUIHandler.getFrame(), InitialValues.getEditorFont(), new ArrayList<>(list), word.shouldLoop, word.word, word.location);
         }
     }
 
