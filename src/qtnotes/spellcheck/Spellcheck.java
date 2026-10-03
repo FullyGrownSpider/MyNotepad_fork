@@ -112,13 +112,6 @@ public final class Spellcheck {
             last = last.replaceFirst(two, one);
             suggestionsList.add(last);
         }
-        last = last.replaceFirst(one, two);
-        last = last.replaceFirst(one, two);
-        suggestionsList.add(last);
-        last = last.replaceFirst(one, two);
-        last = last.replaceFirst(two, one);
-        last = last.replaceFirst(two, one);
-        suggestionsList.add(last);
         return suggestionsList;
     }
 
