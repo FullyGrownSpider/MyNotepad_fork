@@ -168,7 +168,8 @@ public final class Spellcheck {
             }
 
             //add words that are near where it should be, but only those about the same length
-            actualSugs.addAll(Compression.read(word).stream().filter((x) -> x.length() > word.length() - 4 && x.length() < word.length() + 4 && x.charAt(0) == word.charAt(0)).sorted().toList());
+            if (actualSugs.isEmpty())
+                actualSugs.addAll(Compression.read(word).stream().filter((x) -> x.length() > word.length() - 4 && x.length() < word.length() + 4 && x.charAt(0) == word.charAt(0)).sorted().toList());
 
             actualSugs.sort((a, b) -> weirdCompare(word, a, b));
 
@@ -180,19 +181,31 @@ public final class Spellcheck {
 
     private static int weirdCompare(String word, String a, String b){
         //step 1 check the length (the closer it is to the word length the better, otherwise bigger is better
-        int calc = (Math.abs(word.length() - a.length()) - Math.abs(word.length() - b.length())) * 10000;
-        //step 2 does it start with the same letter?
-        calc += a.charAt(0) != b.charAt(0) ? word.charAt(0) == a.charAt(0) ? -10 : 10 : 0;
-        //step 3 do the weird checking of letters that are also in there
+        int calc = (Math.abs(word.length() - a.length()) - Math.abs(word.length() - b.length())) * 10;
+        //step 2 do the weird checking of letters that are also in there
+        var wa = new StringBuilder(a);
+        var wb = new StringBuilder(b);
         for (int i = 0; i < word.length(); i++) {
-            var chari = word.charAt(i);
-            var lengthy = word.split(String.valueOf(chari)).length;
-            var lengthyA = a.split(String.valueOf(chari)).length;
-            lengthyA = Math.max(lengthy - lengthyA, 0);
-            var lengthyB = b.split(String.valueOf(chari)).length;
-            lengthyB = Math.max(lengthy - lengthyB, 0);
-            calc += (lengthyA - lengthyB) * (word.length() - i);
+            var chari = "" + word.charAt(i);
+            var indexB = wb.indexOf(chari);
+            var indexA = wa.indexOf(chari);
+            if (indexB != -1) {
+                wb.deleteCharAt(indexB);
+                if (indexA == -1) {
+                    calc += 100;
+                }
+            } if (indexA != -1) {
+                wa.deleteCharAt(indexA);
+                if (indexB == -1) {
+                    calc -= 100;
+                }
+            }
         }
+        //step 3 check last and first letter
+        calc += a.charAt(0) != word.charAt(0) ? 500 : -500;
+        calc += b.charAt(0) != word.charAt(0) ? -500 : 500;
+        calc += a.charAt(a.length()-1) != word.charAt(word.length()-1) ? 500 : -500;
+        calc += b.charAt(b.length()-1) != word.charAt(word.length()-1) ? -500 : 500;
         return calc;
     }
 }

@@ -160,7 +160,7 @@ public final class Compression {
             }
         }
 
-        var list = new ArrayList<String>(12);
+        var list = new ArrayList<String>(6);
 
         raf.seek((long) middle * byteInByteArray); // jump to this line in the file
         raf.read(bytes.get(0)); // read the line from the file
@@ -170,12 +170,12 @@ public final class Compression {
         int mountUp = getMountUp(bytesOut, middle, raf, bytes, mountDown);
         list.add(textFromLetterCompressCluster(bytesOut));
         bytesOut.clear();
-        int counter = 6;
+        int counter = 3;
         for (int liddle = middle -1 - mountDown; liddle > 0 && counter > 0; counter--) {
             liddle -= suggestWord(raf, liddle, bytes, bytesOut, list);
         }
         int max = Math.toIntExact((raf.length() - 1) / byteInByteArray);
-        counter = 6;
+        counter = 3;
         for (int biddle = middle + 1 + mountUp; biddle < max && counter > 0; counter--) {
             biddle += suggestWord(raf, biddle, bytes, bytesOut, list);
         }
