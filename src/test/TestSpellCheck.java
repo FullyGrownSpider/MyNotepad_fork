@@ -15,7 +15,18 @@ import java.util.*;
 public class TestSpellCheck {
     String fileLocation = "/home/a804/Documents/MyTyper/words.txt";
     String fileLocation4 = "/home/a804/Documents/MyTyper/words_bin.dat";
-    String testWord = "ccesser";
+    String testWord = "beuatiful";
+
+    @Test
+    public void createSuggestions() throws InterruptedException {
+        Compression.path = fileLocation4;
+        var start = System.currentTimeMillis();
+
+        var x = Spellcheck.optimizedSearch(testWord);
+        System.out.println(System.currentTimeMillis() - start);
+
+        var y = 0;
+    }
 
     @Test
     public void removeCheck() throws IOException {
@@ -126,14 +137,4 @@ public class TestSpellCheck {
         Assert.assertTrue(fail.isEmpty());
     }
 
-    @Test
-    public void createSuggestions() throws InterruptedException {
-        Compression.path = fileLocation4;
-        var start = System.currentTimeMillis();
-
-        var x = Spellcheck.optimizedSearch(testWord);
-        System.out.println(System.currentTimeMillis() - start);
-
-        var y = 0;
-    }
 }

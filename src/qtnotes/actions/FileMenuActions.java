@@ -32,7 +32,7 @@ public class FileMenuActions {
             super();
             putValue(AbstractAction.NAME, "New File");
             putValue(MNEMONIC_KEY, KeyEvent.VK_N);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, CTRL_DOWN_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, CTRL_DOWN_MASK + SHIFT_DOWN_MASK));
         }
 
         @Override
@@ -56,32 +56,6 @@ public class FileMenuActions {
             GUIHandler.setIsSaved(true);
             GUIHandler.setEditorText("");
             GUIHandler.setIsLoadingFile(false);
-        }
-    }
-
-    public static class NewWindowFileAction extends AbstractAction {
-        public NewWindowFileAction() {
-            super();
-            putValue(AbstractAction.NAME, "New Window");
-            putValue(MNEMONIC_KEY, KeyEvent.VK_W);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, CTRL_DOWN_MASK + SHIFT_DOWN_MASK));
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String fileName = InitialValues.getFileName();
-            String filePath = InitialValues.getFilePath();
-            InitialValues.setFileName(InitialValues.NEW_FILE);
-            InitialValues.setFilePath(null);
-            InitialValues.writeToFile(); // <---- this is because new window should be empty
-            try {
-                Runtime.getRuntime().exec("cmd /c start cmd.exe /K \"cd bin && java com.gmail.mohitsainiknl2.mynotepad.qtnotes.MainLauncher && exit\"");
-            } catch (Exception ex) {
-                System.out.println("Your are doing something worng...");
-            }
-            InitialValues.setFileName(fileName);
-            InitialValues.setFilePath(filePath);
-            InitialValues.writeToFile();
         }
     }
 

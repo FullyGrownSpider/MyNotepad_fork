@@ -143,8 +143,6 @@ public class GUIHandler {
         };
         //try to save every two seconds
         autoSave.scheduleAtFixedRate(task, 0, 5000);
-
-        findNSetPositionIndicator();
     }
 
     /**
@@ -174,12 +172,9 @@ public class GUIHandler {
         editorScrollPane.setBorder(new LineBorder(Color.WHITE, 0));
         editorScrollPaneOutArea.setBorder(new LineBorder(Color.WHITE, 0));
 
-
         if (InitialValues.getFilePath() != null) {
             loadFileToEditor();
         }
-
-        editorTextArea.addCaretListener(e -> findNSetPositionIndicator());
     }
 
     private JTextPane initTextPane() {
@@ -569,30 +564,17 @@ public class GUIHandler {
         var oldWords = Arrays.stream(allTextAfterOffset.substring(0,lineEndOut).split(splitterPattern.pattern())).toList();
 
         for (var word : oldWords) {
-            if (word.length() < 3) continue;
+            if (word.length() < 4) continue;
             var wrong = AddedWord.exists(word, quicktype.data);
-            if (wrong != null && AddedWord.createText(word, quicktype.data, false, false).equals(word)){
-                statusBar.setHintText(wrong.whatAmI(word));
-                return;
+            if (wrong != null){
+                var whatAmI = wrong.whatAmI(word);
+                if (whatAmI.length() != word.length()) {
+                    statusBar.setHintText(wrong.whatAmI(word) + " → " + word);
+                    return;
+                }
             }
         }
         statusBar.setHintText("");
-    }
-
-    private static void findNSetPositionIndicator() {
-        int lineNum = 1;
-        int columnNum = 1;
-
-        int caretPosition;
-        try {
-            caretPosition = editorTextArea.getCaretPosition();
-            lineNum = editorTextArea.getLineOfOffset(caretPosition);
-            columnNum = caretPosition - editorTextArea.getLineStartOffset(lineNum);
-
-        } catch (BadLocationException ignored) {
-        }
-        if (statusBar != null)
-            statusBar.setCaretPosition(lineNum, columnNum);
     }
 
     /**
@@ -656,7 +638,6 @@ public class GUIHandler {
         menuBar.add(viewMenu);
         frame.setJMenuBar(menuBar);
         JMenuItem newFile = makeMenuItem(new FileMenuActions.NewFileAction());
-        JMenuItem newWindowFile = makeMenuItem(new FileMenuActions.NewWindowFileAction());
         JMenuItem openFile = makeMenuItem(new FileMenuActions.OpenFileAction());
         JMenuItem editQuicktype = makeMenuItem(new EditMenuActions.OpenQuickTypeEditAction());
         saveAsFile = makeMenuItem(new FileMenuActions.SaveAsFileAction());
@@ -666,7 +647,6 @@ public class GUIHandler {
         fixSpelling = makeMenuItem(new EditMenuActions.SuggestAction());
         JMenuItem removeSpelling = makeMenuItem(new EditMenuActions.RemoveSuggestion());
         fileMenu.add(newFile);
-        fileMenu.add(newWindowFile);
         fileMenu.addSeparator();
         fileMenu.add(openFile);
         fileMenu.add(saveAsFile);

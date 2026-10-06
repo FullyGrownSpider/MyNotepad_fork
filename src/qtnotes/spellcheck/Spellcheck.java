@@ -6,33 +6,37 @@ import java.util.stream.Collectors;
 
 public final class Spellcheck {
 
+    private static final int maxStepsDefault = 7;
+    private static final ArrayList<String> nono = new ArrayList<>(List.of("bk","bq","bx","cb","cf","cg","cj","cp","cv","cw","cx","dx","fk","fq","fv","fx","fz","gq","gv","gx","hk","hv","hx","hz","iy","jb","jc","jd","jf","jg","jh","jk","jl","jm","jn","jp","jq","jr","js","jt","jv","jw","jx","jy","jz","kq","kv","kx","kz","lq","lx","mg","mj","mq","mx","mz","pq","pv","px","qb","qc","qd","qe","qf","qg","qh","qj","qk","ql","qm","qn","qo","qp","qr","qs","qt","qv","qw","qx","qy","qz","sx","sz","tq","tx","vb","vc","vd","vf","vg","vh","vj","vk","vm","vn","vp","vq","vt","vw","vx","vz","wq","wv","wx","wz","xb","xg","xj","xk","xv","xz","yq","yv","yz","zb","zc","zg","zh","zj","zn","zq","zr","zs","zx"));
+
     public static boolean isIncorrectlySpelled(String word) {
         try {
             return Compression.find(word) <= -1;
         } catch (IOException e) {
             return true;
         }
-    }
+    } 
 
     private static ArrayList<String> suggestions(String word){
         //replaces f and v, s and z, and such
         List<String> suggestionsList = new ArrayList<>(66000);
 
         suggestionsList.add(word);
-        if (word.endsWith("ll")){
-            suggestionsList.add(word.substring(0,word.length()-1));
-        } else if (word.endsWith("l")){
-            suggestionsList.add(word += "l");
-        }
 
+        defaultMistakes(word, suggestionsList, false);
+        suggestionsList = suggestionsList.stream().distinct().collect(Collectors.toList());
         int max = suggestionsList.size();
-        defaultMistakes(word, suggestionsList);
-        suggestionsList = suggestionsList.stream().distinct().collect(Collectors.toList());
         for (int i = 0; i < max; i++) {
-            defaultMistakes(suggestionsList.get(i), suggestionsList);
+            defaultMistakes(suggestionsList.get(i), suggestionsList, true);
         }
-        suggestionsList = suggestionsList.stream().distinct().collect(Collectors.toList());
-
+        suggestionsList = suggestionsList.stream().filter(x -> {
+            for (var letters : nono){
+                if (x.contains(letters)) return false;
+            }
+            return true;
+        }).distinct().collect(Collectors.toList());
+        if (suggestionsList.isEmpty())
+            suggestionsList.add(word);
         alphabetMe(suggestionsList);
         return new ArrayList<>(suggestionsList.stream().distinct().toList());
     }
@@ -43,66 +47,83 @@ public final class Spellcheck {
             var word = suggestionsList.get(iii);
             int length = word.length();
             for (int i = 0; i< length + 1; i++){
-                StringBuilder removed;
+                String removed;
                 if (i == 0 || i == length){
-                    removed = new StringBuilder(word);
-                } else
-                    removed = new StringBuilder(word).replace(i, i + 1, "");
-                suggestionsList.add(removed.toString());
-                for (int ii = 0; ii < 25; ii++) {
-                    suggestionsList.add(new StringBuilder(word).insert(i, Character.toChars(((int)'a') + ii)).toString());
-                    suggestionsList.add(new StringBuilder(removed).insert(i, Character.toChars(((int)'a') + ii)).toString());
+                    removed = null;
+                } else {
+                    //remove a character from the word
+                    removed = new StringBuilder(word).replace(i, i + 1, "").toString();
+                    suggestionsList.add(removed);
+                    //add things like 'qu' and 'ch' to the word
+                    normalLetterCombos(suggestionsList, removed, i);
                 }
-
-                for (int ii = 1; ii < 25; ii++) {
-                    if (ii == 4 || ii == 8|| ii == 20 || ii == 14 || ii == 17)
-                        continue;
-                    letterDoubleAdd(word, i, ii, suggestionsList, 'a');
-                    letterDoubleAdd(word, i, ii, suggestionsList, 'e');
-                    letterDoubleAdd(word, i, ii, suggestionsList, 'i');
-                    letterDoubleAdd(word, i, ii, suggestionsList, 'o');
-                    letterDoubleAdd(word, i, ii, suggestionsList, 'u');
-                    if (ii != 7)
-                        letterDoubleAdd(word, i, ii, suggestionsList, 'h');
+                normalLetterCombos(suggestionsList, word, i);
+                for (int ii = 0; ii < 26; ii++) {
+                    if (ii == 16) continue;
+                    char charBoy = (char)(((byte) 'a') + ii);
+                    //add the char into the location
+                    suggestionsList.add(new StringBuilder(word).insert(i, charBoy).toString());
+                    if (ii < 22) { //skip v w x y z
+                        //skip a e i o u q
+                        if (ii == 4 || ii == 8 || ii == 20 || ii == 14 || ii == 0)
+                            continue;
+                        //add two letters in the spot
+                        letterDoubleAdd(word, i, ii, suggestionsList, 'a');
+                        letterDoubleAdd(word, i, ii, suggestionsList, 'e');
+                        letterDoubleAdd(word, i, ii, suggestionsList, 'i');
+                        letterDoubleAdd(word, i, ii, suggestionsList, 'o');
+                        letterDoubleAdd(word, i, ii, suggestionsList, 'u');
+                        if (removed != null) {
+                            if (ii != 2 && ii != 9) // skip c j
+                                for (int io = 0; io < length; io++) {
+                                    //while a character is removed add the char into the location
+                                    suggestionsList.add(new StringBuilder(removed).insert(io, charBoy).toString());
+                                }
+                            letterDoubleAdd(removed, i, ii, suggestionsList, 'a');
+                            letterDoubleAdd(removed, i, ii, suggestionsList, 'e');
+                            letterDoubleAdd(removed, i, ii, suggestionsList, 'i');
+                            letterDoubleAdd(removed, i, ii, suggestionsList, 'o');
+                            letterDoubleAdd(removed, i, ii, suggestionsList, 'u');
+                        }
+                    }
                 }
-
-                letterDoubleAdd(word, i, 17, suggestionsList, 'u');
             }
         }
     }
 
-    private static void letterDoubleAdd(String word, int index, int letter, List<String> list, char actualLetter){
-        //pro"ba"bly
-        var buf = new StringBuilder(word).insert(index,actualLetter).insert(index, Character.toChars(((int)'a') + letter));
-        var temp = buf.toString();
-        list.add(temp);
-        if (index != word.length() -1) {
-            //pro"ba"ly
-            var otherTemp = new StringBuilder(temp).replace(index + 2, index + 3, "");
-            list.add(otherTemp.toString());
-            //pr"ba"ly
-            list.add(otherTemp.replace(index, index + 1, "").toString());
-        }
-        //pr"ba"bly
-        list.add(buf.replace(index, index+1, "").toString());
+    private static void normalLetterCombos(List<String> suggestionsList, String removed, int i) {
+        letterDoubleAddOneWay(removed, i, suggestionsList, "qu");
+        letterDoubleAddOneWay(removed, i, suggestionsList, "ch");
+        letterDoubleAddOneWay(removed, i, suggestionsList, "gh");
+        letterDoubleAddOneWay(removed, i, suggestionsList, "th");
     }
 
-    private static void defaultMistakes(String word, List<String> suggestionsList) {
+    private static void letterDoubleAddOneWay(String word, int index, List<String> suggestionList, String letters){
+        suggestionList.add(new StringBuilder(word).insert(index,letters).toString());
+    }
+
+    private static void letterDoubleAdd(String word, int index, int letter, List<String> suggestionList, char actualLetter){
+        var text = "" + (char)(((byte) 'a') + letter) + actualLetter;
+        var text2 = "" + actualLetter + (char)(((byte) 'a') + letter);
+        suggestionList.add(new StringBuilder(word).insert(index,text).toString());
+        suggestionList.add(new StringBuilder(word).insert(index,text2).toString());
+    }
+
+    private static void defaultMistakes(String word, List<String> suggestionsList, boolean advanced) {
         suggestionsList.addAll(suggest(word, "f", "v"));
         suggestionsList.addAll(suggest(word, "s", "c"));
         suggestionsList.addAll(suggest(word, "k", "c"));
-        //common mistakes - e could be i or a
-        suggestionsList.addAll(suggest(word, "e", "a"));
-        suggestionsList.addAll(suggest(word, "e", "y"));
-        suggestionsList.addAll(suggest(word, "i", "y"));
-        suggestionsList.addAll(suggest(word, "i", "e"));
-        suggestionsList.addAll(suggest(word, "ie", "y"));
-        suggestionsList.addAll(suggest(word, "gh", "f"));
+
+        if (advanced) {
+            suggestionsList.addAll(suggest(word, "e", "a"));
+            suggestionsList.addAll(suggest(word, "i", "y"));
+            suggestionsList.addAll(suggest(word, "i", "e"));
+            suggestionsList.addAll(suggest(word, "ie", "y"));
+        }
     }
 
     private static List<String> suggest(String base, String one, String two){
         List<String> suggestionsList = new ArrayList<>();
-
         var last = base;
         while (last.contains(one)){
             last = last.replaceFirst(one, two);
@@ -112,6 +133,8 @@ public final class Spellcheck {
             last = last.replaceFirst(two, one);
             suggestionsList.add(last);
         }
+        if (suggestionsList.size() > maxStepsDefault)
+            suggestionsList.clear();
         return suggestionsList;
     }
 
@@ -128,7 +151,6 @@ public final class Spellcheck {
                 threads.add(first);
                 runs.add(firstFinder);
                 first.start();
-
             }
             var firstFinder = new SearchThread(testList.subList(i-half, testList.size()));
             var first = new Thread(firstFinder);
@@ -143,11 +165,8 @@ public final class Spellcheck {
                 actualSugs.addAll(runs.get(i).getValue());
             }
 
-            actualSugs.sort((a, b) -> a.charAt(1) != b.charAt(1) ? word.charAt(1) == a.charAt(1) ? -1 : 1 : 0);
-
-            actualSugs.sort((a, b) -> - a.length() + b.length() + (word.length() / 2));
-
-            actualSugs.addAll(Compression.read(word).stream().filter((x) -> x.length() > word.length() - 4 && x.length() < word.length() + 4).sorted().toList());
+            //add words that are near where it should be, but only those about the same length
+            actualSugs.addAll(Compression.read(word).stream().filter((x) -> x.length() > word.length() - 4 && x.length() < word.length() + 4 && x.charAt(0) == word.charAt(0)).sorted().toList());
 
             actualSugs.sort((a, b) -> weirdCompare(word, a, b));
 
@@ -156,8 +175,13 @@ public final class Spellcheck {
             throw new RuntimeException(e);
         }
     }
+
     private static int weirdCompare(String word, String a, String b){
-        int calc = 0;
+        //step 1 check the length (the closer it is to the word length the better, otherwise bigger is better
+        int calc = (Math.abs(word.length() - a.length()) - Math.abs(word.length() - b.length())) * 10000;
+        //step 2 does it start with the same letter?
+        calc += a.charAt(0) != b.charAt(0) ? word.charAt(0) == a.charAt(0) ? -10 : 10 : 0;
+        //step 3 do the weird checking of letters that are also in there
         for (int i = 0; i < word.length(); i++) {
             var chari = word.charAt(i);
             var lengthy = word.split(String.valueOf(chari)).length;

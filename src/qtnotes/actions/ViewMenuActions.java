@@ -5,7 +5,6 @@ package qtnotes.actions;/*
 
 
 import qtnotes.gui.GUIHandler;
-import qtnotes.gui.helper.StatusBar;
 import qtnotes.init.InitialValues;
 
 import java.awt.event.ActionEvent;
@@ -52,7 +51,6 @@ public class ViewMenuActions {
             zoomLevel = zoomLevel + 20;
             InitialValues.setZoom(zoomLevel);
             GUIHandler.setZoomValue(zoomLevel);
-            StatusBar.setZoomLevel(zoomLevel);
         }
     }
 
@@ -70,7 +68,6 @@ public class ViewMenuActions {
             zoomLevel = zoomLevel - 20;
             InitialValues.setZoom(zoomLevel);
             GUIHandler.setZoomValue(zoomLevel);
-            StatusBar.setZoomLevel(zoomLevel);
         }
     }
 
@@ -85,7 +82,6 @@ public class ViewMenuActions {
         public void actionPerformed(ActionEvent e) {
             InitialValues.setZoom(100);
             GUIHandler.setZoomValue(100);
-            StatusBar.setZoomLevel(100);
         }
     }
 }

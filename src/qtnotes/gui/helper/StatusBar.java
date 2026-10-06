@@ -7,8 +7,6 @@ package qtnotes.gui.helper;/*
 import qtnotes.gui.GUIHandler;
 import qtnotes.init.InitialValues;
 
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Font;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -24,9 +22,6 @@ import javax.swing.JPanel;
  * help of the JPanel.
  */
 public class StatusBar extends JPanel{
-	private static JPanel blankPanel;
-    private static StatusBarLabel caretPosition;
-    private static StatusBarLabel zoomLevel;
     private static StatusBarLabel hint;
 
     /**
@@ -39,43 +34,9 @@ public class StatusBar extends JPanel{
         initialiseStatusBar();
         setVisible(InitialValues.getShowStatusBar());
     }
-    
-    @Override
-    protected void paintComponent(Graphics g) {
-        if(g instanceof Graphics2D g2d) {
-
-            g2d.setPaint(new Color(215, 215, 215));
-            g2d.drawLine(0, 0, getWidth(), 0);
-            
-            int width = blankPanel.getWidth() - 11;
-            g2d.drawLine(width, 2, width, getHeight() - 2);
-            
-            width += caretPosition.getWidth();
-            g2d.drawLine(width, 2, width, getHeight() - 2);
-            
-            width += zoomLevel.getWidth();
-            g2d.drawLine(width, 2, width, getHeight() - 2);
-        }
-    }
-
-    /**
-     * setCaretPosition method help to change the value of the
-     * caret position label in the statusBar.
-     */
-    public void setCaretPosition(int row, int column) {
-        caretPosition.setText("Ln "+ row + ", Col " + column);
-    }
 
     public void setHintText(String hintText) {
         hint.setText(hintText);
-    }
-
-    /**
-     * setZoomLevel method help to change the value of the
-     * zoom level label in the statusBar.
-     */
-    public static void setZoomLevel(int zoom) {
-        zoomLevel.setText(zoom + "%");
     }
 
     /**
@@ -83,30 +44,18 @@ public class StatusBar extends JPanel{
      * components.
      */
     private void initialiseStatusBar() {
-        blankPanel = new JPanel();
-        blankPanel.setOpaque(false);
-        blankPanel.setBackground(new Color(0, 0, 0, 0));
-
-        JPanel labelHolder = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        JPanel labelHolder = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         labelHolder.setOpaque(false);
         labelHolder.setBackground(new Color(0, 0, 0, 0));
 		
-		caretPosition = new StatusBarLabel("Ln 1, Col 1", 140);
-
         hint = new StatusBarLabel("", 340);
-		zoomLevel = new StatusBarLabel("100%", 70);
 
-        caretPosition.setForeground(Color.green);
         hint.setForeground(Color.red);
-        zoomLevel.setForeground(Color.green);
 
         labelHolder.add(hint);
-        labelHolder.add(caretPosition);
-		labelHolder.add(zoomLevel);
 
         setLayout(new BorderLayout());
-		add(labelHolder, BorderLayout.EAST);
-		add(blankPanel, BorderLayout.CENTER);
+		add(hint);
 	}
 
     /**
@@ -114,13 +63,17 @@ public class StatusBar extends JPanel{
      * added on the statusBar panel.
      */
     private static class StatusBarLabel extends JLabel {
-        Font font = new Font("", Font.PLAIN , 12);
+        Font font = new Font("", Font.PLAIN , 14);
         
         private StatusBarLabel(String name,int width) {
             super(name);
             setFont(font);
             setPreferredSize(new Dimension(width, 23));
             setAlignmentX(LEFT_ALIGNMENT);
+        }
+        @Override
+        public void setText(String text){
+            super.setText(" " + text);
         }
     }
 }
