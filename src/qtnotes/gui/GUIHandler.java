@@ -5,6 +5,7 @@ package qtnotes.gui;/*
 
 import qtnotes.actions.*;
 import qtnotes.gui.helper.OptionPane;
+import qtnotes.gui.helper.QTMouse;
 import qtnotes.gui.helper.StatusBar;
 import qtnotes.gui.helper.StrangeKeyAdapter;
 import qtnotes.init.InitialValues;
@@ -161,6 +162,7 @@ public class GUIHandler {
 
         editorTextArea = initTextArea();
         qtOutArea = initTextPane();
+        qtOutArea.addMouseListener(new QTMouse());
         editorTextArea.addKeyListener(new StrangeKeyAdapter());
         editorScrollPane = new JScrollPane(editorTextArea);
         editorScrollPaneOutArea = new JScrollPane(qtOutArea);
@@ -291,7 +293,7 @@ public class GUIHandler {
 
     public static void postQTClean() {
         try {
-            var word = getCurrentWord();
+            var word = getCurrentWord(editorTextArea.getCaretPosition());
 
             spellCheck(false);
             clearBold(qtOutArea);
@@ -345,13 +347,13 @@ public class GUIHandler {
     }
 
     /// get current selected word in the editorQuickOutArea
-    private static WordXY getCurrentWord() throws BadLocationException {
+    private static WordXY getCurrentWord(int positionEditor) throws BadLocationException {
         String outText = qtOutArea.getText();
         if (!outText.contains(" "))
             return emptyPoint;
 
         //get all cursor data from editorTextArea
-        int line = getCurrentLine();
+        int line = editorTextArea.getLineOfOffset(positionEditor);
         int lineEditorStart = editorTextArea.getLineStartOffset(line);
         int lineEditorEnd = editorTextArea.getLineEndOffset(line);
 
@@ -359,7 +361,7 @@ public class GUIHandler {
 
         String lineOfTextEditor = getTextOffset(lineEditorStart, lineEditorEnd);
 
-        String lineBeforeWordEditor = lineOfTextEditor.substring(0, editorTextArea.getCaretPosition() - lineEditorStart);
+        String lineBeforeWordEditor = lineOfTextEditor.substring(0, positionEditor - lineEditorStart);
         int wordStartEditor = lineBeforeWordEditor.lastIndexOf(' ') + 1;
 
         String lineQuicktypedBeforeWord = wordStartEditor == 0 ? "" : isWhatWords(lineBeforeWordEditor.substring(0, wordStartEditor));
@@ -389,7 +391,16 @@ public class GUIHandler {
             int start = editorTextArea.getSelectionStart();
             int end = editorTextArea.getSelectionEnd();
 
-            if (end != start) {
+            if (start != end) {
+                if (editorTextArea.getText(Math.max(0,start), 1).equals(" "))
+                    start++;
+                if (editorTextArea.getText(Math.min(0,end -1), 1).equals(" "))
+                    end--;
+                if (start == end) return;
+                start = getCurrentWord(Math.max(0,start)).x;
+                var newWord = getCurrentWord(end - 1);
+                end = newWord.x + newWord.y - start;
+                makeBold(qtOutArea, start, end);
                 return;
             }
 
@@ -473,7 +484,7 @@ public class GUIHandler {
     public static PossibleWord getNextMistake() {
         if (incorrectItems.isEmpty()) return null;
         try {
-            var location = getCurrentWord();
+            var location = getCurrentWord(editorTextArea.getCaretPosition());
             for (var loopWord : incorrectItems) {
                 if (location.x == loopWord.x && location.y == loopWord.y) {
                     var word = qtOutArea.getText(loopWord.x, loopWord.y);
@@ -549,6 +560,21 @@ public class GUIHandler {
 
     private static String isWhatWords(String word) {
         return AddedWord.createText(word, quicktype.data, InitialValues.getReplaceQuote(), InitialValues.getException());
+    }
+
+    public static void setLocationOfCursor() throws BadLocationException {
+        int qtOutPos = GUIHandler.getQtOutAreaNewPosition();
+        var text = qtOutArea.getText();
+        var lineStart = text.substring(0, qtOutPos).split("\n").length - 1;
+        int counter = editorTextArea.getLineStartOffset(lineStart);
+        WordXY word;
+        do {
+            word = getCurrentWord(counter);
+            counter++;
+        } while (!(word.x <= qtOutPos && word.y + word.x > qtOutPos));
+        editorTextArea.setCaretPosition(word.x);
+        editorTextArea.grabFocus();
+        postQTClean();
     }
 
     private static void setQTHint() throws BadLocationException {
@@ -710,6 +736,10 @@ public class GUIHandler {
         return qtOutArea.getText();
     }
 
+    public static String getSelectedQTExport() {
+        return qtOutArea.getSelectedText();
+    }
+
     public static JPanel getStatusBar() {
         return statusBar;
     }
@@ -805,6 +835,10 @@ public class GUIHandler {
 
     public static String getTextWord(WordXY wordXY) throws BadLocationException {
         return qtOutArea.getText(wordXY.x, wordXY.y);
+    }
+
+    public static int getQtOutAreaNewPosition(){
+        return qtOutArea.getCaretPosition();
     }
 
     public static void setEditorText(String text) {
