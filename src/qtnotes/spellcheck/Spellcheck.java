@@ -64,26 +64,28 @@ public final class Spellcheck {
                     //add the char into the location
                     suggestionsList.add(new StringBuilder(word).insert(i, charBoy).toString());
                     if (ii < 22) { //skip v w x y z
-                        //skip a e i o u q
-                        if (ii == 4 || ii == 8 || ii == 20 || ii == 14 || ii == 0)
-                            continue;
-                        //add two letters in the spot
-                        letterDoubleAdd(word, i, ii, suggestionsList, 'a');
-                        letterDoubleAdd(word, i, ii, suggestionsList, 'e');
-                        letterDoubleAdd(word, i, ii, suggestionsList, 'i');
-                        letterDoubleAdd(word, i, ii, suggestionsList, 'o');
-                        letterDoubleAdd(word, i, ii, suggestionsList, 'u');
+                        //skip a e i o u
+                        if (!(ii == 4 || ii == 8 || ii == 20 || ii == 14 || ii == 0)) {
+                            //add two letters in the spot
+                            letterDoubleAdd(word, i, ii, suggestionsList, 'a');
+                            letterDoubleAdd(word, i, ii, suggestionsList, 'e');
+                            letterDoubleAdd(word, i, ii, suggestionsList, 'i');
+                            letterDoubleAdd(word, i, ii, suggestionsList, 'o');
+                            letterDoubleAdd(word, i, ii, suggestionsList, 'u');
+                            if (removed != null) {
+                                letterDoubleAdd(removed, i, ii, suggestionsList, 'a');
+                                letterDoubleAdd(removed, i, ii, suggestionsList, 'e');
+                                letterDoubleAdd(removed, i, ii, suggestionsList, 'i');
+                                letterDoubleAdd(removed, i, ii, suggestionsList, 'o');
+                                letterDoubleAdd(removed, i, ii, suggestionsList, 'u');
+                            }
+                        }
                         if (removed != null) {
                             if (ii != 2 && ii != 9) // skip c j
                                 for (int io = 0; io < length; io++) {
                                     //while a character is removed add the char into the location
                                     suggestionsList.add(new StringBuilder(removed).insert(io, charBoy).toString());
                                 }
-                            letterDoubleAdd(removed, i, ii, suggestionsList, 'a');
-                            letterDoubleAdd(removed, i, ii, suggestionsList, 'e');
-                            letterDoubleAdd(removed, i, ii, suggestionsList, 'i');
-                            letterDoubleAdd(removed, i, ii, suggestionsList, 'o');
-                            letterDoubleAdd(removed, i, ii, suggestionsList, 'u');
                         }
                     }
                 }
