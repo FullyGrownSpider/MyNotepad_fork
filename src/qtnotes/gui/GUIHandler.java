@@ -572,7 +572,7 @@ public class GUIHandler {
             word = getCurrentWord(counter);
             counter++;
         } while (!(word.x <= qtOutPos && word.y + word.x > qtOutPos));
-        editorTextArea.setCaretPosition(word.x);
+        editorTextArea.setCaretPosition(counter-1);
         editorTextArea.grabFocus();
         postQTClean();
     }
