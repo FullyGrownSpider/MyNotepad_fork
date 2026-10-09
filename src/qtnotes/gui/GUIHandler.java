@@ -39,6 +39,7 @@ import javax.swing.border.MatteBorder;
  * distribution of work to other classes.
  */
 public class GUIHandler {
+    public static final StrangeKeyAdapter keyAdapter = new StrangeKeyAdapter();
     private static JFrame frame;
     private static JScrollPane editorScrollPane, editorScrollPaneOutArea;
     private static JPanel mainPanel;
@@ -163,7 +164,7 @@ public class GUIHandler {
         editorTextArea = initTextArea();
         qtOutArea = initTextPane();
         qtOutArea.addMouseListener(new QTMouse());
-        editorTextArea.addKeyListener(new StrangeKeyAdapter());
+        editorTextArea.addKeyListener(keyAdapter);
         editorScrollPane = new JScrollPane(editorTextArea);
         editorScrollPaneOutArea = new JScrollPane(qtOutArea);
         editorScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -522,6 +523,8 @@ public class GUIHandler {
     public static void replaceMistake(String replace, WordXY wordXY) {
         incorrectItems.remove(wordXY);
         setSelectedWord(wordXY);
+        keyAdapter.undoer.removeTextUndo(editorTextArea.getSelectionStart(), editorTextArea.getSelectedText());
+        keyAdapter.undoer.addingTextUndo(editorTextArea.getSelectionStart(), replace);
         editorTextArea.replaceSelection(replace);
         fullTextQT();
     }
