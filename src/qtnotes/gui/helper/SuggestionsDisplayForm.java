@@ -5,6 +5,8 @@ import qtnotes.gui.GUIHandler;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
@@ -49,6 +51,17 @@ public class SuggestionsDisplayForm extends ADialog {
         this.add(new JScrollPane(jList));
 
         jList.setSelectedIndex(2);
+
+        jList.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                dispose();
+            }
+        });
 
         KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
         KeyStroke stroke2 = KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0);

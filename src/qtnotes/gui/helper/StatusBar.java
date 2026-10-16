@@ -39,6 +39,10 @@ public class StatusBar extends JPanel{
         hint.setText(hintText);
     }
 
+    public String getHintText(){
+        return hint.getText();
+    }
+
     /**
      * initialiseStatusBar method help to do the initial work and setup
      * components.
@@ -51,6 +55,8 @@ public class StatusBar extends JPanel{
         hint = new StatusBarLabel("", 340);
 
         hint.setForeground(Color.red);
+
+        hint.setText("");
 
         labelHolder.add(hint);
 

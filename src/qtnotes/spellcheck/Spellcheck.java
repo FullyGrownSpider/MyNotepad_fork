@@ -3,11 +3,15 @@ package qtnotes.spellcheck;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class Spellcheck {
 
     private static final int maxStepsDefault = 7;
     private static final ArrayList<String> nono = new ArrayList<>(List.of("bk","bq","bx","cb","cf","cg","cj","cp","cv","cw","cx","dx","fk","fq","fv","fx","fz","gq","gv","gx","hk","hv","hx","hz","iy","jb","jc","jd","jf","jg","jh","jk","jl","jm","jn","jp","jq","jr","js","jt","jv","jw","jx","jy","jz","kq","kv","kx","kz","lq","lx","mg","mj","mq","mx","mz","pq","pv","px","qb","qc","qd","qe","qf","qg","qh","qj","qk","ql","qm","qn","qo","qp","qr","qs","qt","qv","qw","qx","qy","qz","sx","sz","tq","tx","vb","vc","vd","vf","vg","vh","vj","vk","vm","vn","vp","vq","vt","vw","vx","vz","wq","wv","wx","wz","xb","xg","xj","xk","xv","xz","yq","yv","yz","zb","zc","zg","zh","zj","zn","zq","zr","zs","zx"));
+    private static final Map<String, String> map = Stream.of(new String[][] {
+            {"sacraligous", "sacrilegious"},{"sharcucherie", "charcuterie"},{"airinaceous", "erinaceous"},{"repitore", "repertoire"},{"comraderie", "camaraderie"},{"zenofobia", "xenophobia"},{"sicofant", "sycophant"},{"azma", "asthma"},{"caccao", "cocoa"},{"ackwiesce", "acquiesce"},{"apocrifall", "apocryphal"},{"jonra", "genre"},{"froght", "fraught"},{"entroproneur", "entrepreneur"},{"burocracy", "bureaucracy"},{"baloney", "bologna"},{"avalible", "available"},{"faro", "pharaoh"},{"chirsurist", "chiaroscurist"},{"flegmatic", "phlegmatic"},{"idiosinkratic", "idiosyncratic"},{"diaframe", "diaphragm"},{"gowche", "gauche"},{"polturgist", "poltergeist"},{"revalee", "reveille"},{"parafernalia", "paraphernalia"},{"lazee-fare", "laissez-faire"},{"hiroglifics", "hieroglyphics"},{"sfinx", "sphinx"},{"quire", "choir"},{"obleek", "oblique"},{"terradactyl", "pterodactyl"},{"debree", "debris"},{"shurbert", "sherbet"},{"invay", "inveigh"},{"gilotine", "guillotine"},{"indite", "indict"},{"spazmatic", "spasmodic"},{"gorilla", "guerrilla"},{"chipolte", "chipotle"},{"zyphr", "zephyr"},{"cattyclism", "cataclysm"},{"picturesc", "picturesque"},{"demagog", "demagogue"},{"jalapano", "jalapeño"},{"annadote", "anecdote"},{"defibulator", "defibrillator"},{"catakerous", "cantankerous"},{"skitzafrenia", "schizophrenia"},{"fetuchini", "fettuccine"},{"furlow", "furlough"},{"aforism", "aphorism"},{"archipellio", "archipelago"},{"fractus", "fractious"},{"newance", "nuance"},{"apopaliptic", "apocalyptic"},{"sudonym", "pseudonym"},{"aggadize", "aggrandize"},{"numonia", "pneumonia"},{"diafanus", "diaphanous"},{"ostrasice", "ostracize"},{"catchetorie", "cacciatore"},{"cacofany", "cacophony"},{"expachiate", "expatiate"}
+    }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
     public static boolean isIncorrectlySpelled(String word) {
         try {
@@ -142,6 +146,9 @@ public final class Spellcheck {
 
     public static List<String> optimizedSearch(String word){
         try {
+            var common = mostCommon(word);
+            if (common != null)
+                return List.of(common);
             List<String> testList = Spellcheck.suggestions(word);
             List<SearchThread> runs = new ArrayList<>();
             List<Thread> threads = new ArrayList<>();
@@ -207,5 +214,9 @@ public final class Spellcheck {
         calc += a.charAt(a.length()-1) != word.charAt(word.length()-1) ? 500 : -500;
         calc += b.charAt(b.length()-1) != word.charAt(word.length()-1) ? -500 : 500;
         return calc;
+    }
+
+    public static String mostCommon(String word){
+        return map.get(word);
     }
 }

@@ -5,10 +5,16 @@ package qtnotes;/*
 
 
 import qtnotes.gui.GUIHandler;
+import qtnotes.gui.OverlayMode;
 import qtnotes.quicktype.Loading;
 import qtnotes.spellcheck.Compression;
 
 import javax.swing.UIManager;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 
 /** 
  * qtnotes.MainLauncher is the starting point of this Notepad, Moreover,
@@ -24,12 +30,31 @@ public class MainLauncher {
     }
      
 	public static void main(String[] args) {
-        if (args.length == 0)
-            return;
-        Loading.path = args[0];
-        if (args.length > 1) {
-            Compression.path = args[1];
+        var list = Arrays.stream(args).toList();
+        var found = list.stream().filter(a -> a.endsWith("MyChords.txt")).findFirst();
+        Loading.path = found.orElseGet(() -> System.getProperty("user.dir") + File.separator + "MyChords.txt");
+        found = list.stream().filter(a -> a.endsWith("Words.dat")).findFirst();
+        Compression.path = found.orElseGet(() -> System.getProperty("user.dir") + File.separator + "Words.dat");
+        if (!Files.exists(Path.of(Loading.path))){
+            try {
+                Files.createFile(Path.of(Loading.path));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
+        if (!Files.exists(Path.of(Compression.path))){
+            try {
+                Files.createFile(Path.of(Compression.path));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+        if (list.contains("-q")) {
+            new OverlayMode(null, null, false);
+            return;
+        }
+
         loadLookAndFeel();
         new MainLauncher();     //<--- Internal Constructor
 	}

@@ -63,7 +63,7 @@ public class FullEditForm {
                     if (i == 1) continue;
                     fieldList[i].setText("");
                 }
-                showDoubles();
+                spellCheck();
             }
         });
         word.addKeyListener(new KeyAdapter() {
@@ -72,7 +72,7 @@ public class FullEditForm {
                 if (e.isControlDown()) return;
                 if (e.getKeyChar() == KeyEvent.VK_ENTER) return;
                 if ((word.getText() + e.getKeyChar()).trim().isEmpty()) {
-                    showDoubles();
+                    spellCheck();
                     return;
                 }
                 var list = myMap.stream().filter(
@@ -98,7 +98,7 @@ public class FullEditForm {
                 for (int i = 1; i < fieldList.length; i++) {
                     fieldList[i].setText("");
                 }
-                showDoubles();
+                spellCheck();
             }
         });
         shortCut.addKeyListener(new KeyAdapter() {
@@ -106,7 +106,7 @@ public class FullEditForm {
             public void keyTyped(KeyEvent e) {
                 if (e.getKeyChar() == KeyEvent.VK_ENTER && e.isShiftDown()) return;
                 if ((shortCut.getText() + e.getKeyChar()).trim().isEmpty()) {
-                    showDoubles();
+                    spellCheck();
                     return;
                 }
                 var list = myMap.stream().filter(
@@ -205,25 +205,27 @@ public class FullEditForm {
             }, strokeAdd, JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         KeyStroke strokeSpelling = KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK);
-        myFrame.getRootPane().registerKeyboardAction(x -> {
-            this.info.setText("");
-            for (int i = 1; i <fieldList.length; i++) {
-                var item = fieldList[i];
-                var text= item.getText();
-                if (text.length() < 4) continue;
-                if (Spellcheck.isIncorrectlySpelled(text)){
-                    List<String> suggestions = Spellcheck.optimizedSearch(text);
-                    var buf = new StringBuilder();
-                    for (var sug : suggestions){
-                        if (!buf.isEmpty()){
-                            buf.append(" - ");
-                        }
-                        buf.append(sug);
+        myFrame.getRootPane().registerKeyboardAction(x -> spellCheck(), strokeSpelling, JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
+
+    private void spellCheck() {
+        this.info.setText("");
+        for (int i = 1; i <fieldList.length; i++) {
+            var item = fieldList[i];
+            var text= item.getText();
+            if (text.length() < 4) continue;
+            if (Spellcheck.isIncorrectlySpelled(text)){
+                List<String> suggestions = Spellcheck.optimizedSearch(text);
+                var buf = new StringBuilder();
+                for (var sug : suggestions){
+                    if (!buf.isEmpty()){
+                        buf.append(" - ");
                     }
-                    this.info.append(buf + "\n");
+                    buf.append(sug);
                 }
+                this.info.append(buf + "\n");
             }
-        }, strokeSpelling, JComponent.WHEN_IN_FOCUSED_WINDOW);
+        }
     }
 }
 
@@ -235,6 +237,7 @@ class HintTextField extends JTextField implements FocusListener {
         super(hint);
         this.hint = hint;
         super.addFocusListener(this);
+        this.setCaretColor(Color.white);
     }
 
     @Override
@@ -242,6 +245,7 @@ class HintTextField extends JTextField implements FocusListener {
         if(this.getText().isEmpty() || this.getText().equals("-") || this.getText().equals(hint)) {
             super.setText("");
         }
+        this.grabFocus();
     }
     @Override
     public void focusLost(FocusEvent e) {

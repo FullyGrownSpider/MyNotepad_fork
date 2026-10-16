@@ -374,7 +374,11 @@ public class GUIHandler {
         if (!matcher.find())
             endingSpace = outText.length() - (lineQuicktypedBeforeWord.length() + outCurrentLine);
         else {
-            endingSpace = isWhatWords(editorTextArea.getText(wordStartEditor, matcher.end() - 1)).length();
+            var text = editorTextArea.getText(wordStartEditor, matcher.end() - 1);
+            if (!text.isEmpty())
+                endingSpace = isWhatWords(editorTextArea.getText(wordStartEditor, matcher.end() - 1)).length();
+            else
+                endingSpace = 0;
         }
         return new WordXY(lineQuicktypedBeforeWord.length() + outCurrentLine, endingSpace);
     }
@@ -606,6 +610,37 @@ public class GUIHandler {
         statusBar.setHintText("");
     }
 
+    public static void doQTHintFix() {
+        if (statusBar == null || !statusBar.isVisible() || statusBar.getHintText().isBlank()) return;
+
+        var oldSpot = editorTextArea.getCaretPosition();
+        int line = getCurrentLine();
+        int offsetOut;
+        String allTextAfterOffset;
+        try {
+            offsetOut = editorTextArea.getLineStartOffset(line);
+            allTextAfterOffset = editorTextArea.getText(offsetOut, editorTextArea.getText().length() - offsetOut + 1);
+        } catch (BadLocationException e) {
+            return;
+        }
+
+        var hintText = statusBar.getHintText().split(" ");
+        var pat = Pattern.compile("[\n\t \"'.,?!]" + hintText[3]).matcher(allTextAfterOffset);
+        pat.find();
+        editorTextArea.select(pat.start() + 1 + offsetOut, offsetOut + pat.end());
+
+        keyAdapter.undoer.removeTextUndo(editorTextArea.getSelectionStart(), editorTextArea.getSelectedText());
+
+        keyAdapter.undoer.addingTextUndo(editorTextArea.getSelectionStart(), hintText[1]);
+
+        editorTextArea.replaceSelection(hintText[1]);
+
+        oldSpot -= hintText[3].length() - hintText[1].length();
+        editorTextArea.setCaretPosition(oldSpot);
+
+        postQTClean();
+    }
+
     /**
      * loadFileToEditor method is help to load/reload the file,
      * whose name is saved in qtnotes.init.InitialValues class.
@@ -630,7 +665,9 @@ public class GUIHandler {
         if (fileText.length() - 1 > -1)
             editorTextArea.setText(fileText.substring(0, fileText.length() - 1));
         try {
-            editorTextArea.setCaretPosition(InitialValues.getCaretPosition());
+            var numb = InitialValues.getCaretPosition();
+            editorTextArea.setCaretPosition(numb);
+            editorTextArea.scrollRectToVisible(new Rectangle(0, editorTextArea.getLineStartOffset(editorTextArea.getLineOfOffset(numb)), 1, 1));
         } catch (Exception e) {
             editorTextArea.setCaretPosition(0);
             InitialValues.setCaretPosition(0);
@@ -674,6 +711,7 @@ public class GUIHandler {
         JMenuItem copyQuicktype = makeMenuItem(new FileMenuActions.copyQuickTypeAction());
         JMenuItem exitFile = makeMenuItem(new FileMenuActions.ExitFileAction());
         fixSpelling = makeMenuItem(new EditMenuActions.SuggestAction());
+        JMenuItem clearHint = makeMenuItem(new EditMenuActions.ClearHint());
         JMenuItem removeSpelling = makeMenuItem(new EditMenuActions.RemoveSuggestion());
         fileMenu.add(newFile);
         fileMenu.addSeparator();
@@ -688,6 +726,7 @@ public class GUIHandler {
         editMenu.add(editQuicktype);
         editMenu.add(editQuicktype);
         editMenu.add(fixSpelling);
+        editMenu.add(clearHint);
         editMenu.add(removeSpelling);
 
         JCheckBoxMenuItem replaceQuotes = makeCheckBoxMenuItem(new FormatMenuActions.shouldReplaceQuotes());

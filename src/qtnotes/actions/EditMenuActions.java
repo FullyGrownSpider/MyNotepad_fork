@@ -56,6 +56,20 @@ public class EditMenuActions {
         }
     }
 
+    public static class ClearHint extends AbstractAction {
+        public ClearHint() {
+            super();
+            putValue(AbstractAction.NAME, "Clear Hint");
+            putValue(MNEMONIC_KEY, KeyEvent.VK_K);
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_K, CTRL_DOWN_MASK));
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            GUIHandler.doQTHintFix();
+        }
+    }
+
     public static class RemoveSuggestion extends AbstractAction {
         public RemoveSuggestion() {
             super();
