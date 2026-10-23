@@ -149,34 +149,55 @@ public final class Spellcheck {
             var common = mostCommon(word);
             if (common != null)
                 return List.of(common);
-            List<String> testList = Spellcheck.suggestions(word);
-            List<SearchThread> runs = new ArrayList<>();
-            List<Thread> threads = new ArrayList<>();
-            int half = testList.size() / 16;
-            int i;
-            for (i = half; i < testList.size(); i+= half) {
-                var firstFinder = new SearchThread(testList.subList(i - half, i));
-                var first = new Thread(firstFinder);
-                threads.add(first);
-                runs.add(firstFinder);
-                first.start();
+            List<String> testList = Spellcheck.suggestions(word).stream().sorted(Comparator.comparingInt(a -> a.charAt(0))).toList();
+//            List<ArrayList<byte[]>> testBytesList = Spellcheck.suggestions(word).stream().map(Compression::textToLetterCompressOther).sorted((Comparator.comparingInt(a -> a.get(0)[0]))).toList();
+
+            List<String> actualSugs = new ArrayList<>();
+
+            char lastStart = 0;
+            int lastLocation = 0;
+
+            for (var x : testList){
+                if (x.charAt(0) == lastStart){
+                    var location = Compression.find(Compression.textToLetterCompressOther(x), lastLocation+125, lastLocation - 125);
+                    if (location > -1)
+                        actualSugs.add(x);
+                } else {
+                    lastStart = x.charAt(0);
+                    System.out.println(x.charAt(0));
+                    var location = Compression.find(Compression.textToLetterCompressOther(x), -1, 0);
+                    if (location > -1){
+                        lastLocation = location;
+                        actualSugs.add(x);
+                    } else
+                        lastLocation = - location;
+                }
             }
-            var firstFinder = new SearchThread(testList.subList(i-half, testList.size()));
-            var first = new Thread(firstFinder);
-            runs.add(firstFinder);
-            first.start();
 
-            first.join();
-            var actualSugs = new ArrayList<>(firstFinder.getValue());
-
-            for (i = 0; i < threads.size(); i++) {
-                threads.get(i).join();
-                actualSugs.addAll(runs.get(i).getValue());
-            }
-
-            //add words that are near where it should be, but only those about the same length
-            if (actualSugs.isEmpty())
-                actualSugs.addAll(Compression.read(word).stream().filter((x) -> x.length() > word.length() - 4 && x.length() < word.length() + 4 && x.charAt(0) == word.charAt(0)).sorted().toList());
+//            List<String> actualSugs = testBytesList.stream().map(Compression::textFromLetterCompressCluster).toList();
+//            List<SearchThread> runs = new ArrayList<>();
+//            List<Thread> threads = new ArrayList<>();
+//            int half = testList.size() / 16;
+//            int i;
+//            for (i = half; i < testList.size(); i+= half) {
+//                var firstFinder = new SearchThread(testList.subList(i - half, i));
+//                var first = new Thread(firstFinder);
+//                threads.add(first);
+//                runs.add(firstFinder);
+//                first.start();
+//            }
+//            var firstFinder = new SearchThread(testList.subList(i-half, testList.size()));
+//            var first = new Thread(firstFinder);
+//            runs.add(firstFinder);
+//            first.start();
+//
+//            first.join();
+//            var actualSugs = new ArrayList<>(firstFinder.getValue());
+//
+//            for (i = 0; i < threads.size(); i++) {
+//                threads.get(i).join();
+//                actualSugs.addAll(runs.get(i).getValue());
+//            }
 
             actualSugs.sort((a, b) -> weirdCompare(word, a, b));
 

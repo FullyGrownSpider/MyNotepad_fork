@@ -61,21 +61,19 @@ public final class Compression {
         }
     }
 
-    public static int find(String value) throws IOException {
-        var searchValue = Compression.textToLetterCompressOther(value);
-        if (searchValue == null) return Integer.MIN_VALUE;
-        // open the file for reading
-        RandomAccessFile raf = new RandomAccessFile(path, "r");
-        //5 letters of 5 bits + 1 bit
+    public static int find(ArrayList<byte[]> searchValue, int top, int bottom) throws IOException{
+        return searchAlgo(searchValue, top, bottom);
+    }
 
-        // perform the binary search...
-        int bottom = 0;
-        int top = Math.toIntExact((raf.length() - 1) / byteInByteArray);
+    private static int searchAlgo(ArrayList<byte[]> searchValue, int top, int bottom) throws IOException {
+        RandomAccessFile raf = new RandomAccessFile(path, "r");
         int middle = 0;
         var bytes = new ArrayList<byte[]>(8);
         for (int i = 0; i < 8; i++) {
             bytes.add(new byte[searchValue.get(0).length]);
         }
+        if (top == -1)
+            top = Math.toIntExact((raf.length() - 1) / byteInByteArray);
         var bytesOut = new ArrayList<byte[]>(byteInByteArray);
         while (bottom <= top) {
             middle = (bottom + top) / 2;
@@ -121,91 +119,10 @@ public final class Compression {
         return -middle * byteInByteArray;
     }
 
-    public static ArrayList<String> read(String value) throws IOException {
+    public static int find(String value) throws IOException {
         var searchValue = Compression.textToLetterCompressOther(value);
-        if (searchValue == null) throw new IllegalArgumentException("Bad word lol");
-        RandomAccessFile raf = new RandomAccessFile(path, "r");
-        // perform the binary search...
-        int bottom = 0;
-        int top = Math.toIntExact((raf.length() - 1) / byteInByteArray);
-        int middle = 0;
-        var bytes = new ArrayList<byte[]>(8);
-        for (int i = 0; i < 8; i++) {
-            bytes.add(new byte[searchValue.get(0).length]);
-        }
-        var bytesOut = new ArrayList<byte[]>(byteInByteArray);
-        while (bottom <= top) {
-            middle = (bottom + top) / 2;
-            raf.seek((long) middle * byteInByteArray); // jump to this line in the file
-            raf.read(bytes.get(0)); // read the line from the file
-            bytesOut.add(bytes.get(0));
-
-            int mountDown = getMountDown(bytesOut, middle, raf, bytes);
-            int mountUp = getMountUp(bytesOut, middle, raf, bytes, mountDown);
-            int comparison = compare(bytesOut, searchValue);
-
-            bytesOut.clear();
-
-             if (comparison < 0) {
-                // line comes before searchValue
-                bottom = middle + mountUp;
-                middle = bottom -1;
-            } else if (comparison == 0) {
-                raf.close();
-                throw new IllegalArgumentException("Bad word lol");
-            } else {
-                // line comes after searchValue
-                top = middle - mountDown;
-                middle = top + 1;
-            }
-        }
-
-        var list = new ArrayList<String>(6);
-
-        raf.seek((long) middle * byteInByteArray); // jump to this line in the file
-        raf.read(bytes.get(0)); // read the line from the file
-        bytesOut.add(bytes.get(0));
-
-        int mountDown = getMountDown(bytesOut, middle, raf, bytes);
-        int mountUp = getMountUp(bytesOut, middle, raf, bytes, mountDown);
-        list.add(textFromLetterCompressCluster(bytesOut));
-        bytesOut.clear();
-        int counter = 3;
-        for (int liddle = middle -1 - mountDown; liddle > 0 && counter > 0; counter--) {
-            liddle -= suggestWord(raf, liddle, bytes, bytesOut, list);
-        }
-        int max = Math.toIntExact((raf.length() - 1) / byteInByteArray);
-        counter = 3;
-        for (int biddle = middle + 1 + mountUp; biddle < max && counter > 0; counter--) {
-            biddle += suggestWord(raf, biddle, bytes, bytesOut, list);
-        }
-
-        raf.close();
-        return list;
-    }
-
-    private static int suggestWord(RandomAccessFile raf, int startPoint, ArrayList<byte[]> bytes, ArrayList<byte[]> bytesOut, List<String> list) throws IOException {
-        raf.seek((long) startPoint * byteInByteArray); // jump to this line in the file
-        raf.read(bytes.get(0)); // read the line from the file
-        bytesOut.add(bytes.get(0));
-
-        int mountDown = getMountDown(bytesOut, startPoint, raf, bytes);
-        int mountUp = getMountUp(bytesOut, startPoint, raf, bytes, mountDown);
-        list.add(textFromLetterCompressCluster(bytesOut));
-        bytesOut.clear();
-        return mountDown + mountUp;
-    }
-
-    private static int getMountDown(ArrayList<byte[]> bytesOut, int middle, RandomAccessFile raf, ArrayList<byte[]> bytes) throws IOException {
-        int mountDown = 1;
-        while (Compression.needPreviousCluster(bytesOut.get(0))){
-            var seek = middle * byteInByteArray - (byteInByteArray * mountDown);
-            raf.seek(seek);
-            raf.read(bytes.get(mountDown));
-            bytesOut.add(0, bytes.get(mountDown));
-            mountDown++;
-        }
-        return mountDown;
+        if (searchValue == null) return Integer.MIN_VALUE;
+        return searchAlgo(searchValue, -1, 0);
     }
 
     private static int getMountUp(ArrayList<byte[]> bytesOut, int middle,RandomAccessFile raf, ArrayList<byte[]> bytes, int counter) throws IOException {
@@ -220,7 +137,6 @@ public final class Compression {
         }
         return mountUp;
     }
-
 
     public static ArrayList<byte[]> textToLetterCompressOther(String line) {
 //        th, he, in, en, nt
