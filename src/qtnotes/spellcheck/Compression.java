@@ -13,16 +13,14 @@ public final class Compression {
     public static final int charPerChar = 5;
     public static final int byteInByteArray = 4;
     public static final int clusterSize = 6;
-    public static final int maxSize = 6*8;
-    private static final int minSize = 4;
+    public static final int maxSize = 6 * 8;
 
     public static String path;
 
     public static void add(String value) {
         try {
             var searchValue = Compression.textToLetterCompressOther(value);
-            if (searchValue == null) return;
-            var start = find(value);
+            var start = find(value) * byteInByteArray;
             var pathUsed = Path.of(path);
             var text = Files.readAllBytes(pathUsed);
 
@@ -43,8 +41,7 @@ public final class Compression {
     public static void remove(String value) {
         try {
             var searchValue = Compression.textToLetterCompressOther(value.toLowerCase(Locale.ROOT));
-            if (searchValue == null) return;
-            var start = find(value);
+            var start = find(value) * byteInByteArray;
             var pathUsed = Path.of(path);
             var text = Files.readAllBytes(pathUsed);
 
@@ -52,62 +49,56 @@ public final class Compression {
                 return;
 
             var firstHalf = Arrays.copyOfRange(text, 0, start);
-            var secondHalf = Arrays.copyOfRange(text, start + searchValue.size()*byteInByteArray, text.length);
+            var secondHalf = Arrays.copyOfRange(text, start + searchValue.size() * byteInByteArray, text.length);
 
             Files.write(pathUsed, firstHalf);
             Files.write(pathUsed, secondHalf, StandardOpenOption.APPEND);
         } catch (IOException ignored) {
-
         }
     }
 
-    public static int find(ArrayList<byte[]> searchValue, int top, int bottom) throws IOException{
+    public static int find(ArrayList<byte[]> searchValue, int top, int bottom) throws IOException {
         return searchAlgo(searchValue, top, bottom);
     }
 
     private static int searchAlgo(ArrayList<byte[]> searchValue, int top, int bottom) throws IOException {
         RandomAccessFile raf = new RandomAccessFile(path, "r");
-        int middle = 0;
-        var bytes = new ArrayList<byte[]>(8);
+        ArrayList<byte[]> bytes = new ArrayList<>(8);
         for (int i = 0; i < 8; i++) {
             bytes.add(new byte[searchValue.get(0).length]);
         }
         if (top == -1)
             top = Math.toIntExact((raf.length() - 1) / byteInByteArray);
         var bytesOut = new ArrayList<byte[]>(byteInByteArray);
+        int middle = bottom;
         while (bottom <= top) {
             middle = (bottom + top) / 2;
             raf.seek((long) middle * byteInByteArray); // jump to this line in the file
             raf.read(bytes.get(0)); // read the line from the file
             bytesOut.add(bytes.get(0));
 
-            int mountDown = 1;
-            int counter = 1;
-            while (Compression.needPreviousCluster(bytesOut.get(0))){
+            byte mountDown = 1;
+            byte counter = 1;
+            while (Compression.needPreviousCluster(bytesOut.get(0))) {
                 var seek = middle * byteInByteArray - (byteInByteArray * mountDown);
                 raf.seek(seek);
                 raf.read(bytes.get(counter));
                 bytesOut.add(0, bytes.get(counter));
-                mountDown ++;
+                mountDown++;
                 counter++;
             }
-            int mountUp = getMountUp(bytesOut, middle, raf, bytes, counter);
+            byte mountUp = getMountUp(bytesOut, middle, raf, bytes, counter);
             int comparison = compare(bytesOut, searchValue);
 
             bytesOut.clear();
-//            System.out.print(Compression.textFromLetterCompressCluster(bytesOut.get(0)));
-//            if (bytesOut.size() > 1)
-//                System.out.println("|" + Compression.textFromLetterCompressCluster(bytesOut.get(1)));
-//            else
-//                System.out.print('\n');
 
             if (comparison < 0) {
                 // line comes before searchValue
                 bottom = middle + mountUp;
-                middle = bottom -1;
+                middle = bottom - 1;
             } else if (comparison == 0) {
                 raf.close();
-                return middle * byteInByteArray;
+                return middle;
             } else {
                 // line comes after searchValue
                 top = middle - mountDown;
@@ -116,18 +107,17 @@ public final class Compression {
         }
 
         raf.close();
-        return -middle * byteInByteArray;
+        return -middle;
     }
 
     public static int find(String value) throws IOException {
         var searchValue = Compression.textToLetterCompressOther(value);
-        if (searchValue == null) return Integer.MIN_VALUE;
         return searchAlgo(searchValue, -1, 0);
     }
 
-    private static int getMountUp(ArrayList<byte[]> bytesOut, int middle,RandomAccessFile raf, ArrayList<byte[]> bytes, int counter) throws IOException {
-        int mountUp = 1;
-        while (Compression.needNextCluster(bytesOut.get(bytesOut.size()-1))){
+    private static byte getMountUp(ArrayList<byte[]> bytesOut, int middle, RandomAccessFile raf, ArrayList<byte[]> bytes, byte counter) throws IOException {
+        byte mountUp = 1;
+        while (Compression.needNextCluster(bytesOut.get(bytesOut.size() - 1))) {
             var seek = middle * byteInByteArray + (byteInByteArray * mountUp);
             raf.seek(seek);
             raf.read(bytes.get(counter));
@@ -139,22 +129,17 @@ public final class Compression {
     }
 
     public static ArrayList<byte[]> textToLetterCompressOther(String line) {
-//        th, he, in, en, nt
         //should have been done before but we programming defensively now
-        line = line.toLowerCase(Locale.ROOT);
-        if (line.length() < minSize || line.length() > maxSize)
-            return null;
-
-        var list = new ArrayList<byte[]>();
+        var list = new ArrayList<byte[]>(4);
         var myBits = new BitSet(31);
-        int counter = 0;
-        int letters = 0;
-        int totalCounter = 0;
+        byte counter = 0;
+        byte letters = 0;
+        byte totalCounter = 0;
         var listArray = line.toCharArray();
         for (int i = 0; i < listArray.length; i++) {
             totalCounter++;
             int calc = listArray[i];
-            if (i != listArray.length - 1){
+            if (i != listArray.length - 1) {
                 var tempCalc = indexAf(listArray, i);
                 if (tempCalc != 0) {
                     calc = tempCalc;
@@ -162,19 +147,19 @@ public final class Compression {
                     totalCounter++;
                 }
             }
-            int next = calc - shiftMount;
-            for (int ii = 0; ii < charPerChar; ii++) {
+            byte next = (byte) (calc - shiftMount);
+            for (byte ii = 0; ii < charPerChar; ii++) {
                 myBits.set(counter, ((next >> (ii)) % 2) == 1);
-                counter ++;
+                counter++;
             }
-            if (letters == clusterSize - 1){
+            if (letters == clusterSize - 1) {
                 myBits.set(30, !list.isEmpty());
                 myBits.set(31, totalCounter < line.length());
                 list.add(myBits.toByteArray());
                 myBits = new BitSet(31);
                 letters = counter = 0;
             } else
-                letters ++;
+                letters++;
         }
         if (!myBits.isEmpty()) {
             myBits.set(30, !list.isEmpty());
@@ -238,35 +223,17 @@ public final class Compression {
     public static boolean needNextCluster(byte[] in) {
         return in[3] < 0;
     }
+
     public static boolean needPreviousCluster(byte[] in) {
         return in[3] > 63 || (in[3] > -65 && in[3] < 0);
     }
 
     public static int compare(List<byte[]> line, List<byte[]> search) {
-        for (int i = 0; i < line.size(); i++) {
-            if (search.size() == i) return 1;
-            var a = line.get(i);
-            var b = search.get(i);
-
-            int ina = mismatch(a, b,
-                    b.length);
-            if (ina >= 0) {
-                return Byte.compare(a[ina], b[ina]);
-            }
+        for (byte i = 0; i < line.size() * byteInByteArray; i++) {
+            if (line.get(i / byteInByteArray)[i % byteInByteArray] != search.get(i / byteInByteArray)[i % byteInByteArray])
+                return line.get(i / byteInByteArray)[i % byteInByteArray] - search.get(i / byteInByteArray)[i % byteInByteArray];
         }
-        if (line.size() < search.size())
-            return -1;
         return 0;
-    }
-
-    public static int mismatch(byte[] a,
-                               byte[] b,
-                               int length) {
-        for (int i = 0; i < length; i++) {
-            if (a[i] != b[i])
-                return i;
-        }
-        return -1;
     }
 }
 
