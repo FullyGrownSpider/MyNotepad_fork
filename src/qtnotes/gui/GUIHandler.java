@@ -459,7 +459,7 @@ public class GUIHandler {
                 //only letters
                 if (!onlyLettersPattern.matcher(word).find()
                         //do the spell check
-                        && Spellcheck.isIncorrectlySpelled(word.toLowerCase(Locale.ROOT))
+                        && Spellcheck.isIncorrectlySpelled(word.toLowerCase())
                         //is the word in the editor the same as in the QT
                         && editorTextStream.contains(word)
                         //ignore ignored words

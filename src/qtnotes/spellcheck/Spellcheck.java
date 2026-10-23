@@ -10,7 +10,7 @@ public final class Spellcheck {
     private static final int maxStepsDefault = 7;
     private static final ArrayList<String> nono = new ArrayList<>(List.of("bk","bq","bx","cb","cf","cg","cj","cp","cv","cw","cx","dx","fk","fq","fv","fx","fz","gq","gv","gx","hk","hv","hx","hz","iy","jb","jc","jd","jf","jg","jh","jk","jl","jm","jn","jp","jq","jr","js","jt","jv","jw","jx","jy","jz","kq","kv","kx","kz","lq","lx","mg","mj","mq","mx","mz","pq","pv","px","qb","qc","qd","qe","qf","qg","qh","qj","qk","ql","qm","qn","qo","qp","qr","qs","qt","qv","qw","qx","qy","qz","sx","sz","tq","tx","vb","vc","vd","vf","vg","vh","vj","vk","vm","vn","vp","vq","vt","vw","vx","vz","wq","wv","wx","wz","xb","xg","xj","xk","xv","xz","yq","yv","yz","zb","zc","zg","zh","zj","zn","zq","zr","zs","zx"));
     private static final Map<String, String> map = Stream.of(new String[][] {
-            {"sacraligous", "sacrilegious"},{"sharcucherie", "charcuterie"},{"airinaceous", "erinaceous"},{"repitore", "repertoire"},{"comraderie", "camaraderie"},{"zenofobia", "xenophobia"},{"sicofant", "sycophant"},{"azma", "asthma"},{"caccao", "cocoa"},{"ackwiesce", "acquiesce"},{"apocrifall", "apocryphal"},{"jonra", "genre"},{"froght", "fraught"},{"entroproneur", "entrepreneur"},{"burocracy", "bureaucracy"},{"baloney", "bologna"},{"avalible", "available"},{"faro", "pharaoh"},{"chirsurist", "chiaroscurist"},{"flegmatic", "phlegmatic"},{"idiosinkratic", "idiosyncratic"},{"diaframe", "diaphragm"},{"gowche", "gauche"},{"polturgist", "poltergeist"},{"revalee", "reveille"},{"parafernalia", "paraphernalia"},{"lazee-fare", "laissez-faire"},{"hiroglifics", "hieroglyphics"},{"sfinx", "sphinx"},{"quire", "choir"},{"obleek", "oblique"},{"terradactyl", "pterodactyl"},{"debree", "debris"},{"shurbert", "sherbet"},{"invay", "inveigh"},{"gilotine", "guillotine"},{"indite", "indict"},{"spazmatic", "spasmodic"},{"gorilla", "guerrilla"},{"chipolte", "chipotle"},{"zyphr", "zephyr"},{"cattyclism", "cataclysm"},{"picturesc", "picturesque"},{"demagog", "demagogue"},{"jalapano", "jalapeño"},{"annadote", "anecdote"},{"defibulator", "defibrillator"},{"catakerous", "cantankerous"},{"skitzafrenia", "schizophrenia"},{"fetuchini", "fettuccine"},{"furlow", "furlough"},{"aforism", "aphorism"},{"archipellio", "archipelago"},{"fractus", "fractious"},{"newance", "nuance"},{"apopaliptic", "apocalyptic"},{"sudonym", "pseudonym"},{"aggadize", "aggrandize"},{"numonia", "pneumonia"},{"diafanus", "diaphanous"},{"ostrasice", "ostracize"},{"catchetorie", "cacciatore"},{"cacofany", "cacophony"},{"expachiate", "expatiate"}
+            {"sacraligous", "sacrilegious"},{"sharcucherie", "charcuterie"},{"airinaceous", "erinaceous"},{"repitore", "repertoire"},{"comraderie", "camaraderie"},{"zenofobia", "xenophobia"},{"sicofant", "sycophant"},{"azma", "asthma"},{"caccao", "cocoa"},{"ackwiesce", "acquiesce"},{"apocrifall", "apocryphal"},{"jonra", "genre"},{"froght", "fraught"},{"entroproneur", "entrepreneur"},{"burocracy", "bureaucracy"},{"baloney", "bologna"},{"faro", "pharaoh"},{"chirsurist", "chiaroscurist"},{"flegmatic", "phlegmatic"},{"idiosinkratic", "idiosyncratic"},{"diaframe", "diaphragm"},{"gowche", "gauche"},{"polturgist", "poltergeist"},{"revalee", "reveille"},{"parafernalia", "paraphernalia"},{"lazee-fare", "laissez-faire"},{"hiroglifics", "hieroglyphics"},{"sfinx", "sphinx"},{"quire", "choir"},{"obleek", "oblique"},{"terradactyl", "pterodactyl"},{"debree", "debris"},{"shurbert", "sherbet"},{"invay", "inveigh"},{"gilotine", "guillotine"},{"indite", "indict"},{"spazmatic", "spasmodic"},{"gorilla", "guerrilla"},{"chipolte", "chipotle"},{"zyphr", "zephyr"},{"cattyclism", "cataclysm"},{"picturesc", "picturesque"},{"demagog", "demagogue"},{"jalapano", "jalapeño"},{"annadote", "anecdote"},{"defibulator", "defibrillator"},{"catakerous", "cantankerous"},{"skitzafrenia", "schizophrenia"},{"fetuchini", "fettuccine"},{"furlow", "furlough"},{"aforism", "aphorism"},{"archipellio", "archipelago"},{"fractus", "fractious"},{"newance", "nuance"},{"apopaliptic", "apocalyptic"},{"sudonym", "pseudonym"},{"aggadize", "aggrandize"},{"numonia", "pneumonia"},{"diafanus", "diaphanous"},{"ostrasice", "ostracize"},{"catchetorie", "cacciatore"},{"cacofany", "cacophony"},{"expachiate", "expatiate"}
     }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
     public static boolean isIncorrectlySpelled(String word) {
@@ -19,9 +19,54 @@ public final class Spellcheck {
         } catch (IOException e) {
             return true;
         }
-    } 
+    }
 
-    private static ArrayList<String> suggestions(String word){
+    public static List<String> optimizedSearch(String wordSpelled){
+        try {
+            final String word = wordSpelled.toLowerCase(Locale.ROOT);
+            var common = mostCommon(word);
+            if (common != null)
+                return List.of(common);
+            List<ArrayList<byte[]>> testBytesList = Spellcheck.suggestions(word).
+                    stream()
+                    .distinct()
+                    .map(Compression::textToLetterCompressOther)
+                    .sorted((a,b) -> Compression.compare(b,a))
+                    .toList();
+
+            List<SearchThread> runs = new ArrayList<>();
+            List<Thread> threads = new ArrayList<>();
+            int half = testBytesList.size() / 8;
+            int i;
+            for (i = half; i < testBytesList.size(); i+= half) {
+                var firstFinder = new SearchThread(testBytesList.subList(i - half, i));
+                var first = new Thread(firstFinder);
+                threads.add(first);
+                runs.add(firstFinder);
+                first.start();
+            }
+            var firstFinder = new SearchThread(testBytesList.subList(i-half, testBytesList.size()));
+            var first = new Thread(firstFinder);
+            runs.add(firstFinder);
+            first.start();
+
+            first.join();
+            var actualSugs = new ArrayList<>(firstFinder.getValue().stream().map(Compression::textFromLetterCompressCluster).toList());
+
+            for (i = 0; i < threads.size(); i++) {
+                threads.get(i).join();
+                actualSugs.addAll(runs.get(i).getValue().stream().map(Compression::textFromLetterCompressCluster).toList());
+            }
+
+            actualSugs.sort((a, b) -> weirdCompare(word, a, b));
+
+            return actualSugs.stream().toList();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static List<String> suggestions(String word){
         //replaces f and v, s and z, and such
         List<String> suggestionsList = new ArrayList<>(66000);
 
@@ -42,7 +87,7 @@ public final class Spellcheck {
         if (suggestionsList.isEmpty())
             suggestionsList.add(word);
         alphabetMe(suggestionsList);
-        return new ArrayList<>(suggestionsList.stream().distinct().toList());
+        return suggestionsList;
     }
 
     private static void alphabetMe(List<String> suggestionsList){
@@ -67,9 +112,12 @@ public final class Spellcheck {
                     char charBoy = (char)(((byte) 'a') + ii);
                     //add the char into the location
                     suggestionsList.add(new StringBuilder(word).insert(i, charBoy).toString());
-                    if (ii < 22) { //skip v w x y z
-                        //skip a e i o u
-                        if (!(ii == 4 || ii == 8 || ii == 20 || ii == 14 || ii == 0)) {
+
+                    if (iii < 1) {
+                        //skip a e i o u j k
+                        var charAt = word.charAt(Math.min(length - 1, i));
+                        if (!(charAt == 'q' || charAt == 'j' || charAt == 'k' || charAt == 'x' || charAt == 'y' || charAt == 'z' ||
+                                ii == 4 || ii == 8 || ii == 20 || ii == 14 || ii == 0 || ii == 10 || ii == 9)) {
                             //add two letters in the spot
                             letterDoubleAdd(word, i, ii, suggestionsList, 'a');
                             letterDoubleAdd(word, i, ii, suggestionsList, 'e');
@@ -84,6 +132,8 @@ public final class Spellcheck {
                                 letterDoubleAdd(removed, i, ii, suggestionsList, 'u');
                             }
                         }
+                    }
+                    if (ii < 22) { //skip v w x y z
                         if (removed != null) {
                             if (ii != 2 && ii != 9) // skip c j
                                 for (int io = 0; io < length; io++) {
@@ -118,12 +168,14 @@ public final class Spellcheck {
     private static void defaultMistakes(String word, List<String> suggestionsList, boolean advanced) {
         suggestionsList.addAll(suggest(word, "f", "v"));
         suggestionsList.addAll(suggest(word, "s", "c"));
-        suggestionsList.addAll(suggest(word, "k", "c"));
+        suggestionsList.addAll(suggest(word, "b", "d"));
 
         if (advanced) {
             suggestionsList.addAll(suggest(word, "e", "a"));
             suggestionsList.addAll(suggest(word, "i", "y"));
             suggestionsList.addAll(suggest(word, "i", "e"));
+            suggestionsList.addAll(suggest(word, "i", "a"));
+            suggestionsList.addAll(suggest(word, "a", "e"));
             suggestionsList.addAll(suggest(word, "ie", "y"));
         }
     }
@@ -142,48 +194,6 @@ public final class Spellcheck {
         if (suggestionsList.size() > maxStepsDefault)
             suggestionsList.clear();
         return suggestionsList;
-    }
-
-    public static List<String> optimizedSearch(String word){
-        try {
-            var common = mostCommon(word);
-            if (common != null)
-                return List.of(common);
-            List<String> testList = Spellcheck.suggestions(word);
-            List<SearchThread> runs = new ArrayList<>();
-            List<Thread> threads = new ArrayList<>();
-            int half = testList.size() / 16;
-            int i;
-            for (i = half; i < testList.size(); i+= half) {
-                var firstFinder = new SearchThread(testList.subList(i - half, i));
-                var first = new Thread(firstFinder);
-                threads.add(first);
-                runs.add(firstFinder);
-                first.start();
-            }
-            var firstFinder = new SearchThread(testList.subList(i-half, testList.size()));
-            var first = new Thread(firstFinder);
-            runs.add(firstFinder);
-            first.start();
-
-            first.join();
-            var actualSugs = new ArrayList<>(firstFinder.getValue());
-
-            for (i = 0; i < threads.size(); i++) {
-                threads.get(i).join();
-                actualSugs.addAll(runs.get(i).getValue());
-            }
-
-            //add words that are near where it should be, but only those about the same length
-            if (actualSugs.isEmpty())
-                actualSugs.addAll(Compression.read(word).stream().filter((x) -> x.length() > word.length() - 4 && x.length() < word.length() + 4 && x.charAt(0) == word.charAt(0)).sorted().toList());
-
-            actualSugs.sort((a, b) -> weirdCompare(word, a, b));
-
-            return actualSugs.stream().distinct().toList();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private static int weirdCompare(String word, String a, String b){

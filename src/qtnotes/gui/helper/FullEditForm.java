@@ -214,7 +214,7 @@ public class FullEditForm {
             var item = fieldList[i];
             var text= item.getText();
             if (text.length() < 4) continue;
-            if (Spellcheck.isIncorrectlySpelled(text)){
+            if (Spellcheck.isIncorrectlySpelled(text.toLowerCase())){
                 List<String> suggestions = Spellcheck.optimizedSearch(text);
                 var buf = new StringBuilder();
                 for (var sug : suggestions){

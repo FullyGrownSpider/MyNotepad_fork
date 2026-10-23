@@ -14,8 +14,9 @@ import java.util.*;
 //
 public class TestSpellCheck {
     String fileLocation = "/home/a804/Documents/MyTyper/words.txt";
-    String fileLocation4 = "/home/a804/Documents/MyTyper/words_bin.dat";
-    String testWord = "beuatiful";
+    String fileLocation4 = "/home/a804/Documents/MyTyper/Words.dat";
+    String testWord = "beatifull";//avalible, beatiful, probly
+
 
     @Test
     public void createSuggestions() throws InterruptedException {
