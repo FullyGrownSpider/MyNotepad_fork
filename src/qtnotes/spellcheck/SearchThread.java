@@ -24,9 +24,9 @@ public class SearchThread implements Runnable {
 
         found = found.stream().filter((x) -> {
             try {
-                int location = Compression.find(x, ref.lastLocation, ref.lastLocation - 15);
+                int location = Compression.find(x, ref.lastLocation + 15, ref.lastLocation - 15);
 
-                if (location + ref.lastLocation > 12) {
+                if (location + ref.lastLocation > 10) {
                     int secondLocation = Compression.find(x, ref.lastLocation, ref.lastLocation - 31);
                     if (secondLocation + ref.lastLocation < 30) {
                         location = secondLocation;

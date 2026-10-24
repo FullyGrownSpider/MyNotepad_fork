@@ -176,8 +176,8 @@ public final class Spellcheck {
         if (advanced) {
             suggestionsList.addAll(suggest(word, "i", "e"));
             suggestionsList.addAll(suggest(word, "ie", "y"));
+            suggestionsList.addAll(suggest(word, "a", "e"));
             suggestionsList.addAll(oneWaySuggest(word, "i", "a"));
-            suggestionsList.addAll(oneWaySuggest(word, "a", "e"));
         }
     }
 

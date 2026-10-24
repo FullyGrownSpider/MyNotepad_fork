@@ -15,7 +15,7 @@ import java.util.*;
 public class TestSpellCheck {
     String fileLocation = "/home/a804/Documents/MyTyper/words.txt";
     String fileLocation4 = "/home/a804/Documents/MyTyper/Words.dat";
-    String testWord = "beatifull";//avalible, beatiful, probly
+    String testWord = "apperently";//avalible, beatiful, probly, apperently
 
 
     @Test
@@ -57,7 +57,7 @@ public class TestSpellCheck {
     public void searchTest() throws IOException {
 //        var start = System.currentTimeMillis();
         Compression.path = fileLocation4;
-        var found = Compression.find("probably");
+        var found = Compression.find("apparentmy");
 //        System.out.println(System.currentTimeMillis() - start);
         Assert.assertTrue(found > -1);
     }
