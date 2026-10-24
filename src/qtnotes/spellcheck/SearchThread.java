@@ -7,9 +7,10 @@ import java.util.List;
 public class SearchThread implements Runnable {
     private List<ArrayList<byte[]>> found;
 
-    public SearchThread(List<ArrayList<byte[]>> toSearch){
+    public SearchThread(List<ArrayList<byte[]>> toSearch) {
         found = toSearch;
     }
+
     @Override
     public void run() {
         var ref = new Object() {
@@ -23,11 +24,15 @@ public class SearchThread implements Runnable {
 
         found = found.stream().filter((x) -> {
             try {
-                int location = Compression.find(x, ref.lastLocation, Math.max(0, ref.lastLocation - 15));
+                int location = Compression.find(x, ref.lastLocation, ref.lastLocation - 15);
 
-                //if the data is not as alphabetically connected it might trigger this, which means it needs bigger steps than steps of 30
-                if (-15 > -ref.lastLocation + location && location < 0) {
-                    location = Compression.find(x, ref.lastLocation, 0);
+                if (location + ref.lastLocation > 12) {
+                    int secondLocation = Compression.find(x, ref.lastLocation, ref.lastLocation - 31);
+                    if (secondLocation + ref.lastLocation < 30) {
+                        location = secondLocation;
+                    } else {
+                        location = Compression.find(x, ref.lastLocation, ref.lastLocation - 5000);
+                    }
                 }
 
                 if (location > -1) {

@@ -72,6 +72,10 @@ public final class Spellcheck {
 
         suggestionsList.add(word);
 
+        if (word.endsWith("ll"))
+            suggestionsList.add(word.substring(0, word.length() - 1));
+        else if (word.endsWith("l"))
+            suggestionsList.add(word + "l");
         defaultMistakes(word, suggestionsList, false);
         suggestionsList = suggestionsList.stream().distinct().collect(Collectors.toList());
         int max = suggestionsList.size();
@@ -168,16 +172,23 @@ public final class Spellcheck {
     private static void defaultMistakes(String word, List<String> suggestionsList, boolean advanced) {
         suggestionsList.addAll(suggest(word, "f", "v"));
         suggestionsList.addAll(suggest(word, "s", "c"));
-        suggestionsList.addAll(suggest(word, "b", "d"));
 
         if (advanced) {
-            suggestionsList.addAll(suggest(word, "e", "a"));
-            suggestionsList.addAll(suggest(word, "i", "y"));
             suggestionsList.addAll(suggest(word, "i", "e"));
-            suggestionsList.addAll(suggest(word, "i", "a"));
-            suggestionsList.addAll(suggest(word, "a", "e"));
             suggestionsList.addAll(suggest(word, "ie", "y"));
+            suggestionsList.addAll(oneWaySuggest(word, "i", "a"));
+            suggestionsList.addAll(oneWaySuggest(word, "a", "e"));
         }
+    }
+
+    private static List<String> oneWaySuggest(String base, String one, String two){
+        List<String> suggestionsList = new ArrayList<>();
+        var last = base;
+        while (last.contains(one)){
+            last = last.replaceFirst(one, two);
+            suggestionsList.add(last);
+        }
+        return suggestionsList;
     }
 
     private static List<String> suggest(String base, String one, String two){
@@ -227,6 +238,16 @@ public final class Spellcheck {
     }
 
     public static String mostCommon(String word){
+        try {
+        if (word.endsWith("ll")){
+                if (Compression.find(word.substring(0, word.length() - 1)) > -1)
+                    return word;
+        } else if (word.endsWith("l")){
+            if (Compression.find(word + "l") > -1)
+                return word;
+        }
+        } catch (IOException ignored) {
+        }
         return map.get(word);
     }
 }
