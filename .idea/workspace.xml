@@ -10,20 +10,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cd739bde-ad3f-4999-8363-51ddc36f6bc9" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/msnotepad/gui/helper/ADialog.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/msnotepad/quicktype/AddedWord.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/msnotepad/quicktype/Loading.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.vscode/launch.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Settings.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Settings.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/msnotepad/action/EditMenuActions.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/msnotepad/action/EditMenuActions.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/msnotepad/action/FileMenuActions.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/msnotepad/action/FileMenuActions.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/msnotepad/gui/GUIHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/msnotepad/gui/GUIHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/msnotepad/gui/helper/AboutDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/msnotepad/gui/helper/AboutDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/msnotepad/gui/helper/FindAndReplaceDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/msnotepad/gui/helper/FindAndReplaceDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/msnotepad/gui/helper/FontDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/msnotepad/gui/helper/FontDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/msnotepad/init/InitialValues.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/msnotepad/init/InitialValues.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MyNotepad.iml" beforeDir="false" afterPath="$PROJECT_DIR$/MyNotepad.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/qtnotes/spellcheck/Spellcheck.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/qtnotes/spellcheck/Spellcheck.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/TestSpellCheck.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/TestSpellCheck.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,12 +30,12 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "FullyGrownSpider"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;FullyGrownSpider&quot;
   }
-}]]></component>
+}</component>
   <component name="GitSEFilterConfiguration">
     <file-type-list>
       <filtered-out-file-type name="LOCAL_BRANCH" />
@@ -54,15 +44,15 @@
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
   </component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/FullyGrownSpider/MyNotepad_fork.git",
-    "accountId": "86377d28-2276-4792-b730-fb450680cf10"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/FullyGrownSpider/MyNotepad_fork.git&quot;,
+    &quot;accountId&quot;: &quot;74904136-b23a-423e-b6e3-afbf3072edc3&quot;
   }
-}]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2
-}]]></component>
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="1vwLroWBILmjN9279KuawxqqAze" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
@@ -74,8 +64,15 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Application.MainLauncher.executor": "Run",
+    "Downloaded.Files.Path.Enabled": "false",
+    "JUnit.TestSpellCheck.createSuggestions.executor": "Debug",
+    "Repository.Attach.Annotations": "false",
+    "Repository.Attach.JavaDocs": "false",
+    "Repository.Attach.Sources": "false",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/home/a804/IdeaProjects/MSNotepad/src/msnotepad/quicktype"
   }
@@ -85,7 +82,7 @@
       <recent name="$PROJECT_DIR$/src/msnotepad/quicktype" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="JUnit.TestSpellCheck.createSuggestions">
     <configuration name="MainLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="msnotepad.MainLauncher" />
       <module name="MyNotepad" />
@@ -99,8 +96,25 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="TestSpellCheck.createSuggestions" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="MyNotepad" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="test" />
+      <option name="MAIN_CLASS_NAME" value="test.TestSpellCheck" />
+      <option name="METHOD_NAME" value="createSuggestions" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.TestSpellCheck.createSuggestions" />
         <item itemvalue="Application.MainLauncher" />
       </list>
     </recent_temporary>
@@ -108,7 +122,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-cffe25b9f5b3-intellij.indexing.shared.core-IU-253.28294.334" />
+        <option value="bundled-jdk-30f59d01ecdd-a203e0a19954-intellij.indexing.shared.core-IU-262.10968.63" />
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.10968.63" />
       </set>
     </attachedChunks>
   </component>
@@ -138,6 +153,9 @@
     <option name="localTasksCounter" value="3" />
     <servers />
   </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
@@ -160,6 +178,11 @@
           <url>file://$PROJECT_DIR$/src/msnotepad/gui/helper/FindAndReplaceDialog.java</url>
           <line>487</line>
           <option name="timeStamp" value="10" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/qtnotes/spellcheck/Spellcheck.java</url>
+          <line>93</line>
+          <option name="timeStamp" value="17" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -7,7 +7,6 @@ import java.util.stream.Stream;
 
 public final class Spellcheck {
 
-    private static final int maxStepsDefault = 7;
     private static final ArrayList<String> nono = new ArrayList<>(List.of("bk","bq","bx","cb","cf","cg","cj","cp","cv","cw","cx","dx","fk","fq","fv","fx","fz","gq","gv","gx","hk","hv","hx","hz","iy","jb","jc","jd","jf","jg","jh","jk","jl","jm","jn","jp","jq","jr","js","jt","jv","jw","jx","jy","jz","kq","kv","kx","kz","lq","lx","mg","mj","mq","mx","mz","pq","pv","px","qb","qc","qd","qe","qf","qg","qh","qj","qk","ql","qm","qn","qo","qp","qr","qs","qt","qv","qw","qx","qy","qz","sx","sz","tq","tx","vb","vc","vd","vf","vg","vh","vj","vk","vm","vn","vp","vq","vt","vw","vx","vz","wq","wv","wx","wz","xb","xg","xj","xk","xv","xz","yq","yv","yz","zb","zc","zg","zh","zj","zn","zq","zr","zs","zx"));
     private static final Map<String, String> map = Stream.of(new String[][] {
             {"sacraligous", "sacrilegious"},{"sharcucherie", "charcuterie"},{"airinaceous", "erinaceous"},{"repitore", "repertoire"},{"comraderie", "camaraderie"},{"zenofobia", "xenophobia"},{"sicofant", "sycophant"},{"azma", "asthma"},{"caccao", "cocoa"},{"ackwiesce", "acquiesce"},{"apocrifall", "apocryphal"},{"jonra", "genre"},{"froght", "fraught"},{"entroproneur", "entrepreneur"},{"burocracy", "bureaucracy"},{"baloney", "bologna"},{"faro", "pharaoh"},{"chirsurist", "chiaroscurist"},{"flegmatic", "phlegmatic"},{"idiosinkratic", "idiosyncratic"},{"diaframe", "diaphragm"},{"gowche", "gauche"},{"polturgist", "poltergeist"},{"revalee", "reveille"},{"parafernalia", "paraphernalia"},{"lazee-fare", "laissez-faire"},{"hiroglifics", "hieroglyphics"},{"sfinx", "sphinx"},{"quire", "choir"},{"obleek", "oblique"},{"terradactyl", "pterodactyl"},{"debree", "debris"},{"shurbert", "sherbet"},{"invay", "inveigh"},{"gilotine", "guillotine"},{"indite", "indict"},{"spazmatic", "spasmodic"},{"gorilla", "guerrilla"},{"chipolte", "chipotle"},{"zyphr", "zephyr"},{"cattyclism", "cataclysm"},{"picturesc", "picturesque"},{"demagog", "demagogue"},{"jalapano", "jalapeño"},{"annadote", "anecdote"},{"defibulator", "defibrillator"},{"catakerous", "cantankerous"},{"skitzafrenia", "schizophrenia"},{"fetuchini", "fettuccine"},{"furlow", "furlough"},{"aforism", "aphorism"},{"archipellio", "archipelago"},{"fractus", "fractious"},{"newance", "nuance"},{"apopaliptic", "apocalyptic"},{"sudonym", "pseudonym"},{"aggadize", "aggrandize"},{"numonia", "pneumonia"},{"diafanus", "diaphanous"},{"ostrasice", "ostracize"},{"catchetorie", "cacciatore"},{"cacofany", "cacophony"},{"expachiate", "expatiate"}
@@ -178,6 +177,7 @@ public final class Spellcheck {
             suggestionsList.addAll(suggest(word, "ie", "y"));
             suggestionsList.addAll(suggest(word, "a", "e"));
             suggestionsList.addAll(oneWaySuggest(word, "i", "a"));
+            suggestionsList.addAll(oneWaySuggest(word, "i", "y"));
         }
     }
 
@@ -185,25 +185,17 @@ public final class Spellcheck {
         List<String> suggestionsList = new ArrayList<>();
         var last = base;
         while (last.contains(one)){
+            int index = last.indexOf(one);
             last = last.replaceFirst(one, two);
-            suggestionsList.add(last);
+            
+            suggestionsList.add(base.substring(0, index) + two + base.substring(index + 1));
         }
         return suggestionsList;
     }
 
     private static List<String> suggest(String base, String one, String two){
-        List<String> suggestionsList = new ArrayList<>();
-        var last = base;
-        while (last.contains(one)){
-            last = last.replaceFirst(one, two);
-            suggestionsList.add(last);
-        }
-        while (last.contains(two)){
-            last = last.replaceFirst(two, one);
-            suggestionsList.add(last);
-        }
-        if (suggestionsList.size() > maxStepsDefault)
-            suggestionsList.clear();
+        List<String> suggestionsList = oneWaySuggest(base, one, two);
+        suggestionsList.addAll(oneWaySuggest(base, two, one));
         return suggestionsList;
     }
 
