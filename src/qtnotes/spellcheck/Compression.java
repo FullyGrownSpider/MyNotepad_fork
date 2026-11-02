@@ -105,8 +105,9 @@ public final class Compression {
                 middle = top + 1;
             }
         }
-
         raf.close();
+        if (middle == 0)
+            return -1;
         return -middle;
     }
 
