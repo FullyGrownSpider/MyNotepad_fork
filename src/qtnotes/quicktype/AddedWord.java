@@ -249,7 +249,7 @@ public class AddedWord implements Comparable<AddedWord>{
                 chosen = item.getS(chosen);
             chosen = item.getNot(chosen);
         }
-        if (bools[0]) {
+        else if (bools[0]) {
             chosen = item.getS(chosen);
         }
         return chosen;
